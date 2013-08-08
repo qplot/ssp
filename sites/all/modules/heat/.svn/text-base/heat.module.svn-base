@@ -1,0 +1,342 @@
+<?php
+function heat_menu($may_cache) {
+	global $user;
+	$items = array();
+	if ($may_cache) {
+		$items[] = array('path' => 'heat/tickets',
+		'title' => t('View Heat Tickets'),
+		'callback' => 'heat_tickets',
+		'access' => user_access('access content'),
+		'type' => MENU_CALLBACK);
+	}
+	return $items;
+}
+
+function heat_get_heat_db()
+{
+    $db = mssql_connect('SURAZAL3', 'sa', 'craZyr3df0x');
+	if( !$db ) return false;
+
+    mssql_select_db('heat', $db);//or die ("Can't connect to Database");
+		
+	return $db;
+}
+
+function heat_drupal_user($heat_user)
+{
+	$heat_user = strtolower($heat_user);
+	$users = array(
+	'troy' => 'Troy Thompson',
+	'grouse' => 'Granville Rouse',
+	'ty' => 'Ty Vittum',
+	'omccloud' => 'Ondria McCloud',
+	'aime' => 'AMwenge',
+	'dzulueta' => 'Dexter Zulueta'
+	);
+	if( array_key_exists($heat_user,$users) )
+		return $users[$heat_user];
+	else
+		return false;
+}
+
+function heat_user_link($heat_user)
+{
+	$user = heat_drupal_user($heat_user);
+	if( !$user ) return $heat_user;
+
+	$user_url = str_replace(' ','-',strtolower($user));	
+	return "<a class=\"ve-link\" href=\"/users/$user_url\">$user</a>";
+}
+
+function heat_graph($options = array())
+{
+	$options = array_merge(array('short' => false, 'size'=> '375x100'),$options);
+	$db = heat_get_heat_db();
+	
+	$group = tnt_get_group();
+	$o = '';
+	if( !$group || empty($group->field_custid[0]['value']) )
+	{
+		return $o;
+	}
+	
+	$query = "SELECT COUNT(*) FROM CallLog WHERE CustID = '".mysql_real_escape_string($group->field_custid[0]['value'])."'";
+	
+	$closed_query = $query." AND CallStatus = 'Closed'";
+	$res = mssql_query($closed_query);
+	$res = mssql_fetch_array($res);
+	$closed_count = $res[0];
+	
+	$open_query = $query." AND CallStatus = 'Open'";
+	$res = mssql_query($open_query);
+	$res = mssql_fetch_array($res);
+	$open_count = $res[0];
+	
+	$total = $open_count + $closed_count;
+	
+	list($w, $h ) = explode('x',$options['size']);
+
+	$o = "<img class=\"ticket-status-pie-chart\" usemap=\"#map-ticket-status-pie-chart\" alt=\"Open: $open_count Closed: $closed_count\" src=\"http://chart.apis.google.com/chart?chs={$w}x{$h}&chco=ff0000,00ff00&cht=p3&chd=t:";
+	$o.= floor(($open_count/$total)*100).','.ceil(($closed_count/$total)*100);
+	$o.= '&chl='.$open_count.' Open'.($options['short'] ? '' : ' Tickets');
+	$o.= '|'.$closed_count.' Closed'.($options['short'] ? '' : ' Tickets');
+	$o.= '" />';
+	$o.= '<map name="map-ticket-status-pie-chart">';
+	$link_w = ceil($w/3);
+	$open_link_start = $w - $link_w;
+	$o.= '<area href="/heat/tickets?status=Closed" ALT="Closed Tickets" TITLE="View Closed Tickets" SHAPE="RECT" COORDS="0,0,'.$link_w.','.$h.'" />';
+	$o.= '<area href="/heat/tickets?status=Open" ALT="Open Tickets" TITLE="View Open Tickets" SHAPE="RECT" COORDS="'.$open_link_start.',0,'.$w.','.$h.'" />';
+	$o.= '</map>';
+	return $o;
+	
+}
+
+function heat_call_log($show = 5, $show_pager = false, $call_type = '', $call_status = '',$search = '',$before='',$after='')
+{			
+	$group = tnt_get_group();
+	$o = '';
+	if( !$group || empty($group->field_custid[0]['value']) )
+	{
+		$o .='Portal not tied to HEAT account, please <a href="/contact">ask</a> an admin to do this for you.';
+		return $o;
+	}
+	
+	$db = heat_get_heat_db();
+	if( !$db ) return 'Error connecting to MS SQL database. Please try back later or <a href="/contact">contact us</a>.';
+
+	$page_size = intval($show);	
+	$page_num = arg(0) == 'heat' && arg(2) == 'page' ? intval(arg(3)) : 1;
+	if( $page_num < 1 ) $page_num = 1;
+	
+	$conditions = array();
+	if( !empty($call_type) )
+		$conditions[] = 'CallType = \''. mysql_real_escape_string($call_type)."'";
+	if( !empty($call_status) )
+		$conditions[] = 'CallStatus = \''.mysql_real_escape_string($call_status)."'";
+		
+	if( !empty($before) )
+		$conditions[] = 'RecvdDate <= CAST(\''.mysql_real_escape_string($before)."' as smalldatetime)";
+	if( !empty($after) )
+		$conditions[] = 'RecvdDate >= CAST(\''.mysql_real_escape_string($after)."' as smalldatetime)";
+		
+	if( !empty($search) )
+	{		
+		$searchTerms = explode(' ',str_replace('"','',$search));
+		array_map('mysql_real_escape_string',$searchTerms);
+		$searchTerms = implode(' AND ',$searchTerms);
+		$conditions[] = 'CallID IN ( SELECT CallID FROM Journal WHERE CONTAINS(EntryText, \''.$searchTerms.'\') ) OR CallID LIKE \'%'.mysql_real_escape_string($search).'\' OR CallDesc LIKE \'%'.mysql_real_escape_string(str_replace(' ','%',$search))."%'";
+	}
+	
+	if( !empty($conditions))
+	{
+		foreach($conditions as $k => $condition )
+			$conditions[$k] = "($condition)";
+		$conditions = implode(' AND ',$conditions);
+		$conditions = " AND ($conditions)";
+	} else $conditions = '';
+	
+	$res = mssql_query('SELECT count(*) FROM CallLog WHERE CustID = \''.mysql_real_escape_string($group->field_custid[0]['value'])."'".$conditions);
+	$res = mssql_fetch_array($res);
+	$num_calls = $res[0];
+	if( $num_calls > 0 )
+	{	
+		$last_page = ceil( $num_calls / $page_size);
+
+		if( $last_page < $page_num )
+		{
+			drupal_goto('heat/tickets/page/'.$last_page);
+			exit();
+		}
+	} else $last_page = 1;
+	
+	if( $num_calls == 0 )
+	{
+		$o .= '<h3 style="margin:3em;">Your search produced no results, please try using fewer keywords or filters.</h3>';
+		return $o;
+	}
+	
+	$query = 'SELECT ROW_NUMBER() OVER(ORDER BY RecvdDate DESC) AS RowNum,* '.
+		'FROM CallLog '.
+		'WHERE CustID = "'.$group->field_custid[0]['value'].'" '.$conditions;
+	$start = (($page_num - 1) * $page_size )+1;
+	$end = $page_num * $page_size;
+	$query =	'SELECT *,CAST(RecvdDate as smalldatetime ) as RecvdDate FROM ('.$query.') as CallLogRNs '.
+				'WHERE RowNum BETWEEN '.$start.' AND '.$end;
+    $res = mssql_query($query);
+	$o .='<table width="100%">';
+	$o .="<th>Ticket #</th><th>Call Type</th><th>Description</th><th style='width:7em;'>By</th><th>Status</th><th>Created</th>";
+	for ($i = 0; $i < mssql_num_rows( $res ); ++$i)
+	{
+		$r = mssql_fetch_array($res,MSSQL_ASSOC );
+		$cls = $i % 2 == 0 ? 'odd' : 'even';
+		$o .='<tr class="'.$cls.' status-'.strtolower($r['CallStatus']).'">';
+		$r['Tracker'] = heat_user_link($r['Tracker']);
+		$r['RecvdDate'] = heat_date_short($r['RecvdDate']);
+		$o .="<td><a href='/heat/tickets/view/{$r['CallID']}'>{$r['CallID']}</a></td><td>{$r['CallType']}</td><td>{$r['CallDesc']}</td><td>{$r['Tracker']}</td><td>{$r['CallStatus']}</td><td>{$r['RecvdDate']}</td><td><a href='/heat/tickets/view/{$r['CallID']}'>View</a></td>";
+		$o .='</tr>';
+	}
+	$o .='</table>';
+	
+	if( $show_pager )
+	{
+		list($junk,$query_vars) = split('&',$_SERVER['QUERY_STRING'],2);
+		$query_vars = '?'.$query_vars;
+		$o .= '<ul class="pager">';
+		if( $page_num != 1 )	
+			$o .= '<li class="first"><a href="/heat/tickets/page/'.($page_num-1).$query_vars.'">Earlier</a></li>';
+					
+		for($i = 1; $i <= $last_page; $i++ )
+		{
+			if( $i != $page_num )
+				$o .= "<li><a href=\"/heat/tickets/page/$i$query_vars\">$i</a></li>";
+			else
+				$o .= "<li><strong>$i</strong></li>";
+			
+		}
+		if( $page_num != $last_page )
+			$o .= '<li class="last"><a href="/heat/tickets/page/'.($page_num+1).$query_vars.'">Later</a></li>';
+		$o .= '</ul>';
+	}
+	return $o;
+}
+
+function heat_date( $date ){ return date('F j, Y',strtotime($date)); }
+function heat_date_short( $date ){ return date('m.d.y',strtotime($date)); }
+function heat_time( $time ){ return date('g:ia',strtotime($time)); }
+function heat_status( $status )
+{
+	$cls = 'status-'.strtolower($status);
+	return '<span class="'.$cls.'">'.$status.'</span>'; }
+
+function heat_view_call()
+{
+	$id = arg(3);
+	$group = tnt_get_group();
+	$o = '';
+	if( !$group || empty($group->field_custid[0]['value']) )
+	{
+		$o .='Portal not tied to HEAT account, please <a href="/contact">ask</a> an admin to do this for you.';
+		return;
+	}
+	$db = heat_get_heat_db();
+	$res = mssql_query('select * from Journal JOIN CallLog on CallLog.CallID = Journal.CallID where CustID = "'.$group->field_custid[0]['value'].'" AND CallLog.CallID = '.$id);
+	$journal_count = mssql_num_rows( $res );
+	$is_journal = true;
+	if( $journal_count == 0 )
+	{
+		$is_journal = false;
+		$res = mssql_query('SELECT * FROM CallLog WHERE CustID = "'.$group->field_custid[0]['value'].'" AND CallID = '.$id);		
+		$journal_count = mssql_num_rows( $res );
+	}
+	$first = true;
+	for ($i = 0; $i < $journal_count; ++$i)
+	{
+		$r = mssql_fetch_array($res,MSSQL_ASSOC );
+		foreach($r as $k => $v)
+			$r[$k] = trim($v);
+			
+		$r['Tracker'] = heat_user_link($r['Tracker']);
+		$r['ModBy'] = heat_user_link($r['ModBy']);
+		if( !$is_journal )
+		{
+			$r['EntryDate'] = $r['RecvdDate'];
+			$r['EntryTime'] = $r['RecvdTime'];
+		}
+		
+		$r['EntryDate'] = heat_date($r['EntryDate']);
+		$r['EntryTime'] = heat_time($r['EntryTime']);
+		$r['EntryText'] = wordwrap($r['EntryText'],120);
+		
+		
+		$cls = $i % 2 == 0 ? 'odd' : 'even';
+		
+		if( $first )
+		{
+			$first = false;
+			$r['CallStatus'] = heat_status($r['CallStatus']);
+			if( empty($r['CallDesc'])) $r['CallDesc'] = $r['CallType'];
+			$o .= "<h3 class=\"ticket-header\">{$r['CallDesc']} <span>(Ticket #{$r['CallID']} {$r['CallStatus']})</span></h3>";
+			$o .= "<h4 class=\"ticket-title\">Created By {$r['Tracker']} on {$r['EntryDate']} at {$r['EntryTime']}</h4>";
+		}
+		else
+		{
+			$o .= "<h4 class=\"ticket-title\">Journal Entry ( {$r['JournalType']} ) by {$r['ModBy']} on {$r['EntryDate']} at {$r['EntryTime']}</h4>";
+		}
+		if( $is_journal)
+			$o .= '<pre class="ticket-entry">'._filter_url(utf8_encode($r['EntryText'])).'</pre>';
+		else
+			$o .= '<pre style="ticket-entry">No Journal Entry</pre>';
+		
+	}
+	
+	$r['ClosedBy'] = trim($r['ClosedBy']);
+	if( !empty($r['ClosedBy']) )
+	{
+		$o.='<h6>Closed by '.heat_user_link($r['ClosedBy']).' on '.heat_date($r['ClosedDate']).' at '.heat_time($r['ClosedTime']).'</h6>';
+	}
+	$o .='<p style="margin-top:1em;"><a href="/heat/tickets">View All Tickets</a></p>';
+	return $o;
+}
+
+function heat_tickets()
+{
+
+	if( arg(0) == 'heat' && arg(2) == 'view' )
+	{
+		return heat_view_call();
+		exit();
+	}
+	
+	$o = '';
+	$db = heat_get_heat_db();
+	$group = tnt_get_group();
+	$o = '';
+	if( !$group || empty($group->field_custid[0]['value']) )
+	{
+		$o .='Portal not tied to HEAT account, please <a href="/contact">ask</a> an admin to do this for you.';
+		return;
+	}
+	$callTypes = mssql_query('SELECT DISTINCT CallType FROM CallLog WHERE CustID = "'.$group->field_custid[0]['value'].'" order by CallType');
+	$callTypeOpts = '<option value="">Any</option>';
+	while ($callType = mssql_fetch_array($callTypes))
+	{	
+		$callType = $callType[0];
+		$selected = ($_GET['type'] == $callType ) ? 'selected="selected"' : '';
+		$callTypeOpts .= "<option $selected value=\"$callType\">$callType</option>";
+	}
+	
+	$callStatuses = mssql_query('SELECT DISTINCT CallStatus FROM CallLog WHERE CustID = "'.$group->field_custid[0]['value'].'" order by CallStatus');
+	$callStatuseOpts = '<option value="">Any</option>';
+	while ($callStatus = mssql_fetch_array($callStatuses))
+	{	
+		$callStatus = $callStatus[0];
+		$selected = ($_GET['status'] == $callStatus ) ? 'selected="selected"' : '';
+		$callStatuseOpts .= "<option $selected value=\"$callStatus\">$callStatus</option>";
+	}
+	
+	
+$date_title = 'try last week, last month, 12/2, -3 days, -1 week, 8/3/06';
+$o .= heat_graph();
+$o .= <<<FILTERS
+<div class="filters">
+<h3 style="margin-bottom:0;">Filters</h3>
+<form id="heat_filter" action="/heat/tickets/" style="margin-bottom:1em;" method="get">
+	<label for="search" title="Search by Ticket #, Description, Journal Entries">Search</label>
+	<input type="text" name="search" value="{$_GET['search']}" />
+	<label for="type">Type</label>
+	<select name="type">
+		{$callTypeOpts}
+	</select>
+	<label for="status">Status</label>
+	<select name="status">
+		{$callStatuseOpts}
+	</select>
+	Created between <input title="{$date_title}" size="10" class="date" name="after" type="text" value="{$_GET['after']}" /> and <input title="{$date_title}" class="date" name="before" type="text" size="10" value="{$_GET['before']}" />
+	<input type="submit" value="Search" /> or <a href="/heat/tickets/">Reset</a>
+</form>
+</div>
+FILTERS;
+	$o .= heat_call_log(50,true, urldecode($_GET['type']),urldecode($_GET['status']),urldecode($_GET['search']),urldecode($_GET['before']),urldecode($_GET['after']));
+	return $o;
+}
+?>

@@ -1,0 +1,272 @@
+// $Id: INSTALL.txt,v 1.17 2008/04/01 00:55:56 agentken Exp $
+
+--------------------------------------------------------------------------------
+INSTALL.txt for MySite version 5.x.2
+--------------------------------------------------------------------------------
+Drupal version: 5.x
+
+Author: Ken Rickard
+Email: agentrickard [at] gmail [dot] com
+Drupal: agentrickard
+CVS: agentken
+IRC: agentrickard
+
+=======
+CONTENTS
+=======
+
+1.       INSTALLATION
+1.1       Database Tables
+2.       UPGRADING
+2.1       Deprecated Files
+2.2       Database Schema
+2.3       Plugin API Changes
+3.       DEPENDENCIES
+3.1       jQuery Update
+3.2       jQuery Interface
+3.3       MySite without JavaScript
+4.       MYSITE ICONS MODULE
+4.1       Installing
+4.2       Database Table
+5        MYSITE FILES
+5.1       Plugin Directories
+5.2       Directory and File List
+6.       INSTALL CHECKLIST
+
+
+--------
+1.  INSTALLATION
+
+MySite uses the standard Drupal 5 install system.  Simply unpack the tarball and put the mysite folder into your modules directory.  Then navigate to Administer >> Site Building >> Modules and activate the MySite module.
+
+After installation, you should check the Access Control settings and configure the module for use.  See the README.txt for details and options.
+
+----
+1.1  Database Tables
+
+MySite will install the following tables in your Drupal database:
+
+  {mysite}
+  {mysite_content}
+  {mysite_data}
+
+--------
+2.  UPGRADING
+
+Users of MySite 5.x.1.x must run Drupal's updater after installing MySite 5.x.2.
+
+Users of any version of MySite 4.7.x. must run Drupal's updater after installing MySite 5.x.2.  There is a new database table -- {mysite_content} -- and several database schema changes.
+
+----
+2.1  Deprecated Files
+
+All current users should delete the following files; they have been deprecated:
+
+  mysite/plugins/styles/blue.css
+  mysite/plugins/styles/red.css
+
+If your users have selected these styles, their settings will be replaced by the new "sky.css" and "fire.css" files when you run the database upgrade script.
+
+----
+2.2  Database Schema
+
+The current version of the MySite database schema is version 7.
+
+----
+2.3  Plugin API Changes
+
+For users who have written custom plugins, you may need to revise your code
+to match changes in the API.
+
+There have been substantial changes to the Format, Layout, and Style plugins.
+
+Type plugins have changed in subtle ways and may not work in MySite 5.x.2
+as they did in MySite 5.x.1.  See section 7 of the README for notes.
+
+For details on the API, see http://therickards.com/api.
+
+--------
+3.  DEPENDENCIES
+
+In order to provide a shared library of functions, MySite uses other modules to provide advanced JavaScript functions.  If you do not install these modules, MySite will still work correctly.  However, without these modules drag-and-drop sorting of content is not supported.
+
+----
+3.1  jQuery Update
+
+Download and install the jQuery Update module from:
+
+  http://drupal.org/project/jquery_update
+
+This module upgrades Drupal's jQuery file from version 1.0 to the newest release, which is required by the jQuery Interface library.
+
+----
+3.2  jQuery Interface
+
+Download and install the jQuery Interface module from:
+
+  http://drupal.org/project/jquery_interface
+
+This module provides a common method for using the Interface library with Drupal.
+
+----
+3.3  MySite without JavaScript
+
+MySite should work without JavaScript or the jQuery update, but it may
+not perform optimally.
+
+The layout region feature of MySite was written with the assumption that
+users will be able to use JavaScript drag-and-drop for region assignment
+and item sorting.
+
+In the event that your users do not have JavaScript, the 'Action Buttons'
+for moving an item up and down can be used for item sorting.  As of version
+5.x.2.3, users can adjust the layout region of an item by configuring that
+item of their collection.
+
+Thanks to greggles for the tip. http://drupal.org/node/155172
+
+--------
+4.       MYSITE ICONS MODULE
+
+The MySite Icons module provides a graphic interface for users to browse and select content to add to their personal page.  The MySite Icons module is an optional addition to MySite.
+
+----
+4.1       Installing
+
+MySite Icons is included in the MySite download.
+
+MySite Icons uses the standard Drupal 5 install system.  Navigate to Administer
+>> Site Building >> Modules and activate the MySite Icons module.
+
+----
+4.2       Database Table
+
+The MySite Icons module will install the following table:
+
+  {mysite_icon}
+
+
+--------
+5.  MYSITE FILES
+
+The MySite module has more files than most Drupal modules.  This section is a guide to the core MySite files.  For information about these files, see the README.txt file.
+
+----
+5.1  Plugin Directories
+
+MySite uses "plugin" files to define custom options for users.  In order for the module to work, you must retain the plugins folder and all its subfolders within the mysite file directory.
+
+----
+5.2  Directory and File List
+
+  mysite/
+    API.php
+    CHANGELOG.txt
+    INSTALL.txt
+    README.txt
+    mysite.css
+    mysite.info
+    mysite.install
+    mysite.js
+    mysite.module
+  mysite/mysite_icon
+    mysite_icon.info
+    mysite_icon.install
+    mysite_icon.module
+  mysite/contrib
+    biblio.inc
+    README.txt
+    refine.inc
+    storylink.inc
+    weblink.inc
+  mysite/plugins/
+    README.txt
+  mysite/plugins/formats/
+    README.txt
+    default.theme
+    teasers.theme
+  mysite/plugins/icons/
+    README.txt
+    backing.png
+    cancel.png
+    down.png
+    icon-aggregator.png
+    icon-blog.png
+    icon-book.png
+    icon-droplet.png
+    icon-extra.png
+    icon-extra2.png
+    icon-extra3.png
+    icon-feed.png
+    icon-forum.png
+    icon-node.png
+    icon-term.png
+    icon-user.png
+    icon.png
+    menu-collapsed.png
+    menu-expanded.png
+    move.png
+    settings.png
+    up.png
+  mysite/plugins/layouts/
+    README.txt
+    columns.php
+    columns.png
+    default.php
+    default.png
+    left.php
+    left.png
+    stacks.php
+    stacks.png
+    triple.php
+    triple.png
+  mysite/plugins/styles/
+    README.txt
+    default.css
+    fire.css
+    forest.css
+    midnight.css
+    sky.css
+    sunrise.css
+    winter.css
+  mysite/plugins/types/
+    README.txt
+    aggregator.inc
+    blog.inc
+    book.inc
+    droplet.inc
+    feed.inc
+    forum.inc
+    node.inc
+    path.inc
+    popular.inc
+    profile.inc
+    term.inc
+    theme.inc
+    user.inc
+
+
+--------
+6.  INSTALL CHECKLIST
+
+    1.   Install MySite in your modules directory
+    2.   Check to see that all MySite files are present (see section 5)
+    3.   Go to Administer > Site Building > Modules
+    4.   Activate the MySite and MySite Icons modules.
+    5.   Run the Drupal upgrade script if you used MySite 5.x.1 or 4.7.x.y versions of MySite.
+    6.   Go to Administer > User Management > Access Control
+    7.   Set MySite access control rules.
+    8.   Go to Administer > Site configuration > MySite
+    9.   Configure the MySite module's basic options.
+    10.  Enable and configure the Content Types you wish to use.
+    11.  Configure Default page settings for users.
+    12.  Configure Default content settings users.
+
+For configuration details, see the README.txt file.
+
+--------
+
+/**
+ * @file
+ * Installation instructions for the MySite and MySite Icons modules.
+ */

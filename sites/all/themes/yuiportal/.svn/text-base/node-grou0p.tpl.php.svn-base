@@ -1,0 +1,47 @@
+<?php
+list($wug_user, $wug_pass ) = explode(':',$node->field_wug_login[0]['value']);
+$wug_root_device_id = $node->field_wug_root_device_id[0]['value'];
+?>
+
+<div class="<?= $node_class ?>">
+	<?php if ($page == 0): ?>
+		<h2 class="title"><a href="<?= $node_url?>"><?= $title?></a></h2>
+	<?php endif; ?>
+	<div class="content">
+	
+		<a target="_blank" class="network-map" href="http://10.20.1.59:8080/NmConsole/Navigation.asp?bIsJavaScriptDisabled=true&sUsername=<?= $wug_user ?>&sPassword=<?= $wug_pass ?>&nDeviceGroupID=<?= $wug_root_device_id ?>&sGroupView=Map.asp&sTab=Explorer&coords=">
+			<img border="0" ismap="ismap" src="http://10.20.1.59:8080/NmConsole/utility/RenderMap.asp?bIsJavaScriptDisabled=true&sUsername=<?= $wug_user ?>&sPassword=<?= $wug_pass ?>&nDeviceGroupID=<?= $wug_root_device_id ?>" />
+		</a>
+
+	</div>
+</div>
+<script type="text/javascript" src="<?= base_path().path_to_theme() ?>/js/jquery.thickbox.js"></script>
+<script type="text/javascript" src="<?= base_path().path_to_theme() ?>/js/jquery.frameready.js"></script>
+<script>
+	$(function(){
+		$('.network-map').click(function(e){
+			
+			
+			var x = e.pageX - this.offsetLeft;
+			var y = e.pageY - this.offsetTop + 203;
+			
+			var a = $(this);
+			var url = a.attr('href')+x+','+ y +'&TB_iframe=true&width=740&height=480';
+			
+			a.removeAttr('target');
+			console.log(url);
+			tb_showIframe = function(){
+				$("#TB_load").remove();
+				$("#TB_window").css({display:"block"});
+				console.log(this);
+
+				$(this).html('hello');
+			}
+			tb_show('',url,'');
+			return false;
+		}).find('img').removeAttr('ismap').each(function(){
+			$(this).width($(this).width());
+			$(this).height($(this).height());
+		});
+	});
+</script>

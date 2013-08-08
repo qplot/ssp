@@ -1,0 +1,55 @@
+<?php
+// $Id: teasers.theme,v 1.13 2008/04/06 23:08:26 agentken Exp $
+
+/**
+ * @file
+ * Formats content items with complete teasers.  Optional.
+ *
+ * @ingroup mysite_plugins
+ */
+
+/**
+ * Implements theme_mysite_hook_item()
+ */
+function theme_mysite_teasers_item($item) {
+  $output = '';
+  foreach ($item as $element) {
+    // if this is not a droplet, then build a content view
+    if (empty($element['content'])) {
+      $output .= '<h4>'. $element['link'] .'</h4>';
+      if (!empty($element['subtitle'])) {
+        $output .= '<div class="mysite-subtitle">&raquo; '. $element['subtitle'] .'</div>';
+      }
+      if (!empty($element['author'])) {
+        $author = $element['author'];
+        if (!empty($element['uid'])) {
+          $author = l($author, 'user/'. $element['uid']);
+        }
+        $output .= '<div class="mysite-submitted">';
+        $output .= t('submitted by !author on !time', array('!author' => $author, '!time' => format_date($element['date'], 'medium')));
+        $output .= '</div>';
+      }
+      $output .= $element['teaser'];
+    }
+    // this is a droplet, so output the content
+    else {
+      $output = theme('mysite_droplet', $element['content']);
+    }
+    // spacing for the next item
+    $output .= '<div class="end-item"></div>';
+  }
+  return $output;
+}
+
+/**
+ * Implements mysite_theme_hook()
+ */
+function mysite_theme_teasers() {
+  $name = t('Headlines and summaries');
+  $output = '<div class="mysite-sample mysite-content">';
+  $output .= t('<h2><a href="#">Sample headline</a></h2>');
+  $output .= t('submitted by johndoe on !time', array('!time' => format_date($element['date'], 'medium')));
+  $output .= t('<p>Consequat blandit consequat nibh vero at. Euismod feugait volutpat ad dolore vel consequatvel, facilisi aliquam hendrerit odio euismod, feugiat consequat exerci iusto eu consequatvel veniam. Luptatum quis.</p>');
+  $output .= '</div>';
+  return array('format' => $name, 'sample' => $output);
+}

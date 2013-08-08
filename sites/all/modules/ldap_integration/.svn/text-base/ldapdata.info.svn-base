@@ -1,0 +1,10 @@
+; $Id: ldapdata.info,v 1.2 2007/02/11 01:28:03 kreaper Exp $
+name = ldapdata
+description = "Permits reading and editing of own's LDAP data for users authenticated via ldapauth module."
+package = Administration
+dependencies = ldapauth profile
+; Information added by drupal.org packaging script on 2009-10-27
+version = "5.x-1.5"
+project = "ldap_integration"
+datestamp = "1256654469"
+

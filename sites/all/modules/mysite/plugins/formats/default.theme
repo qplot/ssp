@@ -1,0 +1,48 @@
+<?php
+// $Id: default.theme,v 1.9 2008/04/06 23:08:26 agentken Exp $
+
+/**
+ * @file
+ * The default item formatting file for MySite.  Required.
+ *
+ * @ingroup mysite_plugins
+ */
+
+/**
+ * Implements theme_mysite_hook_item()
+ */
+function theme_mysite_default_item($item) {
+  $list = array();
+  foreach ($item as $element) {
+    // if this is not a droplet, then build a list view
+    if (empty($element['content'])) {
+      if (empty($element['subtitle'])) {
+        $list[] = $element['link'];
+      }
+      else {
+        $list[] = $element['link'] .'<br />&raquo; '. $element['subtitle'];
+      }
+      $output = theme_item_list($list, $title = NULL, $type = 'ul');
+    }
+    // this is a droplet, so output the content
+    else {
+      $output = theme('mysite_droplet', $element['content']);
+    }
+  }
+  return $output;
+}
+
+/**
+ * Implements mysite_theme_hook()
+ */
+function mysite_theme_default() {
+  $name = t('Headlines list');
+  $output = '<div class="mysite-sample mysite-content">';
+  $output .= '<ul>';
+  $output .= t('<li><a href="#">Sample headline</a></li>');
+  $output .= t('<li><a href="#">Sample headline</a></li>');
+  $output .= t('<li><a href="#">Sample headline</a></li>');
+  $output .= '</ul>';
+  $output .= '</div>';
+  return array('format' => $name, 'sample' => $output);
+}

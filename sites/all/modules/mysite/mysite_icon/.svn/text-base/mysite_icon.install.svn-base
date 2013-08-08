@@ -1,0 +1,82 @@
+<?php
+// $Id: mysite_icon.install,v 1.3 2008/04/06 23:08:26 agentken Exp $
+
+/**
+ * Implementation of hook_install()
+ */
+function mysite_icon_install() {
+  $success = FALSE;
+  drupal_set_message(t('Installing the MySite Icons module'));
+  switch ($GLOBALS['db_type']) {
+    case 'mysqli':
+    case 'mysql':
+      $sql = "CREATE TABLE {mysite_icon} (
+        iid int(11) NOT NULL default '0',
+        type varchar(40) NOT NULL default '',
+        type_id int(10) NOT NULL default '0',
+        icon varchar(80) NOT NULL default '',
+        PRIMARY KEY  (iid),
+        UNIQUE KEY icon (icon),
+        KEY type (type),
+        KEY type_id (type_id)
+      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ";
+      db_query($sql);
+      $success = TRUE;
+      break;
+
+    case 'pgsql':
+      $sql = "CREATE TABLE {mysite_icon} (
+        iid integer NOT NULL default '0',
+        type varchar(40) NOT NULL default '',
+        type_id integer NOT NULL default '0',
+        icon varchar(80) NOT NULL default '',
+        PRIMARY KEY (iid),
+        UNIQUE (icon)
+      )";
+      db_query($sql);
+      db_query("CREATE INDEX {mysite_icon}_type_idx ON {mysite_data} (type)");
+      db_query("CREATE INDEX {mysite_icon}_typeid_idx ON {mysite_data} (type_id)");
+      $success = TRUE;
+      break;
+  }
+  if ($success) {
+    drupal_set_message(t('MySite Icons module installed successfully.'));
+  }
+  else {
+    drupal_set_message(t('The installation of the MySite Icons module was unsuccessful.'), 'error');
+  }
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function mysite_icon_uninstall() {
+  // Drop the table.
+  db_query('DROP TABLE {mysite_icon}');
+
+  // Delete the variables correctly.
+  $variables = array(
+    'mysite_icon_dimensions',
+    'mysite_icon_download',
+    'mysite_icon_file_size',
+    'mysite_icon_path'
+  );
+  foreach ($variables as $var) {
+    variable_del($var);
+  }
+
+  // Remove any uploaded icons.
+  $path = variable_get('mysite_icon_path', 'files/mysite');
+  $delete = file_scan_directory($path, '.+');
+  $success = TRUE;
+  foreach ($delete as $file) {
+    $check = file_delete($file->filename);
+    if (!$check) {
+      drupal_set_message(t('Could not delete file %file', array('%file' => $file->filename)), 'error');
+      $success = FALSE;
+    }
+  }
+  if ($success) {
+    rmdir($path);
+  }
+}

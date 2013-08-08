@@ -1,0 +1,10 @@
+name = Global Redirect Admin
+description = Provides a seperate administration module for Global Redirect for configuring option
+dependencies = globalredirect
+package = Global Redirect
+
+; Information added by drupal.org packaging script on 2008-12-22
+version = "5.x-1.5"
+project = "globalredirect"
+datestamp = "1229948120"
+

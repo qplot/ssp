@@ -1,0 +1,264 @@
+<?php
+require_once('lib/html2text.inc');
+require_once('ehealth.php');
+
+/**
+ * Adds roles and groups upon creation of a LDAP user.
+ */
+function tnt_user( $op, &$edit, &$account, $category = NULL)
+{
+	switch($op)
+	{
+		case 'insert':
+			//if halifax user
+			if( isset($edit['ldap_dn']) )
+			{
+				if( strpos($edit['ldap_dn'],'HCS') !== false )
+				{
+					user_save($account,array('mail'=>$edit['name'].'@halifax.k12.nc.us'));//add email address
+					og_save_subscription(28, $account->uid, array('is_active' => 1));//join halifax group
+					db_query('insert into {users_roles} (uid, rid) values('.$account->uid.', 3)');//add customer role
+				}
+				else if( strpos($edit['ldap_dn'],'Surazal') !== false )
+				{
+					$query = db_query('select distinct(nid) from {og}');
+					while ($group = db_fetch_array($query))
+						og_save_subscription($group['nid'], $account->uid, array('is_active' => 1));
+					db_query('insert into {users_roles} (uid, rid) values('.$account->uid.', 4)');//add surazal role
+				}
+			}
+			break;
+		case 'update':
+			if( isset($edit['ldap_dn']) && strpos($edit['ldap_dn'],'HCS') !== false )
+			{
+				user_save($account,array('mail'=>$edit['name'].'@halifax.k12.nc.us'));
+			}
+			break;
+		case 'load':
+			if( isset($account->ldap_dn) && strpos($account->ldap_dn,'HCS') !== false )
+				$account->mail = $account->name.'@halifax.k12.nc.us';
+	
+			break;
+	}
+}
+
+
+function tnt_token_values($type, $object = NULL, $options = array()) {
+  $values = array();
+  if( $type == 'node' )
+  {
+    $node = $object;
+    $values['body'] = $node->body;
+
+    $h2t_node_body =& new html2text($node->body);
+    $values['body-plain'] = $h2t_node_body->get_text();
+  }
+  return $values;
+}
+
+function tnt_gmodule($src)
+{
+	return '<iframe src="/gmodule.php?src='.urlencode(htmlentities($src)).'"></iframe>';
+}
+
+function tnt_token_list($type = 'all') {
+  if ($type == 'node' || $type == 'all') {
+    $tokens['node']['body']          = t('Node Body');
+    $tokens['node']['body-plain']      = t('Node Body without HTML');
+    return $tokens;
+  }
+}
+
+function tnt_network_status()
+{
+global $user;
+if( !$user || !isset($user->og_groups) ) return;
+
+$group = tnt_get_group();
+$wug_user = str_replace(' ','',strtolower($group->field_short_name[0]['value']));
+$wug_pass = tnt_make_key($wug_user);
+$wug_root_device_id = $group->field_wug_root_device_id[0]['value'];
+?>
+<p style="text-align:center">
+<a target="_blank" class="network-map" href="http://10.20.1.5:8080/NmConsole/Navigation.asp?bIsJavaScriptDisabled=true&amp;sUsername=<?= $wug_user ?>&amp;sPassword=<?= $wug_pass ?>&amp;nDeviceGroupID=<?= $wug_root_device_id ?>&amp;sGroupView=Map.asp&amp;sTab=Explorer&amp;coords=">
+	<img border="0" ismap="ismap" src="http://10.20.1.5:8080/NmConsole/utility/RenderMap.asp?bIsJavaScriptDisabled=true&amp;sUsername=<?= $wug_user ?>&amp;sPassword=<?= $wug_pass ?>&amp;nDeviceGroupID=<?= $wug_root_device_id ?>&amp;refresh=<?= rand() ?>" />
+</a>
+</p>
+<?php
+
+}
+
+function tnt_form_alter($form_id, &$form)
+{
+	if( in_array($form_id,array('menu_edit_item_form') ) ) return;
+	global $user;
+    //$form['author']['#type'] = 'value';//remove authoring
+    unset($form['menu']);//remove menu options
+    //unset($form['options']);//remove publishing options
+    unset($form['comment_settings']);//remove comment settings
+	unset($form['path']);//remove url path settings (if path module is enabled)
+    unset($form['log']);//log box
+    if( $user->uid != 1 )
+ 		unset($form['body_filter']['format']);//input filter
+    unset($form['preview']);//preview
+
+    if( isset($form['og_nodeapi']['visible']['og_groups_visible']['#type'])
+	&& $form['og_nodeapi']['visible']['og_groups_visible']['#type'] == 'item' )
+	{
+		$form['og_nodeapi']['#type'] = 'value';
+	}
+
+	switch($form['type']['#value'])
+	{
+		case 'heat_ticket':
+			$form['body_filter']['body']['#rows'] = 4;
+			$form['options']['#type'] = 'value';
+			$form['author']['#type'] = 'value';
+			$form['og_nodeapi']['visible']['og_groups']['#type'] = 'select';
+			unset($form['og_nodeapi']['visible']['og_groups']['#multiple']);
+
+			break;
+		case 'group':
+			$form['og_settings']['#type'] = 'value';
+			$form['theme_select']['#type'] = 'value';
+			$form['author']['#type'] = 'value';
+			$form['themes']['#type'] = 'value';
+			//$form['options']['#type'] = 'value';
+
+			break;
+		default:
+	}
+	switch($form['form_id']['#value'])
+	{
+		case 'user_edit':
+			$form['og_settings']['#type'] = 'value';
+			$form['contact']['#type'] = 'value';
+			$form['ldap_settings']['#type'] = 'value';
+			$form['theme_select']['#type'] = 'value';
+			break;
+		default:		
+	}
+	$form['timezone']['#value'] = -18000;
+	$form['timezone']['#type'] = 'value';
+	$form['timezone']['#options'] = 'value';
+	
+	unset($form['body_filter']['format']);
+	
+	/*
+	echo '<!--';
+	print_r($form);
+	echo '-->';
+	*/
+	
+}
+
+function tnt_get_group()
+{
+	global $user;
+	if( !$user || !isset($user->og_groups) ) return false;
+	$group = current($user->og_groups);
+	$group = $group['nid'];
+	
+	if( is_numeric($_GET['group']) )
+		$switch_group = intval($_GET['group']);
+	
+	if( isset($_SESSION['active_group']) || isset($switch_group) )//check for session group variable
+	{
+		if( !isset($switch_group) )
+			$switch_group = intval($_SESSION['active_group']);
+			
+		if( array_key_exists($switch_group,$user->og_groups) )
+		{
+			$group = $switch_group;
+			$_SESSION['active_group'] = $group;
+		}
+	}
+	if( is_numeric($group) )
+		return node_load($group);
+	return false;
+}
+
+function tnt_get_short_group_name()
+{
+	global $user;
+	if( !$user || !isset($user->og_groups) ) return;
+	$group = tnt_get_group();
+	$client = false;
+	if( $group )
+		$client = str_replace(' ','',strtolower($group->field_short_name[0]['value']));
+	return $client;
+}
+
+function tnt_available_reports()
+{
+		$concord_graph_names = array(
+		'avgNetVolume' => 'Average_Network_Volume',
+		'netVolume' => 'Network_Volume',
+		//'avail' => 'Availability',
+		//'averageHealthIndex' => 'Average_Health_Index',
+		'avgHealthIndex' => 'Hourly_Average_Health_Index',
+		//'bandwidthUtilizationLanWan' => 'Bandwidth_Utilization',
+		//'latency' => 'Latency',
+		//'reach' => 'Reachability',
+		//'volumeLeaders' => 'Volume_Leaders',
+		//'volumeVsBaseline' => 'Volume_vs_Baseline'
+	);
+
+	$ssp_graph_names = array_flip($concord_graph_names);
+	return array_keys($ssp_graph_names);
+}
+
+function tnt_report( $report = '')
+{
+	$group = tnt_get_short_group_name();
+	$url = '/ehealth/?client='.$group.'&key='.tnt_make_key($group).'&report='.$report;
+
+	if( in_array($report,array('Situations_to_Watch')) )
+	{
+		if($stream = fopen('http://127.0.0.1/'.$url, 'r')) {
+
+		    return stream_get_contents($stream);
+		    fclose($stream);
+		}
+	}
+	else
+		return '<img src="'.$url.'" />';
+}
+
+function old_tnt_report( $report = '', $show_size = true, $echo = true, $header = false )
+{
+	global $user;
+	if($echo) echo '&nbsp;';
+	if( empty($report) || !$user || !($group = tnt_get_group()) ){ return $ret; }
+
+	$label = str_replace('_',' ',$report);
+	$report = str_replace(' ','_',$report);
+
+	$client = str_replace(' ','',strtolower($group->field_short_name[0]['value']));
+	$ds = DIRECTORY_SEPARATOR;
+	$img_path = file_directory_path().$ds.'reports'.$ds.$client.$ds;
+	$img_src = glob($img_path.$report.'.*');
+	$img_src = $img_src[0];
+	$o = '';
+	if( isset($img_src) && is_file($img_src) )
+	{
+		if( $header )
+			$o = '<h3>'.$label.'</h3>';
+
+		if( strpos($img_src,'.html') > -1 )
+		{
+			$src = file_get_contents($img_src,FILE_TEXT);
+			$src = strip_tags($src,'<p><table><tr><th><td>');
+			$o .= $src;
+		}
+		else
+		{
+			$size = getimagesize($img_src);
+			$src = "/files/reports/$client/".basename($img_src);
+			//$src .= '?day='.date('md');
+			$o .= ($show_size) ? '<img src="'.$src.'" '.$size[3].'/>' : '<img src="'.$src.'" />';
+		}
+	}
+	if( $echo ) echo $o;
+	return $o;
+}

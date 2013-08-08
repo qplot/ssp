@@ -1,0 +1,11 @@
+; $Id: mysite_icon.info,v 1.1 2007/10/21 16:31:10 agentken Exp $
+name = MySite Icons
+description = Icon handler for the MySite module.
+package = MySite
+dependencies = mysite
+
+; Information added by drupal.org packaging script on 2008-10-01
+version = "5.x-3.3"
+project = "mysite"
+datestamp = "1222869925"
+

@@ -1,0 +1,8 @@
+/*	=MySite CSS Stuff
+--------------------------------------*/
+handle: 'span.mysite-header',
+accept : 'sortable-item',
+tolerance: 'intersect',
+activeclass: 'mysite-active',
+hoverclass: 'mysite-hover',
+helperclass: 'mysite-helper',

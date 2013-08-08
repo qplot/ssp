@@ -1,0 +1,11 @@
+; $Id$
+name = Og Management
+description = "Allows users to create organic groups in bulk, and manage suscribers."
+dependencies = og
+package = "Organic groups"
+
+; Information added by drupal.org packaging script on 2007-10-12
+version = "5.x-1.x-dev"
+project = "og_management"
+datestamp = "1192147510"
+

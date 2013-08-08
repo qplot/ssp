@@ -1,0 +1,5 @@
+; $Id$
+name = JQuery Interface Library
+description = An API and central location for modules that use the JQuery Interface library.
+package = User Interface
+dependencies = jquery_update

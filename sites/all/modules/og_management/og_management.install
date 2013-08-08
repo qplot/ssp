@@ -1,0 +1,10 @@
+<?php
+
+// $Id$
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function og_management_uninstall() {
+  variable_del('og_management_roles');
+}

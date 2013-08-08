@@ -1,0 +1,144 @@
+<?php
+/* $Id: sections.install,v 1.5.2.10 2009/12/14 22:25:33 hass Exp $ */
+
+/**
+ * @file
+ * Installation file for Sections module.
+ */
+
+/**
+ * Implementation of hook_disable().
+ */
+function sections_disable() {
+  // Copy Administration theme section configuration into core Administration theme settings.
+  $admin_theme = db_fetch_object(db_query("SELECT status, path, theme FROM {sections_data} WHERE name = '%s'", 'Administration theme'));
+
+  // Enable selected core admin theme only if sections admin theme was enabled,
+  // otherwise use "system default".
+  if ($admin_theme->status) {
+    // Set core admin theme to sections admin theme.
+    variable_set('admin_theme', $admin_theme->theme);
+  }
+}
+
+/**
+ * Implementation of hook_enable().
+ */
+function sections_enable() {
+  // Copy core Administration theme configuration into Administration theme section and disable core Administration theme settings.
+  $admin_theme = variable_get('admin_theme', '0');
+  $path = "admin\nadmin/*";
+  db_query("UPDATE {sections_data} SET status = %d, theme = '%s', path = '%s' WHERE name = '%s'", $admin_theme ? 1 : 0, $admin_theme, $path, 'Administration theme');
+  variable_set('admin_theme', '0');
+}
+
+function sections_install() {
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      db_query("CREATE TABLE {sections_data} (
+        sid INTEGER NOT NULL auto_increment,
+        name VARCHAR(255) DEFAULT '',
+        status TINYINT(4) DEFAULT 0,
+        path text,
+        theme VARCHAR(255) DEFAULT '',
+        visibility TINYINT(4) DEFAULT 0,
+        weight INTEGER DEFAULT 0,
+        PRIMARY KEY (sid)
+      ) /*!40100 DEFAULT CHARACTER SET utf8 */;");
+      break;
+    case 'pgsql':
+      db_query("CREATE TABLE {sections_data} (
+        sid SERIAL,
+        name VARCHAR(255) DEFAULT '',
+        status SMALLINT DEFAULT 0,
+        path TEXT,
+        theme VARCHAR(255) DEFAULT '',
+        visibility SMALLINT DEFAULT 0,
+        weight INTEGER DEFAULT 0,
+        PRIMARY KEY (sid)
+      );");
+      break;
+  }
+  // Set modul weight to negative value to be the first called.
+  db_query("UPDATE {system} SET weight = '-10' WHERE name = 'sections'");
+
+  // Copy Administration theme configuration into section and disable core Administration theme settings.
+  $admin_theme = variable_get('admin_theme', '0');
+  $path = "admin\nadmin/*";
+  db_query("INSERT INTO {sections_data} (name, status, visibility, path, theme, weight) VALUES ('%s', %d, %d, '%s', '%s', %d)", 'Administration theme', $admin_theme ? 1 : 0, 1, $path, $admin_theme, -10);
+  variable_set('admin_theme', '0');
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function sections_uninstall() {
+  db_query('DROP TABLE {sections_data}');
+}
+
+function sections_update_1() {
+  $ret = array();
+
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql("ALTER TABLE {sections_data} ADD visibility smallint(1) default 0;");
+      $ret[] = update_sql("ALTER TABLE {sections_data} ADD weight int(10) default 0;");
+      break;
+  }
+
+  return $ret;
+}
+
+function sections_update_2() {
+  return _system_update_utf8(array('sections_data'));
+}
+
+function sections_update_3() {
+  $ret = array();
+
+  // Sync schema with core and optimize datatypes
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql("ALTER TABLE {sections_data} MODIFY COLUMN sid INTEGER NOT NULL DEFAULT NULL AUTO_INCREMENT, ADD PRIMARY KEY (sid);");
+      $ret[] = update_sql("ALTER TABLE {sections_data} MODIFY COLUMN name VARCHAR(255) DEFAULT '';");
+      $ret[] = update_sql("ALTER TABLE {sections_data} MODIFY COLUMN status TINYINT(4) DEFAULT 0;");
+      $ret[] = update_sql("ALTER TABLE {sections_data} CHANGE COLUMN template theme VARCHAR(255) DEFAULT '';");
+      $ret[] = update_sql("ALTER TABLE {sections_data} MODIFY COLUMN visibility TINYINT(4) DEFAULT 0;");
+      $ret[] = update_sql("ALTER TABLE {sections_data} MODIFY COLUMN weight INTEGER DEFAULT 0;");
+      break;
+  }
+
+  return $ret;
+}
+
+function sections_update_4() {
+  $ret = array();
+
+  // Set modul weight to negative value to be the first called.
+  $ret[] = update_sql("UPDATE {system} SET weight = '-10' WHERE name = 'sections'");
+
+  return $ret;
+}
+
+/**
+ * Add "administration theme" to sections and disable core "administration theme".
+ */
+function sections_update_5000() {
+  $ret = array();
+
+  $admin_theme = variable_get('admin_theme', '0');
+  $path = "admin\nadmin/*";
+  $admin_theme_name = 'Administration theme';
+
+  $result = db_result(db_query("SELECT name FROM {sections_data} WHERE name = '%s'", $admin_theme_name));
+  if (!$result) {
+    db_query("INSERT INTO {sections_data} (name, status, visibility, path, theme, weight) VALUES ('%s', %d, %d, '%s', '%s', %d)", 'Administration theme', $admin_theme ? 1 : 0, 1, $path, $admin_theme, -10);
+    $ret[] = array('success' => TRUE, 'query' => 'Added Administration theme section.');
+  }
+  variable_set('admin_theme', '0');
+
+  return $ret;
+}

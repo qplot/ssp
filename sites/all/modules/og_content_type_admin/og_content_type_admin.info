@@ -1,0 +1,10 @@
+; $Id: og_content_type_admin.info,v 1.1.2.5 2007/09/07 16:31:13 rconstantine Exp $
+;/**
+; * @package OG_CTA
+; * @category NeighborForge
+; */
+name = OG Content Type Admin
+description = Allows restriction of content type use based on group.
+dependencies = og
+package = Organic groups
+project = "og_content_type_admin"

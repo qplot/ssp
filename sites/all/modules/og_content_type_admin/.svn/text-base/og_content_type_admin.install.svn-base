@@ -1,0 +1,162 @@
+<?php
+/**
+ * $Id: og_content_type_admin.install,v 1.1.2.7 2007/09/07 16:31:13 rconstantine Exp $
+ * @package OG_CTA
+ * @category NeighborForge
+ */
+
+/**
+ * Constants to indicate whether a content type is assigned to a group.
+ */
+define('NOT_ASSIGNED_TO_GROUP', 0);
+define('ASSIGNED_TO_GROUP', 1);
+
+/**
+ * Constants to indicats whether a content type is activated/deactivated/required.
+ */
+define('DEACTIVATED', 0);
+define('ACTIVATED', 1);
+define('REQUIRED', 2);
+
+/**
+ * Implementation of hook_install().
+ */
+function og_content_type_admin_install() {
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      $query1 = db_query("
+        CREATE TABLE {og_content_type_admin} (
+          gid int(11) NOT NULL default '0',
+	  name varchar(128) NOT NULL default '',
+          types_allowed longtext NOT NULL,
+	  types_active longtext NOT NULL,
+          PRIMARY KEY (gid)
+        ) /*!40100 DEFAULT CHARACTER SET utf8 */
+      ");
+      $query2 = db_query("UPDATE {system} SET weight = %d WHERE name = '%s'", 3, 'og_content_type_admin');
+      break;
+    case 'psgql':
+      $query1 = db_query("
+        CREATE TABLE {og_content_type_admin} (
+          gid numeric(11) NOT NULL default '0',
+	  name varchar(128) NOT NULL default '',
+          types_allowed text NOT NULL,
+	  types_active text NOT NULL,
+          PRIMARY KEY (gid)
+        ) /*!40100 DEFAULT CHARACTER SET utf8 */
+      ");
+      $query2 = db_query("UPDATE {system} SET weight = %d WHERE name = '%s'", 3, 'og_content_type_admin');
+      break;
+  }
+  
+  //now that the tables are created, create rows for the site-wide and group default settings
+  $node_types = node_get_types();
+  foreach ($node_types as $type) {
+    $all_allowed[$type->type] = ASSIGNED_TO_GROUP;
+    $all_active[$type->type] = REQUIRED;
+  }
+  $og_node_types = variable_get('og_node_types', array('og'));
+  $og_omitted = variable_get('og_omitted', array());
+  $exempt = array_merge($og_node_types, $og_omitted);
+  $swgid = -1;
+  $sitewide = 'Site Wide';
+  $query3 = db_query("INSERT INTO {og_content_type_admin} (gid, name, types_allowed, types_active) VALUES (%d, '%s', '%s', '%s')", $swgid, $sitewide, serialize($all_allowed), serialize($all_active));
+  foreach ($node_types as $type) {
+    if (!in_array($type->type, $exempt)) {
+      $group_allowed[$type->type] = ASSIGNED_TO_GROUP;
+      $group_active[$type->type] = ACTIVATED;
+    }
+  }
+  $dfgid = 0;
+  $group_default = 'Default';
+  $query4 = db_query("INSERT INTO {og_content_type_admin} (gid, name, types_allowed, types_active) VALUES (%d, '%s', '%s', '%s')", $dfgid, $group_default, serialize($group_allowed), serialize($group_active));
+  
+  //make sure all went well
+  if ($query1 && $query2 && $query3 && $query4) {
+    drupal_set_message('The OG Content Type Admin module was installed successfully. A table was added to the database.');
+  }
+  else {
+    drupal_set_message('There was an error installing the OG Content Type Admin database table.', 'error');
+  }
+}
+
+/**
+ * Implementation of hook_enable
+ * 
+ * We need to disable the regular OG block in favor of the new one.
+ */
+function og_content_type_admin_enable() {
+  //replace the og block called og_block_detail with our own
+  $og_module = 'og';
+  $og_delta = 0;
+  $query5abad = 1;
+  $query6bad = 1;
+  $query7bad = 1;
+  $query5 = db_query("SELECT * FROM {blocks} b WHERE b.module = '%s' AND b.delta = %d", $og_module, $og_delta);
+  while ($block_data = db_fetch_object($query5)) {
+    $query5a = db_query("UPDATE {blocks} SET status = %d, region = '%s' WHERE module = '%s' AND delta = %d", 0, '', $og_module, $og_delta);
+    if (!$query5) {
+      $query5abad = 0;
+    }
+    $this_module = 'og_content_type_admin';
+    $query6 = db_query("INSERT INTO {blocks} (module, delta, theme, status, weight, region, custom, throttle, visibility)
+              VALUES ('%s', '%s', '%s', %d, %d, '%s', %d, %d, %d)", 
+              $this_module, $block_data->delta, $block_data->theme, $block_data->status, $block_data->weight, $block_data->region, $block_data->custom, $block_data->throttle, $block_data->visibility);
+    if (!$query6) {
+      $query6bad = 0;
+    }
+  }
+  //now change the title of the node/add menu item to indicate a little better that there is a division between group and site-wide content
+  $path = 'node/add';
+  $new_title = 'Create general content';
+  $query7 = db_query("UPDATE {menu} SET title = '%s' WHERE path = '%s'", $new_title, $path);
+  if (!$query7) {
+    $query7bad = 0;
+  }
+  if ($query5 && $query5abad && $query6bad && $query7bad) {
+    drupal_set_message('The OG Content Type Admin module was enabled successfully. Default settings were initialized.');
+  }
+  else {
+    drupal_set_message('There was an error setting the OG Content Type Admin settings.', 'error');
+  }
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function og_content_type_admin_uninstall() {
+  $query1 = db_query('DROP TABLE {og_content_type_admin}');
+
+  if ($query1) {
+    drupal_set_message('The OG Content Type Admin module was uninstalled successfully.');
+  }
+  else {
+    drupal_set_message('There was an error removing the OG Content Type Admin database table.', 'error');
+  }
+}
+
+function og_content_type_admin_disable() {
+  //restore the og block called og_block_detail with the data ours is now using
+  $this_module = 'og_content_type_admin';
+  $this_delta = 0;
+  $query2 = db_query("SELECT * FROM {blocks} b WHERE b.module = '%s' AND b.delta = %d", $this_module, $this_delta);
+  while ($block_data = db_fetch_object($query2)) {
+    $og_module = 'og';
+    $query3 = db_query("UPDATE {blocks} SET status = %d, weight = %d, region = '%s', custom = %d, throttle = %d, visibility = %d WHERE module = '%s' AND delta = %d",
+    $block_data->theme, $block_data->status, $block_data->weight, $block_data->region, $block_data->custom, $block_data->throttle, $block_data->visibility, $og_module, $this_delta);
+  }
+  //now that it's restored, remove ours
+  $query4 = db_query("DELETE FROM {blocks} WHERE module = '%s'", $this_module);
+
+  //now change the title of the node/add menu item back to its original name
+  $path = 'node/add';
+  $old_title = 'Create content';
+  $query5 = db_query("UPDATE {menu} SET title = '%s' WHERE path = '%s'", $old_title, $path);
+  if ($query2 && $query3 && $query4 && $query5) {
+    drupal_set_message('The OG Content Type Admin module was disabled successfully.');
+  }
+  else {
+    drupal_set_message('There was an error restoring the original OG block settings.', 'error');
+  }
+}

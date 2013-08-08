@@ -1,0 +1,7 @@
+name = 'me' Aliases
+description = Provides links to current user's pages using 'me' instead of the numerical user id.
+; Information added by drupal.org packaging script on 2009-03-31
+version = "5.x-1.2"
+project = "me"
+datestamp = "1238466931"
+

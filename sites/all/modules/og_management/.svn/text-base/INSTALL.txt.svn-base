@@ -1,0 +1,13 @@
+; $Id$
+
+To install this module:
+
+1.  upload/copy your module directory to your web server in your modules folder.
+2.  enable the module at admin/build/modules
+
+then navigate to:
+
+admin/settings/og_management
+
+and decide which user roles are accessible by this form (usually all is a good idea, but you may think differently...)
+

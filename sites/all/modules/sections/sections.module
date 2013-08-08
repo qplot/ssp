@@ -1,0 +1,389 @@
+<?php
+// $Id: sections.module,v 1.16.2.27 2009/12/20 21:24:12 hass Exp $
+
+/**
+ * @file
+ * Allows you to define sections of your site and apply themes to those sections.
+ */
+
+/**
+ * Implementation of hook_help().
+ */
+function sections_help($section) {
+  switch ($section) {
+    case 'admin/modules#description':
+      return t('Allows you to define sections of your site and apply themes to those sections.');
+  }
+}
+
+/**
+ * Implementation of hook_perm().
+ *
+ * Since the access to our new custom pages will be granted based on
+ * special permissions, we need to define what those permissions are here.
+ * This ensures that they are available to enable on the user role
+ * administration pages.
+ */
+function sections_perm() {
+  return array('administer sections');
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function sections_menu($may_cache) {
+  // Never *ever* use t() with %name in hook_menu OR init_theme() get's fired for theme_placeholder
+  // by theme_get_function function and theme switch will fail for anonymous users in cached mode
+  // with subthemes!
+
+  // admin/build/sections/ show the summary
+  // admin/build/sections/list show the summary
+  // admin/build/sections/add show an empty form
+  // admin/build/sections/edit/XX show edit form for XX
+
+  $items = array();
+  if ($may_cache) {
+    $access = user_access('administer sections');
+
+    // This is the minimum information you can provide for a menu item.
+    $items[] = array(
+      'path' => 'admin/build/sections',
+      'title' => t('Sections'),
+      'description' => t('Define sections of your site and apply themes to them.'),
+      'callback' => 'sections_list',
+      'access' => $access
+    );
+    $items[] = array(
+      'path' => 'admin/build/sections/list',
+      'title' => t('List'),
+      'callback' => 'sections_list',
+      'access' => $access,
+      'weight' => -10,
+      'type' => MENU_DEFAULT_LOCAL_TASK
+    );
+    $items[] = array(
+      'path' => 'admin/build/sections/add',
+      'title' => t('Add section'),
+      'callback' => 'drupal_get_form',
+      'callback arguments' => array('sections_admin_settings_form'),
+      'access' => $access,
+      'type' => MENU_LOCAL_TASK
+    );
+
+    foreach (_sections_load() as $section) {
+      $items[] = array(
+        'path' => 'admin/build/sections/edit/'. $section->sid,
+        'title' => t('Edit section'),
+        'callback' => 'drupal_get_form',
+        'callback arguments' => array('sections_admin_settings_form', NULL, $section),
+        'access' => $access,
+        'type' => MENU_CALLBACK
+      );
+      $items[] = array(
+        'path' => 'admin/build/sections/delete/'. $section->sid,
+        'title' => t('Delete section'),
+        'callback' => '_sections_delete',
+        'callback arguments' => array($section),
+        'access' => $access,
+        'type' => MENU_CALLBACK
+      );
+    }
+
+  }
+  else if ($section = sections_in_section()) {
+    // only switch to custom theme if theme is active, to prohibit a destroyed site
+    foreach (list_themes() as $key => $theme) {
+      if ($theme->status == 1 && $theme->name == $section->theme) {
+        global $custom_theme;
+        $custom_theme = $section->theme;
+        init_theme();
+      }
+    }
+  }
+
+  return $items;
+}
+
+/**
+ * Implementation of hook_form_alter().
+ */
+function sections_form_alter($form_id, &$form) {
+  // Disable Administration theme.
+  if ($form_id == 'system_admin_theme_settings') {
+    $form['admin_theme']['#disabled'] = TRUE;
+    drupal_set_message(t('The configuration options have been disabled for compatibility reasons with the sections module. Configure the administration theme via <a href="@sections-admin">sections</a>.', array('@sections-admin' => url('admin/build/sections'))), 'error');
+  }
+}
+
+/**
+ * Declare administrative settings for a module.
+ *
+ * This hook provides an administrative interface for controlling various
+ * settings for this module. A menu item for the module under "site
+ * configuration > modules" will appear in the administrative menu when
+ * this hook is implemented.
+ *
+ * @return
+ *   An HTML string containing form items to place on the module settings
+ *   page.
+ *
+ * The form items defined on the settings page will be saved with
+ * variable_set(), and can be later retrieved with variable_get(). If you
+ * need to store more complicated data (for example, in a separate table),
+ * define your own administration page and link to it using hook_menu().
+ */
+function sections_list() {
+  $header = array(
+    t('Section'),
+    t('Status'),
+    t('Theme'),
+    t('Weight'),
+    array('data' => t('Operations'), 'colspan' => '2')
+  );
+
+  $rows = array();
+  foreach (_sections_load() as $section) {
+    $rows[] = array(
+      filter_xss($section->name),
+      $section->status ? t('Enabled') : t('Disabled'),
+      ($section->theme) ? $section->theme : t('System default'),
+      $section->weight,
+      l(t('Edit'), 'admin/build/sections/edit/'. $section->sid),
+      ($section->name == 'Administration theme') ? '' : l(t('Delete'), 'admin/build/sections/delete/'. $section->sid),
+    );
+  }
+
+  $output = theme('table', $header, $rows);
+  return $output;
+}
+
+function sections_admin_settings_form($edit = NULL, $section = NULL) {
+  if ($section) {
+    $edit = (array)$section;
+  }
+
+  $form['section_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Section settings')
+  );
+  $form['section_settings']['name'] = array(
+    '#type' => $edit['name'] == 'Administration theme' ? 'hidden' : 'textfield',
+    '#title' => t('Name'),
+    '#default_value' => $edit['name'],
+    '#size' => 40,
+    '#maxlength' => 64,
+    '#description' => t('Give the name of the section.')
+  );
+  $form['section_settings']['status'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enabled'),
+    '#default_value' => $edit['status'],
+    '#description' => t('Enable or disable this section.')
+  );
+  $form['section_settings']['theme'] = array(
+    '#type' => 'select',
+    '#title' => t('Select theme'),
+    '#default_value' => $edit['theme'],
+    '#options' => _sections_theme_select(),
+    '#description' => t('Select the theme you want to use for this section. Disabled themes are not used until they are enabled on <a href="@url">themes</a> page.', array('@url' => url('admin/build/themes')))
+  );
+  $form['section_settings']['weight'] = array(
+    '#type' => 'weight',
+    '#title' => t('Weight'),
+    '#default_value' => $edit['weight']
+  );
+
+  // Page specific visibility configurations.
+  $form['page_vis_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Page specific visibility settings'),
+    '#collapsible' => TRUE,
+  );
+
+  $access = user_access('use PHP for block visibility');
+  $visibility = isset($edit['visibility']) ? $edit['visibility'] : 1;
+
+  if ($visibility == 2 && !$access) {
+    $form['page_vis_settings'] = array();
+    $form['page_vis_settings']['visibility'] = array('#type' => 'value', '#value' => 2);
+    $form['page_vis_settings']['pages'] = array('#type' => 'value', '#value' => $edit['path']);
+  }
+  else {
+    $options = array(t('Show on every page except the listed pages.'), t('Show on only the listed pages.'));
+    $description = t("Enter one page per line as Drupal paths. The '*' character is a wildcard. Example paths are %blog for the blog page and %blog-wildcard for every personal blog. %front is the front page.", array('%blog' => 'blog', '%blog-wildcard' => 'blog/*', '%front' => '<front>'));
+
+    if ($access) {
+      $options[] = t('Show if the following PHP code returns <code>TRUE</code> (PHP-mode, experts only).');
+      $description .= ' '. t('If the PHP-mode is chosen, enter PHP code between %php. Note that executing incorrect PHP-code can break your Drupal site.', array('%php' => '<?php ?>'));
+    }
+    $form['page_vis_settings']['visibility'] = array(
+      '#type' => 'radios',
+      '#title' => t('Activate section on the specific pages'),
+      '#options' => $options,
+      '#default_value' => $visibility,
+    );
+    $form['page_vis_settings']['path'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Pages'),
+      '#default_value' => $edit['path'],
+      '#description' => $description,
+      '#wysiwyg' => FALSE,
+    );
+  }
+
+  if ($edit['sid']) {
+    //we are updating
+    drupal_set_title(t('Edit section %name', array('%name' => $section->name)));
+    $form['sid'] = array('#type' => 'hidden', '#value' => $edit['sid']);
+    $form['submit'] = array('#type' => 'submit', '#value' => t('Save section'));
+  }
+  else {
+    //we are adding
+    drupal_set_title(t('Add section'));
+    $form['submit'] = array('#type' => 'submit', '#value' => t('Add section'));
+  }
+
+  return $form;
+}
+
+function sections_admin_settings_form_submit($id, $edit) {
+  switch ($_POST['op']) {
+    case t('Save section'):
+      db_query("UPDATE {sections_data} SET name = '%s', status = %d, visibility = %d, theme = '%s', path = '%s', weight = %d WHERE sid = %d", $edit['name'], $edit['status'], $edit['visibility'], $edit['theme'], $edit['path'], $edit['weight'], $edit['sid']);
+      drupal_set_message(t('The sections configuration has been saved.'));
+      cache_clear_all();
+      menu_rebuild();
+      drupal_goto('admin/build/sections');
+      break;
+    case t('Add section'):
+      db_query("INSERT INTO {sections_data} (name, status, visibility, path, theme, weight) VALUES ('%s', %d, %d, '%s', '%s', %d)", $edit['name'], $edit['status'], $edit['visibility'], $edit['path'], $edit['theme'], $edit['weight']);
+      drupal_set_message(t('The sections configuration has been saved.'));
+      cache_clear_all();
+      menu_rebuild();
+      drupal_goto('admin/build/sections');
+      break;
+  }
+}
+
+function _sections_delete($section) {
+  $op = $_POST['op'];
+
+  switch ($op) {
+    case t('Delete'):
+      db_query("DELETE FROM {sections_data} WHERE sid = %d", $section->sid);
+      drupal_set_message(t('The section %name has been deleted.', array('%name' => $section->name)));
+      cache_clear_all();
+      drupal_goto('admin/build/sections');
+      break;
+    default:
+      $output = drupal_get_form('_sections_delete_confirm', $section);
+      break;
+  }
+
+  return $output;
+}
+
+function _sections_delete_confirm($section) {
+  return confirm_form(
+    array(),
+    t('Delete section %name', array('%name' => $section->name)),
+    'admin/build/sections',
+    '<p>'. t('Are you sure you want to delete the section %name?', array('%name' => $section->name)) .'</p>',
+    t('Delete'),
+    t('Cancel')
+  );
+}
+
+function _sections_load() {
+  $res = db_query("SELECT * FROM {sections_data} ORDER BY weight");
+  $sections = array();
+  while ($row = db_fetch_object($res)) {
+    $sections[] = $row;
+  }
+  return $sections;
+}
+
+/**
+ * Loads the section names
+ */
+function _section_load($section_name) {
+  return db_fetch_object(db_query("SELECT * FROM {sections_data} WHERE name = '%s' ORDER BY weight", $section_name));
+}
+
+/**
+ * Loads the options for the themes select form element
+ */
+function _sections_theme_select() {
+  $options = array();
+
+  $options[0] = '<'. t('System default') .'>';
+  foreach (list_themes() as $key => $theme) {
+    $options[$theme->name] = t('@name (@status)', array('@name' => $theme->name, '@status' => ($theme->status ? t('Enabled') : t('Disabled'))));
+  }
+  return $options;
+}
+
+/**
+ * An API for modules that want to know about sections.
+ *
+ * This API is a function that lets you find out about settings.
+ *
+ * @param
+ *  Optional $setting a string containing the section you wnat to test against.
+ *
+ * @return
+ *   Depends on the parameter.
+ *   If you do not give $section, it will return the section object, if found.
+ *   If you give $section, it will return TRUE if you are in that section
+ *   Otherwise it will return FALSE
+ */
+function sections_in_section($section = NULL) {
+
+  if (is_string($section)) {
+    // caller wants to know if shes in the section she provided.
+    if($section == sections_in_section()) {
+      return TRUE;
+    }
+  }
+  else {
+    // caller wants to know in which section she is.
+    $res = db_query('SELECT sid, name, path, status, visibility, theme, weight FROM {sections_data} WHERE status = %d ORDER BY weight', 1);
+    while ($row = db_fetch_object($res)) {
+      if ($row->visibility < 2) {
+        $path = drupal_get_path_alias($_GET['q']);
+        // Compare with the internal and path alias (if any).
+        $page_match = _sections_match_path($path, $row->path);
+        if ($path != $_GET['q']) {
+          $page_match = $page_match || _sections_match_path($_GET['q'], $row->path);
+        }
+        // When $row->visibility has a value of 0, the block is displayed on
+        // all pages except those listed in $row->path. When set to 1, it
+        // is displayed only on those pages listed in $row->path. Prevent
+        // the admin theme switching on block admin pages.
+        if ($page_match = !($row->visibility xor $page_match) && !(_sections_match_path($path, "admin/build/block\nadmin/build/block/list/*"))) {
+          return $row;
+        }
+      }
+      else {
+        if (drupal_eval($row->path)) {
+          return $row;
+        }
+      }
+    }
+  }
+
+  // No section has been found, return FALSE.
+  return FALSE;
+}
+
+/**
+ * D6 backport of drupal_match_path().
+ */
+function _sections_match_path($path, $patterns) {
+  static $regexps;
+
+  if (!isset($regexps[$patterns])) {
+    $regexps[$patterns] = '/^('. preg_replace(array('/(\r\n?|\n)/', '/\\\\\*/', '/(^|\|)\\\\<front\\\\>($|\|)/'), array('|', '.*', '\1'. preg_quote(variable_get('site_frontpage', 'node'), '/') .'\2'), preg_quote($patterns, '/')) .')$/';
+  }
+  return preg_match($regexps[$patterns], $path);
+}

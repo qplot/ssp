@@ -1,0 +1,428 @@
+<?php
+// $Id: mysite.install,v 1.28 2008/04/01 00:55:56 agentken Exp $
+
+/**
+ * Implementation of hook_install()
+ */
+function mysite_install() {
+  $success = FALSE;
+  drupal_set_message(t('Installing the MySite module'));
+  switch ($GLOBALS['db_type']) {
+    case 'mysqli':
+    case 'mysql':
+      $sql = "CREATE TABLE {mysite} (
+        uid int(10) NOT NULL default '0',
+        created int(11) NOT NULL default '0',
+        updated int(11) default '0',
+        status tinyint(1) NOT NULL default '0',
+        confirm varchar(1) NOT NULL default '0',
+        title varchar(80) NOT NULL default '',
+        layout varchar(40) NOT NULL default 'default',
+        style varchar(40) NOT NULL default 'default',
+        format varchar(40) NOT NULL default 'default',
+        theme varchar(40),
+        message mediumtext,
+        PRIMARY KEY  (uid)
+      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ";
+      db_query($sql);
+
+      $sql = "CREATE TABLE {mysite_data} (
+        mid int(11) NOT NULL,
+        uid int(10) NOT NULL default '0',
+        page int(10) NOT NULL default '0',
+        type varchar(40) NOT NULL default '',
+        type_id int(10) NOT NULL default '0',
+        sort smallint(6) NOT NULL default '0',
+        position smallint(6) NOT NULL default '0',
+        locked varchar(1) NOT NULL default '0',
+        title varchar(255) NOT NULL default '',
+        format varchar(40) NOT NULL default 'default',
+        settings text,
+        PRIMARY KEY (mid),
+        KEY uid (uid)
+      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ";
+      db_query($sql);
+
+      $sql = "CREATE TABLE {mysite_content} (
+        myid int(10) NOT NULL default '0',
+        format smallint(6) default NULL,
+        type varchar(40) NOT NULL default '',
+        type_key varchar(80) default NULL,
+        title varchar(255) NOT NULL default '',
+        base varchar(255) default NULL,
+        xml varchar(255) default NULL,
+        content blob,
+        PRIMARY KEY (myid),
+        KEY type (type),
+        KEY type_key (type_key),
+        KEY title (title)
+      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ";
+      db_query($sql);
+
+      $sql = "CREATE TABLE {mysite_page} (
+        page int(10)  NOT NULL default '0',
+        uid int(10)  NOT NULL default '0',
+        created int(10)  NOT NULL default '0',
+        updated int(10) ,
+        status tinyint(1) NOT NULL default '0',
+        title varchar(80) NOT NULL default '',
+        layout varchar(40) NOT NULL default 'default',
+        style varchar(40) NOT NULL default 'default',
+        format varchar(40) NOT NULL default 'default',
+        theme varchar(40) NULL,
+        UNIQUE (page, uid)
+      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ";
+      db_query($sql);
+
+      $success = TRUE;
+      break;
+
+    case 'pgsql':
+      $sql = "CREATE TABLE {mysite} (
+        uid integer NOT NULL default '0',
+        created integer NOT NULL default '0',
+        updated integer default '0',
+        status integer NOT NULL default '0',
+        confirm varchar(1) NOT NULL default '0',
+        title varchar(80) NOT NULL default '',
+        layout varchar(40) NOT NULL default 'default',
+        style varchar(40) NOT NULL default 'default',
+        format varchar(40) NOT NULL default 'default',
+        theme varchar(40),
+        message text,
+        PRIMARY KEY (uid)
+      )";
+      db_query($sql);
+
+      $sql = "CREATE TABLE {mysite_data} (
+        mid serial,
+        uid integer NOT NULL default '0',
+        page integer NOT NULL default '0',
+        type varchar(40) NOT NULL default '',
+        type_id integer NOT NULL default '0',
+        sort integer NOT NULL default '0',
+        position integer NOT NULL default '0',
+        locked varchar(1) NOT NULL default '0',
+        title varchar(255) NOT NULL default '',
+        format varchar(40) NOT NULL default 'default',
+        settings text,
+        PRIMARY KEY (mid)
+      )";
+      db_query($sql);
+      db_query("CREATE INDEX {mysite_data}_uid_idx ON {mysite_data} (uid)");
+      db_query("CREATE INDEX {mysite_data}_page_idx ON {mysite_data} (page)");
+
+      $sql = "CREATE TABLE {mysite_content} (
+        myid serial,
+        format integer default NULL,
+        type  varchar(40) NOT NULL default '',
+        type_key varchar(80) default '',
+        title varchar(255) NOT NULL default '',
+        base varchar(255) default NULL,
+        xml varchar(255) default NULL,
+        content text,
+        PRIMARY KEY (myid)
+      )";
+      db_query($sql);
+      db_query("CREATE INDEX {mysite_content}_type_idx ON {mysite_content} (type)");
+      db_query("CREATE INDEX {mysite_content}_typekey_idx ON {mysite_content} (type_key)");
+      db_query("CREATE INDEX {mysite_content}_title_idx ON {mysite_content} (title)");
+
+      $sql = "CREATE TABLE {mysite_page} (
+        page integer NOT NULL default '0',
+        uid integer NOT NULL default '0',
+        created integer NOT NULL default '0',
+        updated integer,
+        status integer NOT NULL default '0',
+        title varchar(80) NOT NULL default '',
+        layout varchar(40) NOT NULL default 'default',
+        style varchar(40) NOT NULL default 'default',
+        format varchar(40) NOT NULL default 'default',
+        theme varchar(40) NULL,
+        UNIQUE (page, uid)
+      )";
+      db_query($sql);
+      db_query("CREATE INDEX {mysite_page}_page_idx ON {mysite_page} (page)");
+      db_query("CREATE INDEX {mysite_page}_uid_idx ON {mysite_page} (uid)");
+
+      $success = TRUE;
+      break;
+  }
+  if ($success) {
+    drupal_set_message(t('MySite module installed successfully.'));
+  }
+  else {
+    drupal_set_message(t('The installation of the MySite module was unsuccessful.'), 'error');
+  }
+}
+
+/**
+ * Update to v 4.7.x.3 -- 27-NOV-2006
+ */
+function mysite_update_1() {
+  $ret = array();
+  switch ($GLOBALS['db_type']) {
+    case 'mysqli':
+    case 'mysql':
+      $sql = "CREATE TABLE {mysite_content} (
+        myid int(11) NOT NULL default '0',
+        type varchar(40) NOT NULL default '',
+        type_key varchar(80) default NULL,
+        title varchar(255) NOT NULL default '',
+        content blob,
+        PRIMARY KEY  (myid),
+        KEY type (type),
+        KEY type_key (type_key)
+      )";
+      $ret[] = update_sql($sql);
+      break;
+
+    case 'pgsql':
+      $sql = "CREATE TABLE {mysite_content} (
+        myid serial,
+        type  varchar(40) NOT NULL default '',
+        type_key varchar(80) default '',
+        title varchar(255) NOT NULL default '',
+        content text
+      )";
+      $ret[] = update_sql($sql);
+      $ret[] = update_sql("CREATE INDEX {mysite_content}_myid_idx ON {mysite_content} (myid)");
+      $ret[] = update_sql("CREATE INDEX {mysite_content}_type_idx ON {mysite_content} (type)");
+      $ret[] = update_sql("CREATE INDEX {mysite_content}_typekey_idx ON {mysite_content} (type_key)");
+      break;
+  }
+  return $ret;
+}
+
+/**
+ * Update to add theming -- 4 MAR 2007
+ */
+function mysite_update_2() {
+  $ret = array();
+  switch ($GLOBALS['db_type']) {
+    case 'mysqli':
+    case 'mysql':
+      $sql = "ALTER TABLE {mysite} ADD theme varchar(40);";
+      $ret[] = update_sql($sql);
+      break;
+    case 'pgsql':
+      $sql = "ALTER TABLE {mysite} ADD theme varchar(40);";
+      $ret[] = update_sql($sql);
+      break;
+  }
+  return $ret;
+}
+
+/**
+ * Update to restore UTF-8 encoding 20-MAR-2007
+ */
+function mysite_update_3() {
+  return _system_update_utf8(array('mysite', 'mysite_data', 'mysite_content'));
+}
+
+/**
+ * First update to v. 5.x.2
+ */
+function mysite_update_4() {
+  $ret = array();
+  switch ($GLOBALS['db_type']) {
+    case 'mysqli':
+    case 'mysql':
+      $sql = "ALTER TABLE {mysite_data} ADD position SMALLINT DEFAULT '0' NOT NULL;";
+      $ret[] = update_sql($sql);
+      break;
+    case 'pgsql':
+      $sql = "ALTER TABLE {mysite_data} ADD position integer NOT NULL default '0';";
+      $ret[] = update_sql($sql);
+      break;
+  }
+  return $ret;
+}
+
+/**
+ * Second update to v. 5.x.2
+ */
+function mysite_update_5() {
+  $ret = array();
+  switch ($GLOBALS['db_type']) {
+    case 'mysqli':
+    case 'mysql':
+      $ret[] = update_sql("ALTER TABLE {mysite_content} ADD format smallint(6) default NULL;");
+      $ret[] = update_sql("ALTER TABLE {mysite_content} ADD base varchar(255) default NULL;");
+      $ret[] = update_sql("ALTER TABLE {mysite_content} ADD xml varchar(255) default NULL;");
+      $ret[] = update_sql("ALTER TABLE {mysite_content} ADD INDEX (title);");
+      $ret[] = update_sql("ALTER TABLE {mysite_data} ADD settings text;");
+      break;
+    case 'pgsql':
+      $ret[] = update_sql("ALTER TABLE {mysite_content} ADD format integer default NULL;");
+      $ret[] = update_sql("ALTER TABLE {mysite_content} ADD base varchar(255) default NULL;");
+      $ret[] = update_sql("ALTER TABLE {mysite_content} ADD xml varchar(255) default NULL;");
+      $ret[] = update_sql("CREATE INDEX {mysite_content}_title_idx ON {mysite_content} (title);");
+      $ret[] = update_sql("ALTER TABLE {mysite_data} ADD settings text;");
+      break;
+  }
+  // update red.css and blue.css to fire.css and sky.css
+  $ret[] = update_sql("UPDATE {mysite} SET style = 'fire' WHERE style = 'red';");
+  $ret[] = update_sql("UPDATE {mysite} SET style = 'sky' WHERE style = 'blue';");
+  return $ret;
+}
+
+/**
+ * Adds the ability to lock content.  See http://drupal.org/node/152917.
+ */
+function mysite_update_6() {
+  $ret = array();
+  switch ($GLOBALS['db_type']) {
+    case 'mysqli':
+    case 'mysql':
+      $ret[] = update_sql("ALTER TABLE {mysite_data} ADD locked varchar(1) NOT NULL default 0;");
+      break;
+    case 'pgsql':
+      $ret[] = update_sql("ALTER TABLE {mysite_data} ADD locked varchar(1) NOT NULL default 0;");
+      break;
+  }
+  return $ret;
+}
+
+/**
+ * Adds the ability to confirm deletion of items.
+ */
+function mysite_update_7() {
+  $ret = array();
+  $ret[] = update_sql("ALTER TABLE {mysite} ADD confirm varchar(1) NOT NULL default 0;");
+  return $ret;
+}
+
+/**
+ * Update to 5.x.3 -- add the page (mysite page id) to the {mysite_data} table.
+ */
+function mysite_update_8() {
+  $ret = array();
+  switch ($GLOBALS['db_type']) {
+    case 'mysqli':
+    case 'mysql':
+      $ret[] = update_sql("ALTER TABLE {mysite_data} ADD {page} INT DEFAULT '0' NOT NULL AFTER uid;");
+      $ret[] = update_sql("ALTER TABLE {mysite_data} ADD INDEX (page);");
+      break;
+    case 'pgsql':
+      db_add_column($ret, 'mysite_data', 'page', 'int', array('default' => 0, 'not null' => TRUE));
+      $ret[] = update_sql("CREATE INDEX {mysite_data}_page_idx ON {mysite_data} (page)");
+      break;
+  }
+  return $ret;
+}
+
+/**
+ * Update to 5.x.3 -- add the {mysite_page} table.
+ */
+function mysite_update_9() {
+  $ret = array();
+  switch ($GLOBALS['db_type']) {
+    case 'mysqli':
+    case 'mysql':
+      $sql = "CREATE TABLE {mysite_page} (
+        page int(10)  NOT NULL default '0',
+        uid int(10)  NOT NULL default '0',
+        created int(10)  NOT NULL default '0',
+        updated int(10) ,
+        status tinyint(1) NOT NULL default '0',
+        title varchar(80) NOT NULL default '',
+        layout varchar(40) NOT NULL default 'default',
+        style varchar(40) NOT NULL default 'default',
+        format varchar(40) NOT NULL default 'default',
+        theme varchar(40) NULL,
+        UNIQUE (page, uid)
+      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ";
+      $ret[] = update_sql($sql);
+      break;
+    case 'pgsql':
+      $sql = "CREATE TABLE {mysite_page} (
+        page integer NOT NULL default '0',
+        uid integer NOT NULL default '0',
+        created integer NOT NULL default '0',
+        updated integer,
+        status integer NOT NULL default '0',
+        title varchar(80) NOT NULL default '',
+        layout varchar(40) NOT NULL default 'default',
+        style varchar(40) NOT NULL default 'default',
+        format varchar(40) NOT NULL default 'default',
+        theme varchar(40) NULL,
+        UNIQUE (page, uid)
+      )";
+      $ret[] = update_sql($sql);
+      $ret[] = update_sql("CREATE INDEX {mysite_page}_page_idx ON {mysite_page} (page)");
+      $ret[] = update_sql("CREATE INDEX {mysite_page}_uid_idx ON {mysite_page} (uid)");
+      break;
+  }
+  return $ret;
+}
+
+/**
+ * Update to 5.x.3 -- corrections to pgsql
+ */
+function mysite_update_10() {
+  $ret = array();
+  if ($GLOBALS['db_type'] == 'pgsql') {
+    db_change_column($ret, 'mysite', 'uid', 'integer', array('not null' => TRUE, 'default' => 0));
+    // Reindex the coluimn.
+    $ret[] = update_sql("DROP INDEX {mysite}_uid_idx");
+    $ret[] = update_sql("CREATE INDEX {mysite}_uid_idx ON {mysite} (uid)");
+    $ret[] = update_sql("ALTER TABLE {mysite} ADD CONSTRAINT PRIMARY KEY (uid)");
+    $ret[] = update_sql("ALTER TABLE {mysite_data} ADD CONSTRAINT PRIMARY KEY (mid)");
+    $ret[] = update_sql("ALTER TABLE {mysite_content} ADD CONSTRAINT PRIMARY KEY (myid)");
+  }
+  return $ret;
+}
+
+/**
+ * Update to 5.x.3 -- create a {mysite_page} entry for current users.
+ */
+function mysite_update_11() {
+  $ret = array();
+  $result = db_query("SELECT * FROM {mysite}");
+  while ($mysite = db_fetch_object($result)) {
+    $page_check = db_result(db_query("SELECT COUNT(*) FROM {mysite_page} WHERE uid = %d AND page = %d", $mysite->uid, 0));
+    if (empty($page_check)) {
+      db_query("INSERT INTO {mysite_page} (page, uid, created, updated, status, title, layout, style, format, theme)
+        VALUES (%d, %d, %d, %d, %d, '%s', '%s', '%s', '%s', '%s')",
+        $page, $mysite->uid, $mysite->created, $mysite->updated, $mysite->status, $mysite->title, $mysite->layout, $mysite->style, $mysite->format, $mysite->theme);
+    }
+  }
+  return $ret;
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function mysite_uninstall() {
+  // Drop the tables.
+  db_query('DROP TABLE {mysite}');
+  db_query('DROP TABLE {mysite_content}');
+  db_query('DROP TABLE {mysite_data}');
+  db_query('DROP TABLE {mysite_page}');
+
+  // Delete the variables correctly.
+  $variables = array(
+    'mysite_browser_max',
+    'mysite_browser_pager',
+    'mysite_browser',
+    'mysite_cache',
+    'mysite_confirm_delete',
+    'mysite_content',
+    'mysite_cron',
+    'mysite_default_user',
+    'mysite_elements',
+    'mysite_fullscreen',
+    'mysite_items',
+    'mysite_links',
+    'mysite_list',
+    'mysite_pages',
+    'mysite_private_status',
+    'mysite_sitename',
+    'mysite_theme_settings',
+    'mysite_use_icons'
+  );
+  foreach ($variables as $var) {
+    variable_del($var);
+  }
+}

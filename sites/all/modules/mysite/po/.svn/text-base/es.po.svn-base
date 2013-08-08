@@ -1,0 +1,2676 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: MySite.module\n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: 2007-11-01 21:46-0400\n"
+"Last-Translator: Carlos Miranda Levy <carlos@civila.com>\n"
+"Language-Team: CiudadesVirtuales.com <carlos@civila.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Poedit-Language: Spanish\n"
+"X-Poedit-Country: DOMINICAN REPUBLIC\n"
+
+#: mysite.module:16
+msgid ""
+"<ol><li><b>Installation</b>\n"
+"      <p>MySite uses the standard Drupal 5 install system. Simply put the module directory into your modules directory and then navigate to http://example.com/admin/build/modules and activate the MySite module.  Installation should create three new database tables: {mysite}, {mysite_content} and {mysite_data}.</p></li><li><b>Access Control</b>\n"
+"      <p>After installation, you should check the Access Control settings at Admin >> Users >> Access control.  MySite has the following access control permissions by default:  <ul><li>'administer mysite'<br />Allows a user to control the MySite settings at:  http://example.com/administer/settings/mysite.  Users with this permission also have the ability to edit other user's  MySite content and settings.  This is allow you to provide customer  support for users having trouble with MySite.</li><li>'edit mysite'<br />Grants a user the ability to create and update a MySite page.</li><li>'view all mysites'<br />Grants a user the ability to see public MySite pages created by other  users.</li></ul></p>\n"
+"      <p>If the Aggregator module is present and enabled, then an additional permission exists:  <ul><li>'add mysite feeds'<br />Grants MySite users the ability to add RSS feeds to the site based on the  settings established under the MySite settings page. </li></ul></p></li><li><b>Initial Configuration</b>\n"
+"      <p><em>By design, the MySite module is very flexible.  Administrators may turn off unwanted features.  There are numerous settings options that will affect the behavior of the module.  Please read this section carefully and refer to the README.txt for additional details.</em></p>\n"
+"      <p>The MySite module is dependent on other modules, since all MySite does is present content in a new format. To use MySite correctly, at least one of the following modules needs to be active:</p><ul><li>Aggregator  \n"
+"      <p>If you wish to allow users to add new RSS feeds, set the appropriate Aggregator settings for MySite at http://example.com/admin/settings/mysite (the Feeds tab).</p>\n"
+"      <p>Note that there are two types of feed handling in MySite.  'Web Feeds' refer to  individual RSS feeds.  'Web Headlines' refer to Aggregator categories containing multiple RSS feeds.</p></li><li>Blog  \n"
+"      <p>If the Blog module is active, MySite will allow users to add any active blogger to their MySite page.</p></li><li>Book  \n"
+"      <p>If there are any Books present on your site, they can be added to a MySite page.  MySite will show the newest additions to any book selected by a user.</p></li><li>Forum  \n"
+"      <p>If the Forum module is active, MySite will allow users to add Forum topics to their MySite page. For this feature to work, at least one forum container and one forum topic must be present.</p></li><li>Path  \n"
+"      <p>If the Path module is active and you turn on Path Aliasing, each MySite will be aliased to the path 'mysite/USERNAME' when the MySite is created or updated.</p></li><li>Taxonomy  \n"
+"      <p>If the taxonomy module is active, MySite will allow users to add tagged content to their MySite page. For this feature to work, you must have at least one Vocabulary and one Term created at http://example.com/admin/content/taxonomy. Administrators can limit the categories available to users by configuring the module at http://example.com/admin/settings/mysite/term. Note that Forum categories are not included in MySite's taxonomy-based lists.</p></li><li>Theme  \n"
+"      <p>MySite supports user-based theme settings.  When enabled, MySite users may choose from any active site theme.  Anyone viewing a MySite page will view the page in the user-selected theme.</p></li></li></ul> \n"
+"      <p><b>Special Cases</b> <ul><li>Droplets, Blocks and Views\n"
+"      <p>'Droplets' are the Drupal equivalent of Google Gadgets: they enable the site  administrators to create small widgets that add new features to the site.  Droplets can be created from HTML, JavaScript, or PHP code.  They can also be  generated from Blocks or from Views.</p>\n"
+"      <p>MySite does not expose Blocks or Views directly to end users; the administrator  must select which elements to expose via the Droplet creation system.</p></li> <li>Node and CCK (Content)\n"
+"      <p>The node module is a required core module.  MySite can handle requests for all  posts of a specific node type.  If you use the CCK (Content) module, CCK node  types are also supported.</p></li> \n"
+"      <li>Posts (Content) <p>The node module is a required core module.  MySite can handle requests for individual posts.  If you use the CCK (Content) module, CCK node  types are also supported.</p></li\n"
+"      <li>User <p>The user module is a required core module.  MySite can track posts based on  individual users.</p></li></ul></p></li><li><b>MySite Settings</b>\n"
+"      <p>The following module settings are available.</p><ol type=A><li>Display Settings  \n"
+"      <p>Options that affect user interaction with MySite.</p><ul><li>MySite Sitename<p>This option allows you to change the default 'My Sitename' string used to display menu links and page titles for the MySite module.</p>\n"
+"      <p>Note: If you do not change this value, it will update if you change the name of your site in your System Information settings.</p></li>\n"
+"      <li>MySite Behavior  \n"
+"      <p>This option tells MySite how to behave when a visitor goes to http://example.com/mysite. Most installation will use the default setting 'Go to User MySite,' which directs the user to http://example.com/mysite/UID/view. The additional option mirrors the menu callback for http://example.com/mysite/all and is mainly used for debugging.</p></li><li>MySite Privacy\n"
+"      <p>This option sets the default visibility of the owner's MySIte page with regard  to other users.  By default, all users with the 'view all mysites' privilege can see all other user personal pages.  Individual users can turn this setting to 'private.'</p></li><li>Page Setup  \n"
+"      <p>The administrator now has the option to turn off the left and right rail regions for MySite pages.  This allows the user to have complete control over the content  presented by MySite.</p> \n"
+"      <p>If this feature is turned on, the 'footer' region of your site will still be  printed on all MySite pages.</p> \n"
+"      <p>Note: The full screen display may have unexpected consequences for your theme, since it eliminates the default sidebars and most page regions.  Test before you deploy.</p></li>\n"
+"      <li>Item Deletion<p>You may configure MySite to require users to confirm the deletion of content from their MySite collection.  Users have the option to disable this feature for their own collection.</p></li>      \n"
+"      <li>Node Links<p>By enabling this feature, MySite will place a link at the bottom of all content.  The link, when moused over, will display a box of options related to the content.  Typical options include adding the item to your collection or deleting an item from your collection.  <em>This feature has not been tested on all browsers and platforms.</em></p></li>            \n"
+"      </ul></li><li>Content Settings  \n"
+"      <p>The Content Settings option highlights the Content Types panel, which lets you configure which content options will be available to your users.  These settings control the options that MySite users will be presented.</p><ul><li>Content Types  \n"
+"      <p>On the MySite settings page (http://example.com/admin/settings/mysite), you have the option of enabling all content types that are available. However, you are not required to offer all content to users. Use these settings to determine which content types can be added to a MySite page. Note: when a new Type plug-in is added to your module, a new option should appear in this list.</p>\n"
+"      <p>Note: Some type files have configuration settings -- these are visible as menu tabs.  Be sure to configure each active content type as needed</p></li><li>Disabled Content Types\n"
+"      <p>You may also see a section labeled <b>Disabled Content Types</b> on the settings page.</p>\n"
+"      <p>The MySite module checks to see if various options and permissions have been  defined before allowing you to activate a content type.  The module will  present you with a link to correct the configuration error.  After you make  the suggested change, the content type should be available for activation.</p></li></ul></li><li>Content Browser\n"
+"      <p>The Content Browser settings affect how users will be presented the content options for adding elements to their MySite page.</p><ul><li>Content Browsing\n"
+"      <p>This option will only be available if you have activated the MySite Icons  module. Versions prior to 5.x.2 presented users with a simple table of choices.  In newer versions, MySite presents options for displaying content choices to users.</p>\n"
+"      <p>The default setting is to show a plain-text table of items, with 'Add' links. The optional behavior is to show a table of icons, with each icon representing a content option.</p></li><li>Content Layout\n"
+"      <p><em>This options will only be available if you have activated the MySite Icons  module.</em> If you select the 'Display row of icons' option for content browsing, this  option is used to set the number of items to show per row.  You should test  this settings to optimize the presentation for your site theme(s).</p></li><li>Items per Page\n"
+"      <p>This option sets the pagination limit for the content browser.  In either  table or panel mode, this setting will control the number of items to show per  page.</p></li> </ul></li><li>User Limits\n"
+"      <p>These options determine how much content a user can add to their MySite page.</p><ul><li>Item Count  \n"
+"      <p>Since MySite collects content from a variety of Drupal content, it can be resource intensive. This setting puts a cap on the number of content groups a user can add to a MySite page. The default is 10.</p></li><li>Element Count  \n"
+"      <p>MySite is meant to give a quick overview, not to substitute for reading the original content in context. This setting limits the number of items (links) presented under each content group. The default is 5.</p></li></ul></li><li>Action Buttons  \n"
+"      <p>MySite ships with a small set of GPL icons, created by agentrickard expressly for MySite, which can be used to present the action buttons to users.  Select the option that you prefer.  Default is 'Icons.'  The icons are previewed on the settings page.  </p></li><li>Cache Settings  \n"
+"      <p>For high-traffic sites,  MySite might cause a high volume of database requests (especially if the Item and Element Count settings are very high).  If you have performance issues, you can cache the results of a MySite page view for  a set amount of time.</p></li><li>Default Page Settings  \n"
+"      <p>By setting s default user UID, the module can establish a default page for users to view, set at http://example.com/mysite/default.  This page may be used as an optional homepage.  Note: This menu item is a callback, so no link to it will be generated in your menu.  You must create a link manually.</p></li><li>Default Settings  \n"
+"      <p>As of MySite 5.2, the administrator can now setup the user default settings for MySite.  Clicking on the 'Default Settings' tab will take you to the MySite configuration page for user 0 (zero). The settings and content that are established for user zero will be used for all anonymous users who visit http://example.com/mysite and for all users who have not yet created a MySite page. Further, when a user creates a MySite page, the user's settings will initially match the Default Settings.</p></li><li>Default Content  \n"
+"      <p>As of MySite 5.2, the administrator can now select a default set of content to show to all anonymous users and to authenticated users who have not yet created a MySite page. When a user creates a new MySite page, the default content set will automatically be saved in their collection.  Once saved, the user can change his or her individual content settings to remove the default content. To define the default content set, click on the 'Default Content' tab of MySite's administration page.</p></li></ol>\n"
+"      <p><b>Content Specific Settings</b></p><ol type=A> <li>Droplet Settings \n"
+"      <p>Droplets are content elements similar to Drupal blocks, Google Gadgets and  Yahoo! Widgets.  The Droplet system allows the site administrator to define  custom content objects that users may place on a MySite page. </p> \n"
+"      <p>The Droplet system enables the creation of Droplets from code that you supply,  from existing Drupal Blocks, or from existing Views (if the Views module is  installed and active). </p>\n"
+"      <p>No Droplets are installed by default.  The following Droplet creation options  exist:<ul><li>Custom Droplets\n"
+"      <p>Custom droplets allow you to place whatever code you wish into a Droplet item.  In this sense, Droplets are very similar to Blocks.  We do not use the Drupal  Block system because it doesn't make sense to require administrators to create  new Blocks every time they wish to add a new Droplet. </p>\n"
+"      <p>Custom Droplets can contain any code that you desire, but are subject to  Drupal's normal input filter system.  If, for example, you wish to add the  JavaScript to use a Google Gadget, you must input that Droplet as 'Full HTML.' </p></li><li>Block Droplets\n"
+"      <p>MySite will show a selection form that will allow you to convert any existing  Block into a MySite Droplet.  Simply select the Block to convert and submit  the form.  You will then have the option to preview and configure the Droplet. </p>\n"
+"      <p>Note: Not all Blocks make good Droplets.  Also note that Block access rules  do not apply to Droplets.  Any user can access any Droplet. </p></li><li>Views Droplets\n"
+"      <p>If you have installed and activated the Views module, you can create Droplets  based on existing Views.  (You cannot, however, create Droplets based on  default Views until you have activated them locally.) </p>\n"
+"      <p>To create a Droplet based on a View, simply select the View from the select  list and submit the form.  You will then have the option to preview and  configure the Droplet. </p>\n"
+"      <p>Note: Not all Views make good Droplets.  In particular, Views that require  arguments cannot be handled by the current Droplet system.  Also note that  Views access rules do not apply to Droplets.  Any user can access any Droplet. </p></li></ul></li><li>Aggregator Settings  \n"
+"      <p>If the Aggregator module is enabled and you have given users the permission to 'add mysite feeds,' you will need to configure the default settings for handling new Aggregator feeds. These settings help prevent users from overloading the Aggregator be setting throttles on update frequency.</p></li><ul><li>Aggregator Feeds  \n"
+"      <p>Only if you 'Allow users to add new feeds' will the access control settings appear. Then you can give specific roles the ability to add new feeds. Recommended use is to allow all registered users to add new feeds.</p></li><li>Allowed Feed Categories  \n"
+"      <p>When a user adds a new feed through MySite, they will only be given the  category options that you allow.  If only one option is selected, there is no  choice allowed and all user feeds will be filed under the default category. </p>\n"
+"      <p>In MySite 5.x.2 Feed Categories are no longer required.</p></li><li>Default Feed Category  \n"
+"      <p>Establishes the default feed category for user-submitted feeds.</p></li><li>Update Interval  \n"
+"      <p>Sets the update interval for all user-submitted feeds.</p></li></ul></li><li>Node Settings\n"
+"      <p>The Node module is a core Drupal module.  This MySite feature also works with  CCK (Content) module to allow users to select content based on content type. </p>\n"
+"      <p>On the Nodes settings page, you should see a list of checkboxes for all  content types used by your site.  Simply select which elements you want users to be able to access through MySite. If you do not make any selections, then all node types will be available.</p>\n"
+"      <p>The MySite module will display the X most recent posts by type, where X is set by the default Element Count setting. </p>\n"
+"      <p>Note: MySite does not use PHPTemplate for node formatting.  Custom node theming do at the template layer will not appear to MySite users.  See the API  documentation for information about changing node templates in MySite. </p></li>\n"
+"      <li>Post Settings <p>The Node module is a core Drupal module.  This MySite feature also works with  CCK (Content) module to allow users to select content based on content type. </p>\n"
+"      <p>On the Posts settings page, you should see a list of checkboxes for all  content types used by your site.  Simply select which elements you want users to be able to access through MySite. If you do not make any selections, then all node types will be available.</p>\n"
+"      <p>The MySite module will display the teaser element of the selected post. </p>\n"
+"      <p>Note: MySite does not use PHPTemplate for node formatting.  Custom node theming do at the template layer will not appear to MySite users.  See the API  documentation for information about changing node templates in MySite. </p></li>      \n"
+"      <li>Profile Settings <p>The Profiles handler is new in MySite 5.x.2 and is a little tricky.  This  plugin works with the User module -- through hook_user() -- and the Profile  module to define the available profile elements that MySite users may display  on their personal page. </p>\n"
+"      <p>The problem is that Profile elements may be different for users of different  roles or permissions, or for users who have done certain actions (like  blogging). </p>\n"
+"      <p>The settings on this page establish the default elements for each user's  MySite profile item.  Users may change these settings after they activate  their profile item. </p>\n"
+"      <p>Note: MySite users can only add their profile to their personal page.  By  design, only publicly-viewable profile fields are allowed.  The link to a  user's MySite page provided by mysite_user() will not be shown, since it  is redundant. </p></li><li>Taxonomy Settings  \n"
+"      <p>If the Taxonomy module is enabled, you mayt configure which taxonomy categories (Drupal vocabularies) that users may add to MySite pages.  At least one vocabulary must be selected, and that vocabulary must have active terms.</p><p>If you do not select any vocabularies, all vocabularies will be available to MySite users.</p></li><li>Theme Settings  \n"
+"      <p>On Mysite's Theme settings page, you will find a list of all active themes for your web site.  Check the themes that users are allowed to apply to their MySite page and save.  When users edit their MySite page, the available theme list will be presented. </p></li><li>User Settings\n"
+"      <p>The Users plugin is new in MySite 5.x.2 and allows MySite users to track posts by individual site users. </p>\n"
+"      <p>The settings for this plugin are based on the user Roles active for your site. Only selected roles can be tracked in MySite.  This feature let's the site  administrator have some selectivity over which users can be tracked. </p>\n"
+"      <p>By default, all 'authenticated users' are available to all MySite users.  If  'authenticated users' are allowed, then _all_ roles will be allowed by MySite  except for 'anonymous user'. </p>\n"
+"      <p>Note: The 'anonymous user' role is included in the list in cases where  anonymous users are allowed to post site content.  </p></li></ol><li><b>Plugins and User Options</b>\n"
+"      <p>Part of the design of MySite is to reduce code overhead through the use of  includes (called Plugins).  For MySite to function, certain plugins are  required, but others are optional and can be removed. </p>\n"
+"      <p>In the case of Format, Layout, and Style plugins, the 'default' file is always required.  If this file is the only plugin present, users will not be allowed to change their content settings. \n"
+"      <p>For Type plugins, only the plugins you wish to use need to be present.  Since  the administrator can deactivate Content Types, there is no reason to remove  these files.  </p>\n"
+"      <p>The MySite module directory includes a /plugins folder.  This folder and its subfolders must be present on your server for the module to function correctly.</p>\n"
+"      <p>Within each subfolder are files that control the various presentation options available to end users.</p>\n"
+"      <p>The following files are required: <ul><li>plugins/formats/default.theme</li> <li>plugins/layouts/default.php</li> <li>plugins/styles/default.css</li></ul></p>\n"
+"      <p>If you do not like the additional presentation options provided (such as the sunset.css file), you may simply remove them from the directory (or change the file extension to .bak).</p>\n"
+"      <p>If only one file is present, users will not be presented with choices during MySite customization.</p>\n"
+"      <p><b>Note:</b> The folder  -- plugins/types/ -- must contain at least one type.inc file.  Without type includes, MySite cannot generate any content.</p>\n"
+"      <p>See the README.txt in each plugins directory for more details.</li></ol>"
+msgstr ""
+
+#: mysite.module:114
+msgid "<p>The MySite module gives users a customized view of site data, arranged in the order they prefer.  The behavior and presentation of the MySite module can be controlled through the following settings.  For detailed instructions, see the README.txt file in your MySite folder.</p>"
+msgstr ""
+
+#: mysite.module:145;343;420
+#: mysite.info:0;0
+#: mysite_icon.info:0
+#: plugins/types/droplet.inc:22
+#: plugins/types/feed.inc:703;715;723
+#: plugins/types/popular.inc:18
+msgid "MySite"
+msgstr "MiSitio"
+
+#: mysite.module:146;338;344
+msgid "Adjust the features and settings for the MySite module."
+msgstr ""
+
+#: mysite.module:151
+msgid "Default page settings"
+msgstr "Opciones por defecto de la página "
+
+#: mysite.module:152;159
+msgid "Edit the default MySite content settings."
+msgstr "Modificar las opciones de contenido de MiSitio por defecto."
+
+#: mysite.module:158
+msgid "Default page content"
+msgstr "Contenido por defecto de la página "
+
+#: mysite.module:170
+msgid "View all custom sites"
+msgstr "Ver todos los sitios personalizados"
+
+#: mysite.module:201
+msgid "MySite autocomplete"
+msgstr "Autocompletar de MiSitio"
+
+#: mysite.module:206;212
+msgid "Ajax MySite"
+msgstr "Ajax MiSitio"
+
+#: mysite.module:224;229
+msgid "View"
+msgstr "Ver"
+
+#: mysite.module:233
+#: mysite_icon.module:83
+msgid "Delete"
+msgstr "Eliminar"
+
+#: mysite.module:241;248;337
+msgid "Settings"
+msgstr "Opciones"
+
+#: mysite.module:255
+msgid "Reset"
+msgstr "Reiniciar"
+
+#: mysite.module:273;280
+#: contrib/biblio.inc:33
+#: contrib/refine.inc:29
+#: contrib/storylink.inc:29
+#: contrib/weblink.inc:34
+#: plugins/types/blog.inc:23
+#: plugins/types/book.inc:23
+#: plugins/types/comment.inc:23
+#: plugins/types/forum.inc:18
+#: plugins/types/node.inc:18
+#: plugins/types/post.inc:24
+#: plugins/types/profile.inc:24
+#: plugins/types/term.inc:18
+#: plugins/types/user.inc:17
+msgid "Content"
+msgstr "Contenido"
+
+#: mysite.module:305
+msgid "Customize"
+msgstr "Personalizar"
+
+#: mysite.module:312
+msgid "Remove item"
+msgstr "Eliminar elemento"
+
+#: mysite.module:319
+msgid "Promote item"
+msgstr "Promover elemento"
+
+#: mysite.module:326
+msgid "Add item"
+msgstr "Adicionar elemento"
+
+#: mysite.module:353
+msgid "@type"
+msgstr "@type"
+
+#: mysite.module:354
+msgid "Settings for the @type plugin"
+msgstr "Opciones para la extensión @type"
+
+#: mysite.module:400
+msgid "Read @username's personal page."
+msgstr "Leer la página personal de @username."
+
+#: mysite.module:403
+#, fuzzy
+msgid "History"
+msgstr "Historial"
+
+#: mysite.module:435
+msgid "View custom sites"
+msgstr "Ver sitios personalizados"
+
+#: mysite.module:467
+msgid "Your personal page is currently full. Go to <a href=\"@url\">add or remove content</a> to delete an item."
+msgstr ""
+
+#: mysite.module:525
+msgid "To enable drag-and-drop sorting of content, you must install and enable the <a href=\"!jq\">jQuery Update</a> and <a href=\"!ji\">jQuery Interface</a> modules."
+msgstr ""
+
+#: mysite.module:565
+msgid "<p>@title content is no longer available and has been removed from your personal page.</p>"
+msgstr "<p>El contenido @title ya no está disponible y ha sido eliminado de tu página personal.</p>"
+
+#: mysite.module:594
+#: mysite_icon.module:198
+#, fuzzy
+msgid "Name"
+msgstr "Nombre"
+
+#: mysite.module:595
+msgid "Page Title"
+msgstr "Título de Página"
+
+#: mysite.module:596
+msgid "Updated"
+msgstr "Actualizado"
+
+#: mysite.module:620
+msgid "There are no publicly viewable personal pages."
+msgstr "No hay páginas personales visibles públicamente."
+
+#: mysite.module:625;3244
+msgid "Create your own personal page."
+msgstr "Crea tu propia página personal."
+
+#: mysite.module:744
+msgid "The %title item is no longer available."
+msgstr "El elemento %title ya no está disponible."
+
+#: mysite.module:766
+msgid "You have no content saved."
+msgstr "No tienes contenido guardado."
+
+#: mysite.module:843
+msgid "Add content"
+msgstr "Adicionar contenido"
+
+#: mysite.module:999
+msgid "<h3>Content</h3>"
+msgstr "<h3>Contenido</h3>"
+
+#: mysite.module:1002
+msgid "position"
+msgstr "posición"
+
+#: mysite.module:1002
+msgid "sort"
+msgstr "ordenar"
+
+#: mysite.module:1002
+msgid "title"
+msgstr "título"
+
+#: mysite.module:1002
+msgid "actions"
+msgstr "acciones"
+
+#: mysite.module:1002
+#, fuzzy
+msgid "rename"
+msgstr "renombrar"
+
+#: mysite.module:1020
+msgid "This region is empty"
+msgstr "Esta región está vacía"
+
+#: mysite.module:1025
+msgid "<h3>Current content</h3>"
+msgstr "<h3>Contenido actual</h3>"
+
+#: mysite.module:1028
+msgid "Click and drag to sort"
+msgstr "Selecciona y arrastra con el mouse para ordenar"
+
+#: mysite.module:1030
+msgid "region"
+msgstr "región"
+
+#: mysite.module:1049
+msgid "<p>You have no content saved.</p>"
+msgstr "<p>No tienes contenido guardado.</p>"
+
+#: mysite.module:1065
+msgid "<h3>Personal content is full</h3>"
+msgstr "<h3>Contenido personal lleno</h3>"
+
+#: mysite.module:1066
+msgid "<p>You cannot add any new content without first removing an item.</p><p>Only @max items can be displayed on your personal page at one time.</p>"
+msgstr ""
+
+#: mysite.module:1067
+msgid "View your personal page"
+msgstr "Ver tu página personal"
+
+#: mysite.module:1104
+msgid "<p>Use the form below to save custom options for this item on your personal page.</p>"
+msgstr ""
+
+#: mysite.module:1146
+msgid "The requested content type %type is not available."
+msgstr "El contenido solicitado tipo %type no está disponible."
+
+#: mysite.module:1177
+msgid "The requested content failed to load."
+msgstr "El contenido solicitado no cargó correctamente."
+
+#: mysite.module:1191
+msgid "Display Settings"
+msgstr "Opciones de Despliegue"
+
+#: mysite.module:1196
+msgid "MySite Sitename"
+msgstr "Nombre de MiSitio"
+
+#: mysite.module:1197;2726
+msgid "My !site"
+msgstr "Mi !site"
+
+#: mysite.module:1199
+msgid "Enter the title string to be used for MySite menu items and page titles."
+msgstr "Indica el texto de título a ser usado para los elementos de menú y títulos de página de MiSitio."
+
+#: mysite.module:1202
+msgid "MySite Behavior"
+msgstr "Comportamiento de MiSitio"
+
+#: mysite.module:1203
+msgid "Show list of all user mysites"
+msgstr "Muestra una lista de todos los misitios de los usuarios"
+
+#: mysite.module:1203
+msgid "Go to user MySite page"
+msgstr "Ir a la página MiSitio del usuario"
+
+#: mysite.module:1204
+msgid "Create an overview page with links to all custom user MySite pages?"
+msgstr "Crear una página resumen con enlaces a todas las páginas MiSitio personalizadas de los usuarios?"
+
+#: mysite.module:1207
+msgid "MySite Privacy"
+msgstr "Privacidad de MiSitio"
+
+#: mysite.module:1208
+msgid "Default setting is \"public\""
+msgstr "Configuración por defecto es \"público\""
+
+#: mysite.module:1208
+msgid "Default setting is \"private\""
+msgstr "Configuración por defecto es \"privado\""
+
+#: mysite.module:1209
+msgid "When creating new user MySite pages, should they default to public or private?"
+msgstr "Al crear nuevas páginas MiSitio de usuarios, deben ser por defecto públicas o privadas?"
+
+#: mysite.module:1213
+msgid "MySite Page Setup"
+msgstr "Configuración de Página de MiSitio"
+
+#: mysite.module:1214
+msgid "Show MySite within normal site theme"
+msgstr "Mostrar MiSitio en el estilo normal de esta web"
+
+#: mysite.module:1214
+msgid "Show MySite pages full screen"
+msgstr "Mostrar páginas MiSitio en pantalla completa"
+
+#: mysite.module:1215
+msgid "The full screen option will remove the left and right rail regions from a MySite page view."
+msgstr "La opción de pantalla completa eliminará las regiones izquierda y derecha de la vista de página de MiSitio."
+
+#: mysite.module:1218
+msgid "MySite Item Deletion"
+msgstr "Eliminación de Elemento de MiSitio"
+
+#: mysite.module:1219
+msgid "Delete items on request"
+msgstr "Eliminar elementos al solicitarse"
+
+#: mysite.module:1219
+msgid "Prompt user to confirm deletions"
+msgstr "Pedir al usuario confirmar la eliminación"
+
+#: mysite.module:1220
+msgid "Should users be asked to confirm the deletion of content? Users may choose to ignore the prompt."
+msgstr "Debe pedirse a los usuarios confirmar la eliminación de contenidos? Los usuarios pueden optar por ignorar la confirmación."
+
+#: mysite.module:1223
+msgid "MySite Node Links"
+msgstr "Enlaces de Nodos de MiSitio"
+
+#: mysite.module:1224
+msgid "Do not show MySite links"
+msgstr "No mostrar enlaces de MiSitio"
+
+#: mysite.module:1224
+msgid "Show links on all node views"
+msgstr ""
+
+#: mysite.module:1224
+msgid "Show links on full page view only"
+msgstr ""
+
+#: mysite.module:1225
+msgid "Should MySite add content-sensitive action links to nodes?"
+msgstr ""
+
+#: mysite.module:1229
+msgid "Content Settings"
+msgstr "Opciones de Contenido"
+
+#: mysite.module:1269
+msgid "MySite Content Types"
+msgstr "Tipos de Contenido de MiSitio"
+
+#: mysite.module:1271;1279
+msgid "options"
+msgstr "opciones"
+
+#: mysite.module:1291
+msgid "Which types of content can users add to a MySite collection?"
+msgstr ""
+
+#: mysite.module:1296
+msgid "Disabled Content Types:"
+msgstr "Desactivar Tipos de Contenido:"
+
+#: mysite.module:1298
+msgid "The options listed above require additional configuration before they can be activated."
+msgstr ""
+
+#: mysite.module:1303
+msgid "Content Browser"
+msgstr "Explorador de Contenido"
+
+#: mysite.module:1311
+msgid "Content Browsing"
+msgstr "Exploración de Contenido"
+
+#: mysite.module:1312
+msgid "Display a text-only table"
+msgstr "Mostrar una tabla sólo de texto"
+
+#: mysite.module:1312
+msgid "Display rows of icons"
+msgstr "Mostrar hileras de íconos"
+
+#: mysite.module:1313
+msgid "Show users a table of text or an icon panel?"
+msgstr ""
+
+#: mysite.module:1317;2793
+msgid "Content Layout"
+msgstr "Distribución de Contenido"
+
+#: mysite.module:1319
+msgid "Items per row for the icon panel."
+msgstr "Elementos por final en el panel de íconos."
+
+#: mysite.module:1324
+msgid "Items per Page"
+msgstr "Elementos por Página"
+
+#: mysite.module:1326
+msgid "Content choices to show per page."
+msgstr ""
+
+#: mysite.module:1330
+msgid "User Limits"
+msgstr "Límites de Usuario"
+
+#: mysite.module:1338
+msgid "Item Count"
+msgstr "Conteo de Elementos"
+
+#: mysite.module:1340
+msgid "How many items can users add to a MySite collection?"
+msgstr ""
+
+#: mysite.module:1345
+msgid "Element Count"
+msgstr "Conteo de Elementos"
+
+#: mysite.module:1347
+msgid "How many story elements should be displayed per item?"
+msgstr ""
+
+#: mysite.module:1352
+msgid "Action Buttons"
+msgstr "Botones de Acción"
+
+#: mysite.module:1363
+msgid "Action Labels"
+msgstr "Etiquetas de Acción"
+
+#: mysite.module:1364
+#, fuzzy
+msgid "Text"
+msgstr "Texto"
+
+#: mysite.module:1364
+msgid "Icons"
+msgstr "Iconos"
+
+#: mysite.module:1365
+msgid "The action button icon set: "
+msgstr "Set de íconos de botón de acción:"
+
+#: mysite.module:1366
+msgid "Use the provided icon set for actions?"
+msgstr ""
+
+#: mysite.module:1371
+msgid "Cache Settings"
+msgstr "Opciones de Cache"
+
+#: mysite.module:1380
+msgid "Cache Off"
+msgstr "Cache Apagado"
+
+#: mysite.module:1380
+msgid "5 min."
+msgstr "5 min."
+
+#: mysite.module:1380
+msgid "15 min."
+msgstr "15 min."
+
+#: mysite.module:1380
+msgid "30 min."
+msgstr "30 min."
+
+#: mysite.module:1380
+msgid "1 hour"
+msgstr "1 hora"
+
+#: mysite.module:1383
+msgid "MySite Cache"
+msgstr "Cache de MiSitio"
+
+#: mysite.module:1385
+msgid "Set the cache duration for user MySite page views.  Recommended for high-traffic sites."
+msgstr ""
+
+#: mysite.module:1391
+msgid "Default Page Settings"
+msgstr "Opciones por Defecto de Página"
+
+#: mysite.module:1397
+msgid "MySite Default User"
+msgstr "Usuario por Defecto de MiSitio"
+
+#: mysite.module:1400
+msgid "Optional: Enter the UID of the user to display at http://example.com/mysite/default."
+msgstr ""
+
+#: mysite.module:1433
+msgid "Personal page title"
+msgstr "Título de página personal"
+
+#: mysite.module:1439
+msgid "Naming your page helps you personalize the site."
+msgstr ""
+
+#: mysite.module:1443
+msgid "Allow others to see your personal page"
+msgstr "Permitir a otros ver tu página personal"
+
+#: mysite.module:1445
+#, fuzzy
+msgid "No"
+msgstr "No"
+
+#: mysite.module:1445
+#, fuzzy
+msgid "Yes"
+msgstr "Sí"
+
+#: mysite.module:1460
+#: plugins/types/theme.inc:12
+msgid "Theme"
+msgstr "Estilo"
+
+#: mysite.module:1463
+msgid "Select a theme for your personal page."
+msgstr "Selecciona un tema para tu página personal"
+
+#: mysite.module:1487
+msgid "Select a layout for your personal page."
+msgstr "Selecciona una distribución para tu página personal"
+
+#: mysite.module:1491
+msgid "Layout"
+msgstr "Distribución"
+
+#: mysite.module:1517
+#, fuzzy
+msgid "Style"
+msgstr "Estilo"
+
+#: mysite.module:1520
+msgid "Select a style for your personal page."
+msgstr "Selecciona un estilo para tu página personal"
+
+#: mysite.module:1544;1899
+msgid "Content format"
+msgstr "Formato de contenido"
+
+#: mysite.module:1545
+msgid "This setting will be the default for new content.  You may configure individual items to use different formats."
+msgstr ""
+
+#: mysite.module:1548
+msgid "Select a format for your personal page."
+msgstr "Selecciona un formato para tu página personal"
+
+#: mysite.module:1552
+msgid "Update all content to this format"
+msgstr "Actualizar todos los contenidos a este formato"
+
+#: mysite.module:1555
+msgid "Set all your personal page content to use the selected format?"
+msgstr ""
+
+#: mysite.module:1580
+msgid "Save and view changes"
+msgstr "Guardar y ver cambios"
+
+#: mysite.module:1581
+msgid "Save settings and continue >>"
+msgstr "Guardar opciones y continuar >>"
+
+#: mysite.module:1606
+msgid "Settings updated."
+msgstr "Opciones actualizadas."
+
+#: mysite.module:1612
+msgid "mysite created"
+msgstr "misitio creado"
+
+#: mysite.module:1616
+msgid "Failure.  Invalid UID"
+msgstr "Fallo. UID Incorrecto"
+
+#: mysite.module:1659
+msgid "No content is available."
+msgstr "No hay contenido disponible."
+
+#: mysite.module:1756
+#: mysite_icon.module:198
+#: plugins/types/droplet.inc:218;221
+msgid "Actions"
+msgstr "Acciones"
+
+#: mysite.module:1777
+msgid "<b>@sub</b>"
+msgstr "<b>@sub</b>"
+
+#: mysite.module:1789
+msgid "add"
+msgstr "adicionar"
+
+#: mysite.module:1807
+msgid "<h3>@cat to your personal page</h3>"
+msgstr "<h3>@cat a tu página personal</h3>"
+
+#: mysite.module:1815
+msgid "Browse available options"
+msgstr "Explorar opciones disponibles"
+
+#: mysite.module:1822
+msgid "All available @type content is already on your personal page."
+msgstr ""
+
+#: mysite.module:1848
+msgid "Content title"
+msgstr "Título de contenido"
+
+#: mysite.module:1865
+msgid "Lock item"
+msgstr "Fijar elemento"
+
+#: mysite.module:1866
+msgid "Check this option to display this content to all users at all times."
+msgstr ""
+
+#: mysite.module:1875
+msgid "Page region"
+msgstr "Región de la página"
+
+#: mysite.module:1902
+msgid "Select a format."
+msgstr "Selecciona un formato."
+
+#: mysite.module:1958
+#: plugins/types/profile.inc:181
+msgid "Save settings"
+msgstr "Guardar opciones"
+
+#: mysite.module:1973
+msgid "You must select a format."
+msgstr "Debes seleccionar un formato."
+
+#: mysite.module:1980
+#: contrib/refine.inc:298;321
+msgid "The title must be unique."
+msgstr "El título debe ser único."
+
+#: mysite.module:1985
+msgid "You must enter a title."
+msgstr "Debes introducir un título."
+
+#: mysite.module:1997
+msgid "Title successfully changed."
+msgstr "Título cambiado exitosamente."
+
+#: mysite.module:2037
+msgid "Do not show this message again."
+msgstr "No mostrar este mensaje de nuevo."
+
+#: mysite.module:2038
+msgid "Are you sure you wish to delete this item?"
+msgstr ""
+
+#: mysite.module:2038
+msgid "<p>%name, you can add this item again later.</p>"
+msgstr ""
+
+#: mysite.module:2065
+msgid "Are you sure you wish to delete this user page?"
+msgstr ""
+
+#: mysite.module:2066
+msgid "<p>%user may be able to recreate the page if he or she has the \"edit mysite\" permission.</p>"
+msgstr ""
+
+#: mysite.module:2067
+msgid "Delete this page"
+msgstr "Eliminar esta página"
+
+#: mysite.module:2067;2109
+#: plugins/types/droplet.inc:494
+#, fuzzy
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: mysite.module:2072
+msgid "This user does not have a personal page."
+msgstr ""
+
+#: mysite.module:2093
+msgid "%user's page has been deleted."
+msgstr ""
+
+#: mysite.module:2097
+msgid "%user's page could not be found."
+msgstr ""
+
+#: mysite.module:2108
+msgid "Are you sure you wish to reset your personal page content?"
+msgstr ""
+
+#: mysite.module:2109
+msgid "Reset my personal page"
+msgstr "Reiniciar mi página personal"
+
+#: mysite.module:2174
+msgid "Item added."
+msgstr "Elemento adicionado."
+
+#: mysite.module:2177;2525
+msgid "@title has already been added to your personal page."
+msgstr ""
+
+#: mysite.module:2181
+msgid "You are not authorized to add this item."
+msgstr ""
+
+#: mysite.module:2247
+msgid "Item deleted."
+msgstr "Elemento eliminado."
+
+#: mysite.module:2250
+msgid "You are not authorized to delete this item."
+msgstr ""
+
+#: mysite.module:2279
+msgid "Item demoted."
+msgstr "Elemento degradado."
+
+#: mysite.module:2282
+msgid "Item promoted"
+msgstr "Elemento promovido"
+
+#: mysite.module:2301
+msgid "You are not authorized to edit this item."
+msgstr ""
+
+#: mysite.module:2453
+msgid "Default settings"
+msgstr "Opciones por defecto"
+
+#: mysite.module:2509
+msgid "<b>@title</b> matched your search"
+msgstr ""
+
+#: mysite.module:2514
+msgid "No @type was found that matched your search.  Please check the spelling and try again."
+msgstr ""
+
+#: mysite.module:2517
+msgid "@count matches were found for your search."
+msgstr ""
+
+#: mysite.module:2522
+msgid "<a href=\"@url\">@title (click to add)</a>: %desc"
+msgstr ""
+
+#: mysite.module:2558
+msgid "Add !name to your personal page"
+msgstr "Adicionar !name a tu página personal"
+
+#: mysite.module:2562
+msgid "Remove !name from your personal page"
+msgstr "Eliminar !name de tu página personal"
+
+#: mysite.module:2787
+msgid "Personal Settings"
+msgstr "Opciones Personales"
+
+#: mysite.module:2787
+msgid "Your personal page lets you organize content so that you can quickly view items of interest to you.  The settings below control how others will view your personal page."
+msgstr ""
+
+#: mysite.module:2790
+msgid "Personal Theme"
+msgstr "Tema Personal"
+
+#: mysite.module:2790
+msgid "You may choose to view your personal pages in a custom theme.  Choose from one of the options below."
+msgstr ""
+
+#: mysite.module:2793
+msgid "You may arrange content on your personal page according to the layout of the page.  Select one of the options below."
+msgstr ""
+
+#: mysite.module:2796
+msgid "Content Style"
+msgstr "Estilo de Contenido"
+
+#: mysite.module:2796
+msgid "You may select from a variety of styles to display content on your personal page.  Select one of the options below."
+msgstr ""
+
+#: mysite.module:2799
+msgid "Display Format"
+msgstr "Formato de Despliegue"
+
+#: mysite.module:2799
+msgid "Choose how you would prefer to view content on your personal page."
+msgstr ""
+
+#: mysite.module:2845
+msgid "Enable this plugin."
+msgstr "Activar esa extensión."
+
+#: mysite.module:2848
+msgid "The <b>@type plugin</b> is not enabled for MySite.  Changes made here may not be visible to your users. !active"
+msgstr ""
+
+#: mysite.module:2901
+msgid "Could not find proper info file."
+msgstr "No pudo encontrarse  el archivo de información adecuada."
+
+#: mysite.module:2981
+msgid "The $type was not set"
+msgstr "No se configuró el/la $type"
+
+#: mysite.module:3065
+msgid "<p>The options you have chosen are no longer available.  Please <a href=\"@url\">edit your settings</a>.</p><p>If the problem continues, please contact the site administrator at <b>@mail</b>.</p>"
+msgstr ""
+
+#: mysite.module:3193
+msgid "@name, start by customizing the settings for your personal page."
+msgstr ""
+
+#: mysite.module:3228
+msgid "<p>@name, you can add content from these selections to customize your page.</p>"
+msgstr ""
+
+#: mysite.module:3232
+msgid "The items shown are the default for all new users.  Use the links to the left to add content to this list."
+msgstr ""
+
+#: mysite.module:3254
+msgid "You must be logged in to create your own personal page."
+msgstr ""
+
+#: mysite.module:3287
+msgid "%user, this column is empty, you may <a href=\"!url\">add content</a> to it"
+msgstr ""
+
+#: mysite.module:3307
+msgid "+"
+msgstr "+"
+
+#: mysite.module:3307
+msgid "-"
+msgstr "-"
+
+#: mysite.module:3307
+msgid "x"
+msgstr "x"
+
+#: mysite.module:3307
+msgid "?"
+msgstr "?"
+
+#: mysite.module:3317
+msgid " promote item "
+msgstr "promover elemento"
+
+#: mysite.module:3318
+msgid " demote item "
+msgstr "degradar elemento"
+
+#: mysite.module:3319
+msgid " delete item "
+msgstr "eliminar elemento"
+
+#: mysite.module:3320
+msgid "item settings"
+msgstr "opciones de elemento"
+
+#: mysite.module:3342
+#, fuzzy
+msgid "Options"
+msgstr "Opciones"
+
+#: mysite.module:3364
+msgid "Reset to Defaults"
+msgstr "Restaurar Valores por Defecto"
+
+#: mysite.module:3368
+msgid "Administer"
+msgstr "Administrar"
+
+#: mysite.module:3370
+msgid "MySite Settings"
+msgstr "Opciones de MiSitio"
+
+#: mysite.module:3371
+msgid "Default Settings"
+msgstr "Opciones por Defecto"
+
+#: mysite.module:3372
+msgid "Default Content"
+msgstr "Contenido por Defecto"
+
+#: mysite.module:3397
+msgid "<< first"
+msgstr "<< primero"
+
+#: mysite.module:3422
+msgid "last >>"
+msgstr "último >>"
+
+#: mysite.module:3479
+msgid "@name, there is no @option content available to add to your collection."
+msgstr ""
+
+#: mysite.module:3543
+msgid "Item title"
+msgstr "Título de elemento"
+
+#: mysite.module:3543
+msgid "Sample headline"
+msgstr "Encabezado de muestra"
+
+#: mysite.module:3543
+msgid "sample text"
+msgstr "texto de muestra"
+
+#: mysite.module:3543
+#, fuzzy
+msgid "footer"
+msgstr "pie"
+
+#: mysite.module:1146;0
+msgid "mysite"
+msgstr "misitio"
+
+#: mysite.module:383
+msgid "administer mysite"
+msgstr "administrar misitio"
+
+#: mysite.module:383
+msgid "edit mysite"
+msgstr "modificar misitio"
+
+#: mysite.module:383
+msgid "view all mysites"
+msgstr "ver todos los misitios"
+
+#: mysite.module:385
+#: plugins/types/feed.inc:557;595
+msgid "aggregator"
+msgstr "agregador"
+
+#: mysite.module:386
+msgid "add mysite feeds"
+msgstr "adicionar fuentes de misitio"
+
+#: mysite_icon.module:16
+msgid "<p>MySite offers the option to view content selections as a table of image icons.  In order to use this feature, you must have a directory writable by your Drupal installation.  For most users, this directory will be <em>files/mysite</em>.  MySite Icons may not work properly until you configure a storage directory.</p><p>To use the MySite Icons module's features, you must also configure the MySite option <em>Content Browser</em> to the value <em>Display rows of icons</em>."
+msgstr ""
+
+#: mysite_icon.module:20
+msgid "<p>MySite offers the option to view content selections as a table of image icons.  In order to use this feature, you must have a directory writable by your Drupal installation.  For most users, this directory will be <em>files/mysite</em>.  If you see an error message below, MySite Icons may not work properly until you configure a storage directory.</p>"
+msgstr ""
+
+#: mysite_icon.module:35
+msgid "Content icons"
+msgstr "Iconos de contenido"
+
+#: mysite_icon.module:36;43
+msgid "Manage icons for use with the MySite content browser."
+msgstr ""
+
+#: mysite_icon.module:42
+#: mysite_icon.info:0
+msgid "MySite Icons"
+msgstr "Iconos de MiSitio"
+
+#: mysite_icon.module:48
+msgid "Current icons"
+msgstr "Iconos actuales"
+
+#: mysite_icon.module:49;56
+msgid "Add icons for use with the MySite content browser."
+msgstr ""
+
+#: mysite_icon.module:55
+msgid "Add content icon"
+msgstr "Adicionar ícono de contenido"
+
+#: mysite_icon.module:62
+msgid "Icon settings"
+msgstr "Opciones de Iconos"
+
+#: mysite_icon.module:63
+msgid "Default icon settings for the MySite content browser."
+msgstr ""
+
+#: mysite_icon.module:76
+msgid "Change"
+msgstr "Modificar"
+
+#: mysite_icon.module:77
+msgid "Change content icon."
+msgstr "Modificar ícono de contenido."
+
+#: mysite_icon.module:84
+msgid "Delete content icon."
+msgstr "Eliminar ícono de contenido."
+
+#: mysite_icon.module:136
+msgid "The MySite Icons directory needs to reside in a folder that is writable by Drupal.  The recommended path is <b>mysite</b>. "
+msgstr ""
+
+#: mysite_icon.module:136
+msgid "Please check your file upload settings"
+msgstr ""
+
+#: mysite_icon.module:156
+msgid "MySite Icons Directory"
+msgstr "Directorio de Iconos de MySite"
+
+#: mysite_icon.module:161
+msgid "This folder will reside in %path, and is a file system path where the files will be stored. Do not use a leading or trailing slash. This directory has to exist and be writable by Drupal. Changing this location after the site has been in use will cause problems so only change this setting on an existing site if you know what you are doing."
+msgstr ""
+
+#: mysite_icon.module:165
+msgid "Icon maximum dimensions"
+msgstr "Dimensiones máximas de íconos"
+
+#: mysite_icon.module:168
+msgid "Maximum dimensions for icons, Width x Height, in pixels."
+msgstr ""
+
+#: mysite_icon.module:172
+msgid "Icon maximum file size"
+msgstr "Tamaño máximo del archivo de ícono"
+
+#: mysite_icon.module:175
+msgid "Maximum file size for icons, in kB."
+msgstr ""
+
+#: mysite_icon.module:179
+msgid "Download icons"
+msgstr "Descargar íconos"
+
+#: mysite_icon.module:180
+msgid "Do not download icons."
+msgstr "No descargar íconos."
+
+#: mysite_icon.module:180
+msgid "Attempt to download icons."
+msgstr "Intentar descargar íconos."
+
+#: mysite_icon.module:182
+msgid "Should MySite attempt to download icons from external websites?"
+msgstr ""
+
+#: mysite_icon.module:198
+#, fuzzy
+msgid "Id"
+msgstr "Id"
+
+#: mysite_icon.module:198
+#, fuzzy
+msgid "Type"
+msgstr "Tipo"
+
+#: mysite_icon.module:198
+msgid "Type Id"
+msgstr "Id de Tipo"
+
+#: mysite_icon.module:198;555
+#: plugins/types/droplet.inc:218
+#, fuzzy
+msgid "Icon"
+msgstr "Icono"
+
+#: mysite_icon.module:207
+msgid "Current Icons"
+msgstr "Iconos Actuales"
+
+#: mysite_icon.module:213
+msgid "No icons found."
+msgstr "No se encontraron íconos."
+
+#: mysite_icon.module:217;273;382
+msgid "There is an error in the configuration of the MySite Icons upload folder."
+msgstr ""
+
+#: mysite_icon.module:245
+msgid "Upload icon: "
+msgstr "Enviar ícono:"
+
+#: mysite_icon.module:268
+msgid "No options are currently available."
+msgstr ""
+
+#: mysite_icon.module:305;411
+msgid "Icon successfully changed."
+msgstr "Icono cambiado exitosamente."
+
+#: mysite_icon.module:308;414
+msgid "The image upload has failed."
+msgstr "El envío de la imagen ha fallado."
+
+#: mysite_icon.module:324
+msgid "<h3>Add new MySite icon</h3><p>Select from the options below.  Only content elements that do not have existing icons are shown.</p>"
+msgstr ""
+
+#: mysite_icon.module:327
+msgid "Select @key"
+msgstr "Selecciona @key"
+
+#: mysite_icon.module:330
+msgid "Add new %key icon"
+msgstr "Adicionar nueva ícono de %key"
+
+#: mysite_icon.module:335
+msgid "Select Item and Continue"
+msgstr "Seleccionar Elemento y Continuar"
+
+#: mysite_icon.module:351
+msgid "You must select an option."
+msgstr "Debes seleccionar una opción."
+
+#: mysite_icon.module:374
+msgid "Change icon: "
+msgstr "Modificar ícono:"
+
+#: mysite_icon.module:378;431
+msgid "Invalid selection."
+msgstr "Selección incorrecta."
+
+#: mysite_icon.module:427
+msgid "Delete icon: "
+msgstr "Eliminar ícono:"
+
+#: mysite_icon.module:452
+msgid "<p>The default icon will be used if you delete this icon.</p>"
+msgstr ""
+
+#: mysite_icon.module:453
+msgid "Do not delete this icon."
+msgstr ""
+
+#: mysite_icon.module:454
+msgid "Delete Icon"
+msgstr "Eliminar Icon"
+
+#: mysite_icon.module:468
+msgid "Icon successfully deleted."
+msgstr "Icono eliminado exitosamente."
+
+#: mysite_icon.module:472
+msgid "Failed to delete icon.  Check the server permissions in your MySite icon directory."
+msgstr ""
+
+#: mysite_icon.module:529
+msgid "<p>Blog and user icons are set to be user pictures by default.  If the user has no picture, or you wish to override the user picture, upload a new icon here.  Changing the MySite icon will not change the user picture.</p>"
+msgstr ""
+
+#: mysite_icon.module:557
+msgid "Must be a .GIF, .JPG or .PNG and should be %width x %height pixels.  Maximum size is %size kB."
+msgstr ""
+
+#: mysite_icon.module:559
+msgid "Save Icon"
+msgstr "Grabar Icono"
+
+#: mysite_icon.module:590
+msgid "The uploaded file was not an image."
+msgstr "El archivo subido no es una imagen."
+
+#: mysite_icon.module:597
+msgid "The uploaded image is too large; the maximum file size is %size kB."
+msgstr ""
+
+#: mysite_icon.module:600
+msgid "The uploaded image is too large; the maximum dimensions are %width x %height pixels."
+msgstr ""
+
+#: mysite_icon.module:609
+msgid "Failed to upload the picture image; the %directory directory doesn't exist."
+msgstr ""
+
+#: mysite_icon.module:696
+msgid "Upload new icon."
+msgstr "Enviar nuevo ícono."
+
+#: mysite_icon.module:699
+msgid "Change current icon."
+msgstr "Cambiar ícono actual."
+
+#: mysite_icon.module:0
+msgid "mysite_icon"
+msgstr "mysite_icon"
+
+#: mysite.install:9
+msgid "Installing the MySite module"
+msgstr "Instalando el módulo MySite"
+
+#: mysite.install:115
+msgid "MySite module installed successfully."
+msgstr "Módulo MySite instalado exitosamente."
+
+#: mysite.install:118
+msgid "The installation of the MySite module was unsuccessful."
+msgstr ""
+
+#: mysite_icon.install:9
+msgid "Installing the MySite Icons module"
+msgstr ""
+
+#: mysite_icon.install:43
+msgid "MySite Icons module installed successfully."
+msgstr ""
+
+#: mysite_icon.install:46
+msgid "The installation of the MySite Icons module was unsuccessful."
+msgstr ""
+
+#: mysite_icon.install:64
+msgid "Could not delete file %file"
+msgstr "No pudo eliminarse el archivo %file"
+
+#: mysite.info:0
+msgid "Allows users to create a custom page of site content."
+msgstr ""
+
+#: mysite_icon.info:0
+msgid "Icon handler for the MySite module."
+msgstr ""
+
+#: contrib/biblio.inc:28
+msgid "Bibliographies"
+msgstr ""
+
+#: contrib/biblio.inc:29
+msgid "<b>Bibliographies</b>: All bibliographies from a specific user"
+msgstr ""
+
+#: contrib/biblio.inc:32
+msgid "bibliographies"
+msgstr ""
+
+#: contrib/biblio.inc:36
+msgid "Add Bibliography"
+msgstr "Adicionar Bibliografía"
+
+#: contrib/biblio.inc:37
+msgid "You can choose bibliography postings by specific users. Type a user name in the search box, or choose from a list of active contributers."
+msgstr ""
+
+#: contrib/biblio.inc:64
+msgid "There are no users with permission to create bibliographies."
+msgstr ""
+
+#: contrib/biblio.inc:70
+msgid "At least one bibliography must exist."
+msgstr ""
+
+#: contrib/biblio.inc:107
+#: plugins/types/blog.inc:94
+#: plugins/types/user.inc:94
+msgid "'s"
+msgstr ""
+
+#: contrib/biblio.inc:111
+#: contrib/refine.inc:92
+#: contrib/storylink.inc:81
+#: contrib/weblink.inc:115
+msgid "Could not find title"
+msgstr "No pudo encontrarse título"
+
+#: contrib/biblio.inc:144
+#: contrib/refine.inc:135
+#: contrib/storylink.inc:114
+#: contrib/weblink.inc:159
+msgid "Could not find data"
+msgstr "No pudo encontrarse info"
+
+#: contrib/biblio.inc:187
+#: contrib/storylink.inc:174
+msgid "User Name"
+msgstr "Nombre de Usuario"
+
+#: contrib/biblio.inc:189
+msgid "The user name of the author of the bibliography you wish to add."
+msgstr ""
+
+#: contrib/biblio.inc:195
+msgid "Add biblio"
+msgstr "Adicionar biblio"
+
+#: contrib/biblio.inc:214
+msgid "The bibliographies of %user"
+msgstr "Bibliografías de %user"
+
+#: contrib/refine.inc:24
+msgid "Refined Categories"
+msgstr "Categorías Refinadas"
+
+#: contrib/refine.inc:25
+msgid "<b>Refined Categories</b>: Posts that match multiple terms."
+msgstr ""
+
+#: contrib/refine.inc:28
+#: plugins/types/term.inc:17
+msgid "articles"
+msgstr "artículos"
+
+#: contrib/refine.inc:32
+msgid "Add Refined Categories"
+msgstr "Adicionar Categorías Refinadas"
+
+#: contrib/refine.inc:33
+msgid "Display posts tagged with multiple categories."
+msgstr ""
+
+#: contrib/refine.inc:55
+msgid "You must create at least one term group to activate this plugin."
+msgstr ""
+
+#: contrib/refine.inc:196
+msgid "<h3>Rename Groups</h3>"
+msgstr "<h3>Renombrar Grupos</h3>"
+
+#: contrib/refine.inc:197
+msgid "<p>The following content groups have been created by the Refine-By-Taxo module.</p>"
+msgstr ""
+
+#: contrib/refine.inc:199
+msgid "ID #"
+msgstr "ID #"
+
+#: contrib/refine.inc:200
+#, fuzzy
+msgid "Title"
+msgstr "Título"
+
+#: contrib/refine.inc:201
+msgid "Terms"
+msgstr "Categorías"
+
+#: contrib/refine.inc:202
+msgid "Rename"
+msgstr "Renombrar"
+
+#: contrib/refine.inc:209
+msgid "Edit name"
+msgstr "Modificar nombre"
+
+#: contrib/refine.inc:228
+msgid "Add Content Group"
+msgstr "Adicionar Grupo de Contenido"
+
+#: contrib/refine.inc:231
+msgid "<p>Select as many terms as you like to create a new content view.  These items will show all content that matches term1 AND term2 AND so forth.</p>"
+msgstr ""
+
+#: contrib/refine.inc:236
+msgid "Group Name"
+msgstr "Nombre de Grupo"
+
+#: contrib/refine.inc:252
+msgid "Select the vocabulary terms to combine."
+msgstr ""
+
+#: contrib/refine.inc:259
+msgid "Create new group"
+msgstr "Crear nuevo grupo"
+
+#: contrib/refine.inc:276
+msgid "Group name"
+msgstr "Nombre de grupo"
+
+#: contrib/refine.inc:284
+msgid "Change title"
+msgstr "Cambiar título"
+
+#: contrib/refine.inc:309
+msgid "Title changed successfully."
+msgstr "Título cambiado exitosamente."
+
+#: contrib/refine.inc:325
+msgid "You must select at least two terms."
+msgstr ""
+
+#: contrib/refine.inc:333
+msgid "This content group already exists."
+msgstr "Este grupo de contenido ya existe."
+
+#: contrib/refine.inc:348
+msgid "New content group added."
+msgstr "Nuevo grupo de contenido adicionado."
+
+#: contrib/refine.inc:351
+msgid "Insert failed"
+msgstr "Inserción fallida"
+
+#: contrib/storylink.inc:24
+msgid "Storylinks"
+msgstr "Storylinks"
+
+#: contrib/storylink.inc:25
+msgid "<b>Storylinks</b>: All storylink posts from a specific user"
+msgstr ""
+
+#: contrib/storylink.inc:27
+msgid "News from "
+msgstr "Noticias de"
+
+#: contrib/storylink.inc:32
+msgid "Add User Storylinks"
+msgstr "Adicionar Storylinks de  Usuario"
+
+#: contrib/storylink.inc:33
+msgid "You can choose storylink postings by specific users. Type a user name in the search box, or choose from the list of link contributors."
+msgstr ""
+
+#: contrib/storylink.inc:177
+msgid "The user name of the storylink you wish to add."
+msgstr ""
+
+#: contrib/storylink.inc:183
+msgid "Add storylink"
+msgstr "Adicionar storylink"
+
+#: contrib/storylink.inc:202
+msgid "The storylink posts of %user"
+msgstr "Publicaciones de storylink de %user"
+
+#: contrib/weblink.inc:28
+msgid "Web Links"
+msgstr "Enlaces Web"
+
+#: contrib/weblink.inc:29
+msgid "<b>Weblinks</b>: All weblinks from a specific category."
+msgstr ""
+
+#: contrib/weblink.inc:32
+msgid "weblinks"
+msgstr "enlaces web"
+
+#: contrib/weblink.inc:36
+msgid "Add Web Link"
+msgstr "Adicionar Enlace Web"
+
+#: contrib/weblink.inc:37
+msgid "Add all web page links in a given category.  You may search for links or select from the list provided."
+msgstr ""
+
+#: contrib/weblink.inc:58
+msgid "There are no categories defined for Weblink content."
+msgstr ""
+
+#: contrib/weblink.inc:65
+msgid "The MySite Weblink options must be configured."
+msgstr ""
+
+#: contrib/weblink.inc:199
+#: plugins/types/term.inc:187
+msgid "Category"
+msgstr "Categoría"
+
+#: contrib/weblink.inc:201
+msgid "The weblink category you wish to add."
+msgstr ""
+
+#: contrib/weblink.inc:207
+msgid "Add category"
+msgstr "Adicionar categoría"
+
+#: contrib/weblink.inc:306
+#: plugins/types/term.inc:304
+msgid "The taxonomy module is not active or there are no vocabularies.  These features cannot be used."
+msgstr "El módulo de taxonomía no está activo o no hay vocabularios. Estas funcionalidades no pueden ser usadas."
+
+#: contrib/weblink.inc:320
+#: plugins/types/term.inc:322
+msgid "Allowed Vocabularies"
+msgstr "Vocabularios Permitidos"
+
+#: contrib/weblink.inc:323
+msgid "What weblinks vocabularies should be displayed to MySite users?"
+msgstr "¿Cuáles vocabularios de enlaces web deben desplegarse para los usuarios de MiSitio?"
+
+#: contrib/weblink.inc:325
+msgid "Last change"
+msgstr "Ultimo cambio"
+
+#: contrib/weblink.inc:325
+msgid "Number of clicks"
+msgstr "Número de clicks"
+
+#: contrib/weblink.inc:327
+msgid "Sorting"
+msgstr "Ordenando"
+
+#: contrib/weblink.inc:330
+msgid "How should weblinks be sorted for MySite users?"
+msgstr "¿Cómo deben ordenarse los enlaces para usuarios de MiSitio?"
+
+#: contrib/weblink.inc:148
+msgid "click"
+msgid_plural "clicks"
+msgstr[0] "click"
+msgstr[1] "clicks"
+
+#: plugins/formats/default.theme:41
+msgid "Headlines list"
+msgstr "Lista de Titulares"
+
+#: plugins/formats/default.theme:44;45;46
+msgid "<li><a href=\"#\">Sample headline</a></li>"
+msgstr "<li><a href=\"#\">Titular de ejemplo</a></li>"
+
+#: plugins/formats/default.theme:0
+msgid "default"
+msgstr "por defecto"
+
+#: plugins/formats/teasers.theme:29
+msgid "submitted by !author on !time"
+msgstr "publicado por !author en !time"
+
+#: plugins/formats/teasers.theme:50
+msgid "Headlines and summaries"
+msgstr "Titulares y resúmenes"
+
+#: plugins/formats/teasers.theme:52
+msgid "<h2><a href=\"#\">Sample headline</a></h2>"
+msgstr "<h2><a href=\"#\">Titular de ejemplo</a></h2>"
+
+#: plugins/formats/teasers.theme:53
+msgid "submitted by johndoe on !time"
+msgstr "publicado por juanperez en !time"
+
+#: plugins/formats/teasers.theme:54
+msgid "<p>Consequat blandit consequat nibh vero at. Euismod feugait volutpat ad dolore vel consequatvel, facilisi aliquam hendrerit odio euismod, feugiat consequat exerci iusto eu consequatvel veniam. Luptatum quis.</p>"
+msgstr "<p>Consequat blandit consequat nibh vero at. Euismod feugait volutpat ad dolore vel consequatvel, facilisi aliquam hendrerit odio euismod, feugiat consequat exerci iusto eu consequatvel veniam. Luptatum quis.</p>"
+
+#: plugins/formats/teasers.theme:0
+msgid "teasers"
+msgstr "fragmento inicial"
+
+#: plugins/layouts/columns.php:46
+#: plugins/layouts/default.php:45
+#: plugins/layouts/left.php:51
+#: plugins/layouts/stacks.php:51
+#: plugins/layouts/triple.php:46
+msgid "<p>No content found.</p>"
+msgstr "<p>No se encontró ningún contenido.</p>"
+
+#: plugins/layouts/columns.php:51
+#: plugins/layouts/default.php:50
+#: plugins/layouts/left.php:56
+#: plugins/layouts/stacks.php:56
+#: plugins/layouts/triple.php:51
+msgid "Read more"
+msgstr "Ver más"
+
+#: plugins/layouts/columns.php:68
+#: plugins/layouts/stacks.php:76
+#: plugins/layouts/triple.php:68
+msgid "Left"
+msgstr "izquierda"
+
+#: plugins/layouts/columns.php:68
+#: plugins/layouts/stacks.php:76
+#: plugins/layouts/triple.php:68
+msgid "Right"
+msgstr "Derecha"
+
+#: plugins/layouts/columns.php:70
+msgid "Two column"
+msgstr "Dos columnas"
+
+#: plugins/layouts/columns.php:71
+msgid "Two equal-width columns."
+msgstr "Dos columans del mismo ancho."
+
+#: plugins/layouts/default.php:66
+#: plugins/layouts/left.php:73
+#: plugins/layouts/stacks.php:76
+msgid "Main"
+msgstr "Principal"
+
+#: plugins/layouts/default.php:68
+msgid "Basic layout"
+msgstr "Distribución básica"
+
+#: plugins/layouts/default.php:69
+msgid "A single-column display of your personal content."
+msgstr "Una simple columna para mostrar contenido personal."
+
+#: plugins/layouts/left.php:73
+msgid "Sidebar"
+msgstr "Barrra Lateral"
+
+#: plugins/layouts/left.php:75
+msgid "Left sidebar"
+msgstr "Barra lateral izquierda"
+
+#: plugins/layouts/left.php:76
+msgid "A large main area with left sidebar."
+msgstr "un área grande con una barra lateral izquierda."
+
+#: plugins/layouts/stacks.php:78
+msgid "Stacked two column"
+msgstr "Dos columnas apiladas"
+
+#: plugins/layouts/stacks.php:79
+msgid "One main area and two equal-width columns."
+msgstr "Un área grande con dos columnas del mismo ancho."
+
+#: plugins/layouts/triple.php:68
+#, fuzzy
+msgid "Center"
+msgstr "Centro"
+
+#: plugins/layouts/triple.php:70
+msgid "Three column"
+msgstr "Tres columnas"
+
+#: plugins/layouts/triple.php:71
+msgid "Three equal-width columns."
+msgstr "Tres columnas con el mismo ancho."
+
+#: plugins/types/aggregator.inc:18
+msgid "Web Headlines"
+msgstr "Encabezados Web"
+
+#: plugins/types/aggregator.inc:19
+msgid "<b>Web Headlines</b>: News items for an Aggregator category."
+msgstr "<b>Titulares Web</b>: Elementos y novedades de una categoría de Agregador."
+
+#: plugins/types/aggregator.inc:22
+msgid "headlines"
+msgstr "encabezados"
+
+#: plugins/types/aggregator.inc:23
+#: plugins/types/feed.inc:23
+msgid "Aggregation"
+msgstr "Agregación"
+
+#: plugins/types/aggregator.inc:26;180
+msgid "Add Web Headlines"
+msgstr "Adicionar Encabezados Web"
+
+#: plugins/types/aggregator.inc:27
+msgid "Some web feeds are combined into categories. You can add an entire category of feeds to your personal page."
+msgstr "Algunas fuentes web están combinadas en categorías. Puedes adicionar una categoría completa de fuentes en tu página personal."
+
+#: plugins/types/aggregator.inc:47
+msgid "At least one Aggregator category must be created."
+msgstr "Debe crearse al menos una categoría de Agregador."
+
+#: plugins/types/aggregator.inc:86
+msgid "Could not find aggregator title"
+msgstr "No pudo encontrarse el título del agregador"
+
+#: plugins/types/aggregator.inc:129
+msgid "Could not find aggregator data"
+msgstr "No pudo encontrarse info del agregador"
+
+#: plugins/types/aggregator.inc:170
+msgid "Headline name"
+msgstr "Nombre del titular"
+
+#: plugins/types/aggregator.inc:174
+msgid "The name of the headlines you wish to add."
+msgstr "El nombre de los titulares que deseas adicionar."
+
+#: plugins/types/aggregator.inc:199
+msgid "The aggregator posts of @title"
+msgstr "Las publicaciones del agregador de @title"
+
+#: plugins/types/blog.inc:18
+msgid "Blogs"
+msgstr "Blogs"
+
+#: plugins/types/blog.inc:19
+msgid "<b>Blog Posts</b>: Blog posts from a specific user."
+msgstr "<b>Publicaciones de Blog</b>: Publicaciones de blog de un usuario específico."
+
+#: plugins/types/blog.inc:22
+msgid "blog posts"
+msgstr "publicaciones de blog"
+
+#: plugins/types/blog.inc:26;200
+msgid "Add User Blog"
+msgstr "Adicionar Blog de Usuario"
+
+#: plugins/types/blog.inc:27
+msgid "You can choose blog postings by specific users. Type a user name in the search box, or choose from the list of active bloggers."
+msgstr "Puedes elegir publicaciones de blog de usuarios específicos. Escribe el nombre de un usuario en la caja de búsqueda, o elige uno de la lista de escritores activos de blog."
+
+#: plugins/types/blog.inc:51
+msgid "There are no users with blog permissions."
+msgstr "No hay usuarios con permisos de bitácora."
+
+#: plugins/types/blog.inc:98
+msgid "Could not find blog title"
+msgstr "No pudo encontrarse el título del blog"
+
+#: plugins/types/blog.inc:133
+msgid "Could not find blog data"
+msgstr "No pudo encontrarse info del blog"
+
+#: plugins/types/blog.inc:191
+#: plugins/types/user.inc:198
+msgid "Search by user name"
+msgstr "Buscar por nombre de usuario"
+
+#: plugins/types/blog.inc:194
+msgid "The user name of the blog you wish to add."
+msgstr "El nombre del usuario cuya bitácora deseas adicionar."
+
+#: plugins/types/blog.inc:219
+msgid "The blog posts of @user"
+msgstr "Las publicaciones de blog de @user"
+
+#: plugins/types/book.inc:18
+msgid "Books"
+msgstr "Libros"
+
+#: plugins/types/book.inc:19
+msgid "<b>Books</b>: Pages from a book collection."
+msgstr "<b>Libros</b>: Páginas de una colección."
+
+#: plugins/types/book.inc:22
+msgid "book pages"
+msgstr "páginas de libros"
+
+#: plugins/types/book.inc:26
+msgid "Add Book Updates"
+msgstr "Adicionar Actualizaciones de Libros"
+
+#: plugins/types/book.inc:27
+msgid "You can track new pages for individual books. Type a book name in the search box, or choose from the list provided."
+msgstr "Puedes mantenerte actualizado de nuevas páginas en los libros. Escribe un nombre de libro en la caja de búsqueda, o elige uno de la lista provista."
+
+#: plugins/types/book.inc:51
+msgid "There are no users with create or edit book permissions."
+msgstr "No hay usuarios con permiso para crear o editar libros."
+
+#: plugins/types/book.inc:105
+msgid "Could not find book data"
+msgstr "No pudo encontrarse la info del libro"
+
+#: plugins/types/book.inc:123
+msgid "Could not find book title"
+msgstr "No pudo encontrarse el título del libro"
+
+#: plugins/types/book.inc:168
+msgid "Book title"
+msgstr "Título de libro"
+
+#: plugins/types/book.inc:171
+msgid "The name of the book you wish to add."
+msgstr "El nombre del libro que deseas adicionar."
+
+#: plugins/types/book.inc:177
+msgid "Add Book"
+msgstr "Adicionar Libro"
+
+#: plugins/types/comment.inc:18
+#, fuzzy
+msgid "Comments"
+msgstr "Comentarios"
+
+#: plugins/types/comment.inc:19
+msgid "<b>Post Comments</b>: Comments on a specific post."
+msgstr "<b>Comentarios de Publicación</b>: Comentarios de un contenido publicado específico."
+
+#: plugins/types/comment.inc:21
+msgid "Comments on"
+msgstr "Comentarios en"
+
+#: plugins/types/comment.inc:26;183
+msgid "Add Post Comments"
+msgstr "Adicionar Comentarios de la Publicación"
+
+#: plugins/types/comment.inc:27
+msgid "You can choose comments attached to specific posts. Search the list of active posts or browse from the list below."
+msgstr "Puedes elegir comentarios de contenido específicos. Busca la lista de contenidos activos o explora la lista debajo."
+
+#: plugins/types/comment.inc:51
+msgid "There are no users with commenting permissions."
+msgstr "No hay usuarios con permisos para comentar."
+
+#: plugins/types/comment.inc:105;106
+msgid "No comments found."
+msgstr "No se encontraron comentarios."
+
+#: plugins/types/comment.inc:111
+msgid "Could not find comment data"
+msgstr "No pudo encontrarse la info del comentario"
+
+#: plugins/types/comment.inc:129
+msgid "Could not find comment title"
+msgstr "No pudo encontrarse el título del comentario"
+
+#: plugins/types/comment.inc:174
+#: plugins/types/post.inc:170
+msgid "Post title"
+msgstr "Título de publicación"
+
+#: plugins/types/comment.inc:177
+#: plugins/types/post.inc:173
+msgid "The title of the post you wish to add."
+msgstr "El titulo del contenido que deseas adicionar."
+
+#: plugins/types/droplet.inc:17;218;221
+msgid "Droplet"
+msgstr "Aplicacioncita"
+
+#: plugins/types/droplet.inc:18
+msgid "<b>Droplets</b>: Content defined by the site administrator."
+msgstr "<b>Aplicacioncitas</b>: Contenido definido por el administrador del sitio."
+
+#: plugins/types/droplet.inc:25
+msgid "Add Droplet"
+msgstr "Adicionar Aplicacioncita"
+
+#: plugins/types/droplet.inc:26
+msgid "Droplets are helpful tools that you can add to your personal page.  Search by name or select from the list provided."
+msgstr "Las aplicacioncitas son herramientas útiles que puedes adicionar a tu página personal. Busca por nombre o selecciona de la lista proporcionada."
+
+#: plugins/types/droplet.inc:45
+msgid "You must create a Droplet before activating this content type."
+msgstr "Debes crear una aplicacioncita antes de activar este tipo de contenido."
+
+#: plugins/types/droplet.inc:80
+msgid "Could not find droplet title"
+msgstr "No pudo encontrarse el título de la aplicacioncita"
+
+#: plugins/types/droplet.inc:106
+msgid "Could not find droplet data"
+msgstr "No pudo encontrarse la info de la aplicacioncita"
+
+#: plugins/types/droplet.inc:129
+msgid "Search by name"
+msgstr "Buscar por nombre"
+
+#: plugins/types/droplet.inc:132
+msgid "The name of the content droplet you wish to add."
+msgstr "El nombre de la aplicacioncita que deseas adicionar."
+
+#: plugins/types/droplet.inc:138
+msgid "Add Content"
+msgstr "Adicionar Contenido"
+
+#: plugins/types/droplet.inc:218;221
+msgid "Subtype"
+msgstr "Subtipo"
+
+#: plugins/types/droplet.inc:231
+msgid "change"
+msgstr "modificar"
+
+#: plugins/types/droplet.inc:231
+#, fuzzy
+msgid "delete"
+msgstr "eliminar"
+
+#: plugins/types/droplet.inc:234
+msgid "add icon"
+msgstr "adicionar ícono"
+
+#: plugins/types/droplet.inc:243
+msgid "<h3>Create New Droplet</h3>"
+msgstr "<h3>Crear una Nueva Aplicacioncita</h3>"
+
+#: plugins/types/droplet.inc:245
+msgid "Create a new droplet"
+msgstr "Crear una nueva aplicacioncita"
+
+#: plugins/types/droplet.inc:246
+msgid ""
+"You may copy code from <a href=\"!url\">Google gadgets</a> or <a href=\"!wdb\">WidgetBox</a> \n"
+"      into a new droplet.  Be sure to use the <em>Full HTML</em> input format."
+msgstr ""
+"Puedes copiar código de <a href=\"!url\">Google gadgets</a> o <a href=\"!wdb\">WidgetBox</a> \n"
+" en una nueva aplicacioncita. Asegúrate de seleccionar el formato de entrada <em>Full HTML</em>."
+
+#: plugins/types/droplet.inc:262
+msgid "<h3>Create Droplet from existing blocks</h3>"
+msgstr "<h3>Crear Aplicacioncita a partir de bloques existentes</h3>"
+
+#: plugins/types/droplet.inc:282
+msgid "<h3>Create Droplet from existing views</h3>"
+msgstr "<h3>Crear Aplicacioncita a partir de vistas existentes</h3>"
+
+#: plugins/types/droplet.inc:287
+msgid "<h3>Current Droplets</h3>"
+msgstr "<h3>Aplicacioncitas Actuales</h3>"
+
+#: plugins/types/droplet.inc:293
+msgid "<p>No droplets have been created.</p>"
+msgstr "<p>No se han creado aplicacioncitas.</p>"
+
+#: plugins/types/droplet.inc:305;335
+msgid "Create Droplet"
+msgstr "Crear Aplicacioncita"
+
+#: plugins/types/droplet.inc:308
+msgid "Block to transform"
+msgstr "Bloque a transformar"
+
+#: plugins/types/droplet.inc:311
+msgid "Select the appropriate block to create a new droplet."
+msgstr "Selecciona el bloque apropiado para crear un nuevo droplet."
+
+#: plugins/types/droplet.inc:338
+msgid "View to transform"
+msgstr "Vista a transformar"
+
+#: plugins/types/droplet.inc:341
+msgid "Select the appropriate view to create a new droplet. <br />NOTE: Droplets cannot be created from <em>default views</em>. <br />Not all views make good droplets."
+msgstr "Selecciona la vista apropiada para crear una nueva aplicacioncita. <br />NOTA: Las aplicacioncitas no pueden crearse a partir de <em>vistas por defecto</em>. <br />No todas las vistas hacen buenas aplicacioncitas."
+
+#: plugins/types/droplet.inc:389
+msgid "Droplet settings"
+msgstr "Configuración de aplicacioncita"
+
+#: plugins/types/droplet.inc:394
+msgid "Droplet title"
+msgstr "Título de aplicacioncita"
+
+#: plugins/types/droplet.inc:398
+msgid "The name of the droplet, as seen by the end user."
+msgstr "El nombre de la aplicacioncita, tal y como la ve el usuario final."
+
+#: plugins/types/droplet.inc:404;425
+msgid "There is no content to render."
+msgstr "No hay contenido para mostrar."
+
+#: plugins/types/droplet.inc:407
+msgid "<p><b>Droplet preview: </b></p><p><hr /></p><p>"
+msgstr "<p><b>Vista Previa de la aplicacioncita: </b></p><p><hr /></p>"
+
+#: plugins/types/droplet.inc:409
+msgid "</p><p><hr /></p><p class=\"description\">Content preview.</p>"
+msgstr "</p><p><hr /></p><p class=\"description\">Vista previa de contenido.</p>"
+
+#: plugins/types/droplet.inc:414
+msgid "Droplet content"
+msgstr "Contenido de la aplicacioncita"
+
+#: plugins/types/droplet.inc:418
+msgid "The content to display to the end user."
+msgstr "El contenido a mostrar para el usuario final."
+
+#: plugins/types/droplet.inc:428
+msgid "<p><b>Droplet content: </b></p><p><hr /></p>"
+msgstr "<p><b>Contenido de la aplicacioncita: </b></p><p><hr /></p>"
+
+#: plugins/types/droplet.inc:430
+msgid "<p><hr /></p><p class=\"description\">This content cannot be edited.</p>"
+msgstr "<p><hr /></p><p class=\"description\">Este contenido no puede ser editado.</p>"
+
+#: plugins/types/droplet.inc:435
+msgid "Droplet link"
+msgstr "Enlace aplicacioncita"
+
+#: plugins/types/droplet.inc:439
+msgid "Optional: The URL to click for more of this content.  Use http:// or a Drupal-formatted \"path/to/item\"."
+msgstr "Opcional: La dirección URL a la cual hacer click para ver más de este contenido.  Usa http:// o en formato Drupal \"path/to/item\"."
+
+#: plugins/types/droplet.inc:444
+msgid "Droplet xml link"
+msgstr "Enlace xml de la aplicacioncita"
+
+#: plugins/types/droplet.inc:448
+msgid "Optional: The path to the RSS/XML output for this content.  Use http:// or a Drupal-formatted \"path/to/item\"."
+msgstr "Opcional: La dirección de salida RSS/XML de este contenido. Usa http:// o en formato Drupal \"path/to/item\"."
+
+#: plugins/types/droplet.inc:459
+msgid "Droplet Icon:"
+msgstr "Icono de la Aplicacioncita:"
+
+#: plugins/types/droplet.inc:474
+msgid "Save Droplet"
+msgstr "Guardar Aplicacioncita"
+
+#: plugins/types/droplet.inc:476
+msgid "Delete This Droplet"
+msgstr "Eliminar Esta Aplicacioncita"
+
+#: plugins/types/droplet.inc:490
+msgid "<p>You are about to delete the droplet \"@title.\"  Do you wish to continue?</p>"
+msgstr "<p>Estás a punto de eliminar la aplicacioncita \"@title.\" ¿Deseas continuar?</p>"
+
+#: plugins/types/droplet.inc:492
+msgid "Confirm Deletion"
+msgstr "Confirmar Eliminación"
+
+#: plugins/types/droplet.inc:499
+msgid "<p>An invalid selection has been detected.</p>"
+msgstr "<p>Una selección incorrecta ha sido detectada.</p>"
+
+#: plugins/types/droplet.inc:515
+msgid "Another droplet already exists with the specified title."
+msgstr "Ya existe otra aplicacioncita con el título especificado."
+
+#: plugins/types/droplet.inc:530
+msgid "Your droplet has been created successfully."
+msgstr "Tu aplicacioncita ha sido creada exitosamente."
+
+#: plugins/types/droplet.inc:539
+msgid "Your droplet has been updated successfully."
+msgstr "Tu aplicacioncita ha sido actualizada exitosamente."
+
+#: plugins/types/droplet.inc:550
+msgid "Your droplet has been deleted."
+msgstr "Tu aplicacioncita ha sido eliminada."
+
+#: plugins/types/feed.inc:18
+msgid "Web Feeds"
+msgstr "Fuentes Web"
+
+#: plugins/types/feed.inc:19
+msgid "<b>Web Feeds</b>: News items for a specific Aggregator feed."
+msgstr "<b>Fuentes Web</b>: Artículos y novedades de una guente específica del Agregador."
+
+#: plugins/types/feed.inc:22
+msgid "feed"
+msgstr "fuente"
+
+#: plugins/types/feed.inc:26;239
+msgid "Add Web Feed"
+msgstr "Adicionar Fuente Web"
+
+#: plugins/types/feed.inc:27
+msgid "Web feeds from other sites can be added to your personal page. Use the search box, or select from the list provided."
+msgstr "Fuentes de otros sitios pueden ser adicionadas a tu página personal. Usa el cuadro de búsquedas, o selecciona una de la lista provista."
+
+#: plugins/types/feed.inc:50
+msgid "There are no Aggregator feeds available."
+msgstr "No hay fuentes de Agregador disponibles."
+
+#: plugins/types/feed.inc:60
+msgid "User Feed categories are not configured."
+msgstr "No se han configurado las categorías para fuentes de usuario."
+
+#: plugins/types/feed.inc:65
+msgid "Default User Feed category is not configured"
+msgstr "No se ha configurado la categoría por defecto para fuentes de usuario"
+
+#: plugins/types/feed.inc:76
+msgid "There are no users with the \"add mysite feeds\" permissions"
+msgstr "No hay usuarios con permiso para \"adicionar fuentes misitio\""
+
+#: plugins/types/feed.inc:88
+msgid "Other feeds"
+msgstr "Otras fuentes"
+
+#: plugins/types/feed.inc:137
+msgid "Could not find feed title"
+msgstr "No pudo encontrarse el título de la fuente"
+
+#: plugins/types/feed.inc:187
+msgid "Could not find feed data"
+msgstr "No pudo encontrarse la info de la fuente"
+
+#: plugins/types/feed.inc:230;420
+msgid "Feed title"
+msgstr "Título de la Fuente"
+
+#: plugins/types/feed.inc:233;424
+msgid "The name of the feed; typically the name of the web site you syndicate content from."
+msgstr "El nombre de la fuente; tipícamente el nombre del website del cual proviene el contenido."
+
+#: plugins/types/feed.inc:308
+msgid "The aggregator module is not active.  These features cannot be used."
+msgstr "El módulo del agregador no está activo. Estas facilidades no pueden usarse."
+
+#: plugins/types/feed.inc:320
+msgid "Aggregator Settings"
+msgstr "Opciones del Agregador de Fuentes"
+
+#: plugins/types/feed.inc:326
+msgid "Aggregator Feeds"
+msgstr "Fuentes del Agregador"
+
+#: plugins/types/feed.inc:327
+msgid "Allow users to add new feeds"
+msgstr "Permitir a los usuarios adicionar nuevas fuentes"
+
+#: plugins/types/feed.inc:327
+msgid "Do not allow users to add new feeds"
+msgstr "No permitir a los usuarios adicionar nuevas fuentes"
+
+#: plugins/types/feed.inc:328
+msgid "Should users be able to add feeds to their MySite page?  If so, be sure to grant the \"add mysite feeds\" permission in <a href=\"@url\">MySite access control</a>."
+msgstr "¿Deben los usuarios poder adicionar fuentes a su página MiSitio? En caso positivo, asegúrate de adicionar el permiso para \"adicionar fuentes a misitio\" en <a href=\"@url\">control de acceso MiSitiol</a>."
+
+#: plugins/types/feed.inc:339;456
+msgid "<p>There are no categories configured.  Please go to <a href=\"@url\">aggregator categories</a> to add one. <br /><b>User Feeds</b> is a good choice.</p>"
+msgstr "<p>No hay categorías configuradas. Por favor, ve a <a href=\"@url\">categorías del agregador</a> para adicionar una. <br /><b>Fuentes de los Usuarios</b> es una buena opción.</p>"
+
+#: plugins/types/feed.inc:344
+msgid "Allowed Feed Categories"
+msgstr "Categorías de Fuente Permitidas"
+
+#: plugins/types/feed.inc:346
+msgid "In which categories may users add new feeds?"
+msgstr "¿En cuáles categorías los usuarios pueden hacer nuevas fuentes?"
+
+#: plugins/types/feed.inc:356
+msgid "<p><em>There are no categories configured. After you select at least one category, you must select a default.</em></p>"
+msgstr "<p><em>No hay categorías configuradas. Luego de seleccionar al menos una categoría, debes seleccionar una por defecto.</em></p>"
+
+#: plugins/types/feed.inc:365
+msgid "Default Feed Category"
+msgstr "Categoría por Defecto de Fuente"
+
+#: plugins/types/feed.inc:368
+msgid "What is the default category for new feeds?"
+msgstr "¿Cuál es la categoría por defecto para las nuevas fuentes?"
+
+#: plugins/types/feed.inc:374
+msgid "Update interval"
+msgstr "Frecuencia de actualización"
+
+#: plugins/types/feed.inc:376
+msgid "Define the update interval for user-supplied feeds.  This value will be used for all user-submitted feeds."
+msgstr "Define el intervalo de actualización para las fuentes definidas por los usuarios. Este valor será usado para todas las fuentes definidas por los usuarios."
+
+#: plugins/types/feed.inc:395
+msgid "Add new feed"
+msgstr "Adicionar nueva fuente"
+
+#: plugins/types/feed.inc:396
+msgid "You aren't limited to existing feeds. Add any RSS or Atom web feed from your favorite sites."
+msgstr "No estás limitado a las fuentes existentes. Puedes adicionar cualquier fuente RSS o Atom de tus sitios favoritos."
+
+#: plugins/types/feed.inc:414
+msgid "Add New Web Feed"
+msgstr "Adicionar Nueva Fuente Web"
+
+#: plugins/types/feed.inc:429
+#, fuzzy
+msgid "URL"
+msgstr "URL"
+
+#: plugins/types/feed.inc:433
+msgid "The fully-qualified URL of the feed."
+msgstr "El URL completo de esta fuente."
+
+#: plugins/types/feed.inc:461
+msgid "Feed Categories"
+msgstr "Categorías de Fuentes"
+
+#: plugins/types/feed.inc:463
+msgid "Select a category for this feed"
+msgstr "Selecciona una categoría para esta fuente"
+
+#: plugins/types/feed.inc:472;484
+msgid "Submit New Feed"
+msgstr "Adicionar Nueva Fuente"
+
+#: plugins/types/feed.inc:499
+msgid "A feed named @feed already exists. <a href=\"@url\">Would you like to add it to your MySite page</a>?"
+msgstr "Una fuente llamada @feed ya existe. <a href=\"@url\">¿Deseas adicionarla a tu página de MiSitio?</a>?"
+
+#: plugins/types/feed.inc:502
+msgid "A feed named @feed already exists and has been added to your MySite page."
+msgstr "Una fuente llamada @feed ya existe y ha sido adicionada a la página de tu MiSitio."
+
+#: plugins/types/feed.inc:511
+msgid "You must enter a valid title."
+msgstr "Debes introducir un título válido."
+
+#: plugins/types/feed.inc:514
+msgid "You must enter a valid URL."
+msgstr "Debes introducir un URL válido."
+
+#: plugins/types/feed.inc:529
+msgid "<p>Failed to find RSS feed.  Please check the URL and try again.</p>"
+msgstr "<p>No se pudo encontrar la fuente RSS. Por favor, revisa la URL e intenta de nuevo.</p>"
+
+#: plugins/types/feed.inc:547
+msgid "<p>Failed to parse RSS feed.  Please check the URL and try again.</p>"
+msgstr "<p>Fallo al leer la fuente RSS. Por favor, revisa el URL e intenta de nuevo.</p>"
+
+#: plugins/types/feed.inc:557
+msgid "The feed from %site seems to be broken, due to an error \"%error\" on line %line."
+msgstr "La fuente de %site parece estar fuera de servicio, debido al error \"%error\" en la línea %line."
+
+#: plugins/types/feed.inc:558
+msgid "The feed from %site seems to be broken, because of error \"%error\" on line %line."
+msgstr "La fuente de alimentación de %site parece que no está funcionando, por el error \"%error\" en la línea %line."
+
+#: plugins/types/feed.inc:580
+msgid "A feed named @feed already exists at that url. <a href=\"@url\">Would you like to add it to your MySite page</a>?"
+msgstr "Una fuente de alimentación llamada @feed ya existe con esa dirección. ¿<a href=\"@url\">Deseas adicionarla a tu página de MiSition</a>?"
+
+#: plugins/types/feed.inc:583
+msgid "A feed named @feed already exists at that url and has been added to your MySite."
+msgstr "Una fuente de alimentación llamada @feed ya existe con esa dirección y ha sido adcionada a tu MiSitio."
+
+#: plugins/types/feed.inc:595
+msgid "Feed @feed added."
+msgstr "Fuente @feed adicionada."
+
+#: plugins/types/feed.inc:595
+msgid "view"
+msgstr "ver"
+
+#: plugins/types/feed.inc:596
+msgid "The feed @feed has been added."
+msgstr "La fuente @feed ha sido adicionada."
+
+#: plugins/types/feed.inc:703
+msgid "Copying icon file for Feed ID %fid."
+msgstr "Copiando el archivo de ícono para Fuente de Alimentación ID %fid."
+
+#: plugins/types/feed.inc:715
+msgid "The transfer of a MySite feed icon failed -- bad file extension -- for Feed ID %fid."
+msgstr "La transferencia de un ícono de fuente alimentación MiSitio ha fallado -- mala extensión de archivo -- para la Alimentación ID %fid."
+
+#: plugins/types/feed.inc:723
+msgid "The transfer of a MySite feed icon failed -- could not copy file -- for Feed ID %fid."
+msgstr "La transferencia de un ícono de fuente de alimentación MiSitio ha fallado -- no pudo copiarse el archivo -- para la Alimentación ID %fid."
+
+#: plugins/types/forum.inc:13
+msgid "Forums"
+msgstr "Foros"
+
+#: plugins/types/forum.inc:14
+msgid "<b>Forum Topics</b>: Forum posts within a specific topic."
+msgstr "<b>Tópicos en el Foro</b>: Publicaciones en los foros sobre un tóico específico."
+
+#: plugins/types/forum.inc:17
+msgid "forum posts"
+msgstr "publicaciones del foro"
+
+#: plugins/types/forum.inc:21;208
+msgid "Add Forum Topic"
+msgstr "Adicionar Tema del Foro"
+
+#: plugins/types/forum.inc:22
+msgid "You can track posts within a forum. Type a keyword to search for matching forum topics, or select from the list provided."
+msgstr "Puedes seguir las publicaciones en un foro. Escribe una palabra clave para buscar publicaciones en los foros, o selecciona de la lista provista."
+
+#: plugins/types/forum.inc:54
+msgid "There are no users with create or edit forum permissions."
+msgstr "No hay usuarios con permiso para crear o editar foros."
+
+#: plugins/types/forum.inc:96
+msgid "Could not find forum title"
+msgstr "No pudo encontrarse el título del foro"
+
+#: plugins/types/forum.inc:140
+msgid "Could not find forum data"
+msgstr "No pudo encontrarse la información del foro"
+
+#: plugins/types/forum.inc:198
+msgid "Forum title"
+msgstr "Título del foro"
+
+#: plugins/types/forum.inc:202
+msgid "The name of the forum you wish to add."
+msgstr "El nombre del foro que deseas adicionar."
+
+#: plugins/types/node.inc:13
+msgid "Posts"
+msgstr "Publicaciones"
+
+#: plugins/types/node.inc:14
+msgid "<b>Post Types</b>: Content posts of a specific type."
+msgstr "<b>Tipos de Publicaciones</b>: Publicaciones de contenido de un tipo específico."
+
+#: plugins/types/node.inc:17
+#: plugins/types/user.inc:16
+msgid "posts"
+msgstr "publicaciones"
+
+#: plugins/types/node.inc:21
+msgid "Add Posts by Type"
+msgstr "Adicionar Publicaciones por Tipo"
+
+#: plugins/types/node.inc:22
+msgid "You can add recent posts by type to your personal page. Choose from the list of available content types."
+msgstr "Puedes adicionar publicaciones recientes a tu página personal. Elige entre la lista de tipos de contenidos disponibles."
+
+#: plugins/types/node.inc:49
+#: plugins/types/post.inc:55
+msgid "No users have permission to access site content"
+msgstr "No hay usuarios con permisos para acceder a los perfiles."
+
+#: plugins/types/node.inc:99
+msgid "Could not find node title"
+msgstr "No pudo encontrarse el título del contenido"
+
+#: plugins/types/node.inc:134
+msgid "Could not find node data"
+msgstr "No pudo encontrarse la info del contenido"
+
+#: plugins/types/node.inc:216
+#: plugins/types/post.inc:277
+msgid "Allowed content types"
+msgstr "Tipos de contenido permitidos"
+
+#: plugins/types/node.inc:217
+msgid "<h3>Content types</h3><p>Enabling the options below will allow users to add recent posts of a specific content type to their MySite page.</p><p><em>If no options are selected, then all node types will be available.</em></p>"
+msgstr "<h3>Tipos de Contenido</h3><p>Activar las opciones debajo permitirán a los usuarios adicionar contenidos recientes de un tipo específico a su página MiSitio.</p><p><em>Si no se seleccionan opciones, entonces todos los nodos estarán disponibles.</em></p>"
+
+#: plugins/types/node.inc:221
+#: plugins/types/post.inc:282
+msgid "Select the content types that users may select for their MySite page."
+msgstr "Selecciona los contenidos que los usuarios pueden colocar en su página MiSitio."
+
+#: plugins/types/path.inc:13
+#, fuzzy
+msgid "Path"
+msgstr "Ruta"
+
+#: plugins/types/path.inc:14
+msgid "<b>Path Aliases</b>: Creates <em>mysite/USERNAME</em> path aliases for all MySite users."
+msgstr "<b>Aliases de Ruta</b>: Crea direcciones <em>mysite/NOMBREDEUSUARIO</em> para todos los usuarios de MiSitio."
+
+#: plugins/types/path.inc:16
+#: plugins/types/theme.inc:15
+msgid "Usability"
+msgstr "Usabilidad"
+
+#: plugins/types/popular.inc:13
+msgid "Most popular"
+msgstr "Lo Mas Popular"
+
+#: plugins/types/popular.inc:14
+msgid "<b>Most Popular</b>: The MySite content most requested by users."
+msgstr "<b>Más Popular</b>: Los contenidos más solicitados por los usuarios en MiSitio."
+
+#: plugins/types/popular.inc:21
+msgid "Add Popular Content"
+msgstr "Adicionar Contenido Popular"
+
+#: plugins/types/popular.inc:22
+msgid "Browse the list of the 100 most popular items on personal user pages."
+msgstr "Explorar la lista de los 100 elementos más populares en uso en las páginas personales."
+
+#: plugins/types/popular.inc:41
+msgid "There is no content stored in MySite pages.  Try again later."
+msgstr "No hay contenido guardado en páginas MiSitio. Intenta de nuevo más tarde."
+
+#: plugins/types/post.inc:19
+msgid "Post"
+msgstr "Publicación"
+
+#: plugins/types/post.inc:20
+msgid "<b>Posts</b>: A specific, published post."
+msgstr "<b>Publicaciones</b>: Una publicación específica, disponible."
+
+#: plugins/types/post.inc:27;179
+msgid "Add Post"
+msgstr "Adicionar publicación"
+
+#: plugins/types/post.inc:28
+msgid "You can add individual posts to your page. Search the list of active posts or browse from the list provided."
+msgstr "Puedes adicionar publicaciones individuales a tu página. Busca la lista de publicaciones activas o explora la lista provista."
+
+#: plugins/types/post.inc:112
+msgid "Could not find post data"
+msgstr "No pudo encontrarse la info del contenido"
+
+#: plugins/types/post.inc:130
+msgid "Could not find post title"
+msgstr "No pudo encontrarse el título del contenido"
+
+#: plugins/types/post.inc:278
+msgid "<h3>Content types</h3><p>Enabling the options below will allow users to add specific posts to their MySite page.</p><p><em>If no options are selected, then all node types will be available.</em></p>"
+msgstr "<h3>Tipos de Contenido</h3><p>Activar las opciones debajo permitirán a los usuarios adicionar contenidos específicos a su página MiSitio.</p><p><em>Si no se seleccionan opciones, entonces todos los nodos estarán disponibles.</em></p>"
+
+#: plugins/types/profile.inc:19
+msgid "Profile"
+msgstr "Perfil"
+
+#: plugins/types/profile.inc:20
+msgid "<b>User Profiles</b>: Selected information about the user"
+msgstr "<b>Perfiles de Usuarios</b>: Información seleccionada sobre el usuario"
+
+#: plugins/types/profile.inc:28
+msgid "Add Your Profile"
+msgstr "Adiciona Tu Perfil"
+
+#: plugins/types/profile.inc:29
+msgid "You may add your profile to your personal page."
+msgstr "Puedes adicionar tu perfil a tu página personal."
+
+#: plugins/types/profile.inc:55
+msgid "There are no users with permission to access profiles."
+msgstr "No hay usuarios con permisos para acceder a los perfiles."
+
+#: plugins/types/profile.inc:60
+msgid "No profile settings are configured for MySite."
+msgstr "No hay opciones de perfil configuradas para MiSitio."
+
+#: plugins/types/profile.inc:91
+msgid "My profile"
+msgstr "Mi perfil"
+
+#: plugins/types/profile.inc:102
+msgid "Could not find profile title."
+msgstr "No pudo encontrarse el título del perfil."
+
+#: plugins/types/profile.inc:176
+msgid "There are no valid profile options."
+msgstr "No hay opciones de perfil válidas."
+
+#: plugins/types/profile.inc:178
+msgid "Select the profile elements that will display by default on a user MySite page.  Users may edit these settings when they configure their MySite profile element."
+msgstr "Selecciona los elementos del perfil que serán mostrados por defecto en la página personal del MiSitio de los usuarios. Los usuarios pueden modificar estas opciones cuando configuren los elementos de perfil en su MiSitio."
+
+#: plugins/types/profile.inc:182
+#, fuzzy
+msgid "Reset to defaults"
+msgstr "Restaurar valores por defecto"
+
+#: plugins/types/profile.inc:221;254
+msgid "At least one option must be selected."
+msgstr "Debe seleccionarse al menos una opción."
+
+#: plugins/types/profile.inc:241
+msgid "Select the profile elements to show on your personal page."
+msgstr "Selecciona los elementos del perfil a mostrar en tu página personal."
+
+#: plugins/types/profile.inc:266
+msgid "Personal settings saved."
+msgstr "Opciones personales guardadas."
+
+#: plugins/types/profile.inc:300
+msgid "User picture"
+msgstr "Foto del usuario"
+
+#: plugins/types/profile.inc:397
+msgid "No profile information was found."
+msgstr "No se encontró información de perfil."
+
+#: plugins/types/profile.inc:443
+msgid "!name"
+msgstr "!name"
+
+#: plugins/types/profile.inc:444
+msgid "Page updated "
+msgstr "Página actualizada"
+
+#: plugins/types/profile.inc:470
+msgid "Site members can display their personal information in this space. You will be able to select which elements of your personal profile to display to others."
+msgstr "Los usuarios miembros pueden mostrar su información personal en este espacio. Puedes seleccionar cuales elementos de tu perfil personal mostrar a los demás."
+
+#: plugins/types/profile.inc:471
+msgid "Login to your account"
+msgstr "Ingresar a tu cuenta"
+
+#: plugins/types/profile.inc:472
+msgid "Sign up for an account"
+msgstr "Regístrate"
+
+#: plugins/types/term.inc:13
+msgid "Categories"
+msgstr "Categorías"
+
+#: plugins/types/term.inc:14
+msgid "<b>Categories</b>: Content assigned to a specific taxonomy term."
+msgstr "<b>Categorías</b>: Contenido asignado a una categoría específica."
+
+#: plugins/types/term.inc:21
+msgid "Add Categories"
+msgstr "Adicionar Categorías"
+
+#: plugins/types/term.inc:22
+msgid "You can track content by category. Type a keyword in the search box to find the matching category, or choose from the list provided."
+msgstr "Puedes rastrear el contenido por categoría. Escribe una palabra en el recuadro de búsqueda para encontrar la categoría correspondiente, o selecciona de la lista propuesta."
+
+#: plugins/types/term.inc:43
+msgid "There are no categories defined for the site."
+msgstr "No hay categorías definidas en este sitio."
+
+#: plugins/types/term.inc:101
+msgid "Could not find term title"
+msgstr "No pudo encontrarse título de esa categoría"
+
+#: plugins/types/term.inc:139
+msgid "Could not find term data"
+msgstr "No pudo encontrarse información de esa categoría"
+
+#: plugins/types/term.inc:190
+msgid "The content category that you wish to add."
+msgstr "La categoría de contenido que deseas adicionar."
+
+#: plugins/types/term.inc:196
+msgid "Add Category"
+msgstr "Adicionar Categoría"
+
+#: plugins/types/term.inc:320
+msgid "<p>Select the vocabularies to display to MySite users.</p><p><em>If no options are selected, then all vocabularies will be made available.</em></p>"
+msgstr "<p>Selecciona los vocabularios a desplegar para los usuarios de MiSitio.</p><p><em>Si no hay opciones seleccionadas, entonces todos los vocabularios quedarán disponibles.</em></p>"
+
+#: plugins/types/term.inc:326
+msgid "What vocabularies should be displayed to MySite users?"
+msgstr "Qué vocabularios deben mostrarse a los usuarios de MiSitio?"
+
+#: plugins/types/theme.inc:13
+msgid "<b>Theme Switching</b>: Enables users to choose a theme for MySite."
+msgstr "<b>Cambiar de Tema</b>: Permite a los usuarios elegir un tema para MiSitio."
+
+#: plugins/types/theme.inc:43
+msgid "There must be more than one enabled theme."
+msgstr "Debe haber más de un tema activado."
+
+#: plugins/types/theme.inc:53
+msgid "More than one MySite theme must be configured."
+msgstr "Más de un tema de MiSitio debe ser configurado."
+
+#: plugins/types/theme.inc:76
+msgid "Allowed themes"
+msgstr "Estilos permitidos"
+
+#: plugins/types/theme.inc:80
+msgid "Select the themes that users may select for their MySite page."
+msgstr "Selecciona los temas que los usuarios pueden elegir para su página de MiSitio."
+
+#: plugins/types/theme.inc:130
+msgid "Screenshot for %theme theme"
+msgstr "Captura de pantalla del tema %theme"
+
+#: plugins/types/theme.inc:130
+msgid "no screenshot"
+msgstr "no hay captura de pantalla"
+
+#: plugins/types/user.inc:12
+msgid "Users"
+msgstr "Usuarios"
+
+#: plugins/types/user.inc:13
+msgid "<b>User Posts</b>: Content posted by a specific user."
+msgstr "<b>Publicaciones de Usuario</b>: Contenido publicado por un usuario específico."
+
+#: plugins/types/user.inc:20;207
+msgid "Add User Posts"
+msgstr "Adicionar Publicaciones de Usuario"
+
+#: plugins/types/user.inc:21
+msgid "You can choose to track postings by specific users. Type a user name in the search box, or choose from the list of active contributors."
+msgstr "Puedes elegir seguir las publicaciones de usuarios específicos. Escribe un nombre de usuario en el recuadro, o elígelo de la lista de participantes activos."
+
+#: plugins/types/user.inc:47
+msgid "There are no users with permission to access content."
+msgstr "No hay usuarios con permisos para acceder al contenido."
+
+#: plugins/types/user.inc:52
+msgid "No user roles are configured for MySite."
+msgstr "No hay roles de usuarios configurados para MiSitio."
+
+#: plugins/types/user.inc:98
+msgid "Could not find user title."
+msgstr "No pudo encontrarse el título del usuario."
+
+#: plugins/types/user.inc:133
+msgid "Could not find user data"
+msgstr "No pudo encontrarse información del usuario."
+
+#: plugins/types/user.inc:201
+msgid "The user name of the user you wish to add."
+msgstr "El nombre de usuario del usuario que deseas adicionar."
+
+#: plugins/types/user.inc:229
+msgid "The user posts of @user"
+msgstr "Pubicaciones recientes de @user"
+
+#: plugins/types/user.inc:301
+msgid "Allowed user roles"
+msgstr "Roles de usuario permitidos"
+
+#: plugins/types/user.inc:302
+msgid "<h3>User posts</h3><p>Enabling the options below will allow users to add recent posts from a specific user to their personal page.  The users available may be restricted to only the roles selected below.</p>"
+msgstr "<h3>Publicaciones de Usuarios</h3><p>Activar esta opción permite a los usuarios adicionar publicaciones recientes de un usuario específico a su página personal. Los usuarios disponibles pueden ser restringidos a los roles indicados debajo.</p>"
+
+#: plugins/types/user.inc:306
+msgid "Select the user roles that may be added to a MySite page. <br /><em>NOTE: Adding <b>authenticated user</b> will enable all roles except <b>anonymous user</b>.</em>"
+msgstr "Selecciona los roles de usuarios que pueden ser adicionados a una página de MiSitio. <br /><em>NOTA: Adicionar <b>usuario autenticado</b> activará todos los roles menos <b>usuario anónimo</b>.</em>"
+

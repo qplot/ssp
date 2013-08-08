@@ -1,0 +1,864 @@
+// $Id: CHANGELOG.txt,v 1.131 2008/10/01 14:01:37 agentken Exp $
+
+/**
+ * @file
+ * Changelog file for the MySite and MySite Icons modules.
+ */
+
+MySite
+-------
+author: agentrickard
+version: Drupal 5.x
+
+CHANGELOG
+========
+
+01-OCT-2008
+  -- #309218 fixes error in calculating collection limits.
+  -- Creates the 5.x.3.3 release.
+
+27-APR-2008
+  -- #251891 by markhb1.  Fixes logic error in mysite_view().
+  -- Creates the 5.x.3.2 release.
+
+27-APR-2008
+  -- Fixes issue with mysite-default page.
+  -- #248726 by bangpound.  Fixes issue with theming mysite_links().
+  -- #250393 by patchak.  Adds z-index to mysite-links.css to avoid overlap with other divs.
+  -- Creates the 5.x.3.1 release.
+  
+11-APR-2008
+  -- Creates the 5.x.3.0 release.
+
+06-APR-2008
+  -- Finishes cleanup up of API and code style.
+  -- Creates 5.x.3rc2
+
+31-MAR-2008
+  -- Cleans up profile settings form.
+  -- #230919 by WiseOZ.  Fixed display error for droplet source links.
+  -- Cleans up code style issues.
+  -- Cleans up API documentation.
+
+12-FEB-2008
+  -- #220146 by WiSeOz.  Default pages could not be removed by the admin.
+  -- Default page names are no inherited when user creates a new collection.
+  -- #219879 by WiSeOz.  Custom description text needed when changing
+      default text in the UI.
+  -- Profile include did not respect custom settings.
+
+08-FEB-2008
+  -- #219450 by kpaul and IceCreamYou.  Bug in access denied usage.
+
+07-FEB-2008
+  -- #219019.  Feed include can produce an error if the admin is trying to add a feed.
+  -- #218777 by IceCeamYou.  Enabling the MySite cache can cause an empty array
+      to be passed if the user has no MySite page content.
+  -- Changes output message when no content exists.  Message is now sensitive
+      to who the user is.
+  -- Corrects an issue where users with the View permission but not the Edit
+      permission are given the wrong error message.
+
+05-FEB-2008
+  -- #215095 by gustav.  Fixes JavaScript failure on IE for mysite_links.
+  -- #217543 fixes bug in generating add/remove content links.
+
+24-JAN-2008
+  -- #213336.  Static variable caching in mysite_get() caused redirect failures
+      for users trying to create new MySite accounts.
+
+20-JAN-2008
+  -- #210510. Partial change to droplet.inc for killes, to show the originating block or view data.
+      We need to make this a link to the original.
+  -- #208887 by atuyo60.  Incorrect use of t() in theme_mysite_submenu() causes
+      errors for non-English translations.
+  -- The following bugs are all related to changes in mysite_get_includes() and improper
+      use of static variables.
+    -- #208895 by atuyo60
+    -- #208276 by relkiman
+    -- #208610 by LouBabe
+  -- Fixes mysite_load_includes() to throw a warning when no includes are active.
+  -- Fixes an issue where content pages for disabled includes could still be loaded.
+
+09-JAN-2008
+  -- #207524 by ajayg.  The function theme_mysite_content_help() had
+      hardcoded the page to be 0, the first page, causing new content to
+      by added to the home page instead of a subpage when linked to from
+      an empty collection page.
+
+06-JAN-2008
+  -- #206721 by WiSeOz.  The profile.inc needs to force user_load() in order
+      to fetch all user profile data from contributed modules.
+  -- Profile.inc does not require the profile module, just the user module.
+  -- Cleans up missing profile element titles on the settings page.
+
+05-JAN-2008 (2)
+  -- Applies #206480 to the contrib folder as well.
+
+05-JAN-2008
+  -- Moves the creation of {mysite_page} initial records into an undate function, which
+      is where it belongs.
+  -- #206480 by IceCreamYou.  Title checks in blocks may fail because of ndoe access rules.
+      alters the api in mysite_type_hook_block() to account for this.
+  -- #198904 by mariano.barcia.  Provides a Views query substitution if the view is called
+      from a MySite page.
+
+02-JAN-2008
+  -- #205441 by WiSeOz.  Profile.inc always links to user/0.
+  -- #205252 by WiSeOz.  Profile.inc default settings did not use user 1.
+  -- Profile.inc did not check for module_exists in mysite_type_profile_options.
+  -- Fixes logic errors in mysite_reset sequence.
+  -- Fixes menu handling issue with item configuration screen.
+  -- Allows a user to change settings for all pages at once.
+
+30-DEC-2007
+  -- #204876.  Cleans up duplicate admin account creation.
+  -- Allows for multiple default pages.
+  -- Removes stray print debug statement.
+  -- Fixes logic error in theme_mysite_empty_column().
+  -- Cleans up the page deletion sequence.
+
+29-DEC-2007 (2)
+  -- Restores theme switching to 5.x.3.
+  -- Changes mysite/all to mysite-all and mysite/default to mysite-default to avoid
+      conflicts with path aliases for specific user names.
+  -- Releases 5.x.3-beta1.
+
+29-DEC-2007
+  -- Fixes pgSQL installer.
+  -- Corrects item settings page.
+  -- Changes permission from -view all mysites- to -view mysite- for consistency.
+  -- Users must now have the -view mysite- permission to see personal pages.
+  -- Fixes drag-and-drop sorting for multiple pages.
+  -- Fixes menu issues associated with new features.
+  -- Returns the old -move.png- file.
+  -- Removes a stray db_queryd().
+
+24-DEC-2007
+  -- Multiple pages now function, but need bug testing.
+  -- More database cleanup.
+
+24-DEC-2007
+  -- Adds page creation and removal logic to support multiple pages.
+  -- Database schema changes discovered during testing.
+
+22-DEC-2007 (2)
+  -- Uses static variables to eliminate redundant database queries.
+  -- Begins structure of new menu callbacks.
+
+22-DEC-2007
+  -- Cleans up the install and uninstall functions.  Needs pgSQL testing.
+  -- Adds integration with Domain Access.
+  -- Cleans up settings page, placing default items on top and formatting the Content Settings using
+      a proper form theme function.
+  -- Replaces current icon set with new icons, which are more consistent with Drupal standards.
+  -- Fixes error with possible null value passed to load includes.
+
+21-DEC-2007 (2)
+  -- Adds the update sql functions to create the database schema for mutliple page support.
+
+21-DEC-2007
+  -- #202816 by New Oceans.  teasers.theme prints current time instead of element time.
+  -- #202500 by andreash.  Trailing comma in mysite.install causes pgSQL failure.
+
+28-NOV-2007
+  -- Fixes additional translation string.
+  -- #190588 by ThriLLzadar.  Fixes mysite_links.css problem on Windows browsers.
+
+04-NOV-2007
+  -- #188714 by patchak.  Fixes some missing translation strings in mysite.module.
+
+28-OCT-2007
+  -- #186755 by mikesmullin.  Fixes logic error in changing element titles.  Fix also edits refine.inc.
+  -- Applies the remainder of the #186751 patch.
+
+26-OCT-2007
+  -- #186761 patch by mikesmullin.  Change to mysite_theme_hook() breaks the element configuration screen.
+
+24-OCT-2007
+  -- #185863 by roblang.  Some host configurations make MySite Icons throw an error by trying to write to a bad directory.
+      This fix makes the downloading of RSS icons to the local server optional and configurable.  Small change to feed.inc as well.
+ -- #185988 by sambtaylor.  Allows the admin to change the name of the MySite menu item as a module setting.
+
+23-OCT-2007
+  -- Starts the change to the 5.x.3 release.  This commit breaks the MySite menu hook.
+  -- THIS VERSION OF THE MODULE IS NOT STABLE.
+  -- #150654 by jofaglia. Cleans up forms by theming complex elements into tables.  Removes CSS errors reported in some browsers.
+      This fix makes some small changes to theme.inc and mysite_theme_hook().
+  -- Cleans up some capitalization inconsistencies in layout files.
+  -- Renames mysite_type_theme_list() to mysite_type_theme_data().
+  -- #185429 by Walt Esquivel and bonobo.  Fixes css problem with content elements that extend beyond the size of the container.
+
+21-OCT-2007 (5)
+  -- Form handling error on mysite_delete_form caused wrong UID to be loaded.
+  -- mysite_create_account() fired too late if the user clicked on the Content tab.
+  -- Fixes form redirect when admin is changing default setting for a content item.
+
+21-OCT-2007 (4)
+  -- #174674.  Logic error adds settings on pages where they should not load.
+
+21-OCT-2007 (3)
+  -- #174674.  Logic error forces some settings pages to disappear.
+
+21-OCT-2007 (2)
+  -- Moves most of mysite_help into the mysite_help.inc file, for easier reading of the code.
+
+21-OCT-2007
+  -- Moves mysite_icon module into its own folder.
+
+17-OCT-2007
+  -- #184159 by drayen.  Fixes logic error in mysite_prepare_columns().
+  -- #182742.  Clears the mysite cache when turned off.
+
+07-OCT-2007
+  -- #174673 patch by tdeknich and mdekkers: Adds configuration options for strings used in the MySite UI.
+
+04-OCT-2007
+  -- #180844. Logic error in displaying the Reset to Defaults link.
+
+12-SEP-2007
+  -- Linebreaks in post.inc were DOS encoded.  Fixed to use Unix-encoding.
+
+11-SEP-2007
+  -- #168317 by patchak and tsavino.  mysite_prepare_columns() does not work correctly for
+      users with limited permissions.
+
+10-SEP-2007
+  -- #174433 by funana.  Feeds not being categorized correctly.
+
+09-SEP-2007
+  -- Adds remote debugging capabilites for checking versions.
+
+08-SEP-2007
+  -- Fixes layout separation issue for teaser.theme.  Minor change to mysite.css.  Adds end-item div.
+  -- Minor update to INSTALL.txt.
+  -- Removed a debug statement from mysite_render().
+  -- #171478 by tsavino.  Fixes css issue with layout selection form.
+
+02-SEP-2007
+  -- hook_link should only be invoked if user can create a MySite collection.
+  -- Creates 5.x.2.11 release.
+  -- Branches the 5.x.2 branch to prepare for pages in 5.x.3.
+
+01-SEP-2007 (3)
+  -- #172408 was fixed incorrectly.  Use http://drupal.org/files/issues/mysite-delete_0.patch to patch.
+  -- I am not rolling a third release tonight after mucking up the last two.
+
+01-SEP-2007 (2)
+  -- #172408.  Error in delete confirmation logic causes failure to delete.
+  -- #172409.  hook_link() returns empty for anonymous users.
+  -- Creates 5.x.2.10 release.
+  -- At this point, I will branch the code to start working on 5.x.3, featuring #145423
+
+01-SEP-2007
+  -- Adds WdigetBox link to Droplet creation page.  WidgetBox is a JS service for providing remote applications
+      to your web site, similar to Google Gadgets.  http://widgetbox.com/
+  -- Adds implementaton of hook_link() with JavaScript collapsible options.  Can be used to replace the MySite Block.
+      Needs documentation and testing on browsers.
+  -- #168317 by patchak and gsadler.  Fixes an array collapsing error in mysite_prepare_columns() that could
+      throw an error if a multi-region layout had blank regions and then was set to a layout with fewer regions.
+  -- Adds documentation for #156445.
+  -- Adds mysite-links.css and mysite-links.js
+  -- Creates the 5.x.2.9 release.
+
+27-AUG-2007
+  -- #156445 by mounte. Admins may now set an option to allow users to confirm deletion of items.
+      Needs documentation and will require running update.php.
+
+26-AUG-2007
+  -- Related to #156445. Now adds a jQuery message to the user after state change for drag-and-drop.
+
+22-AUG-2007
+  -- #169610 fixes issue with db_rewrite_sql and table abbreviations in post.inc and comment.inc.
+  -- blog.inc did not use db_rewrite_sql() when searching content lists.  It also did not LOWER the search term.
+  -- term.in did not LOWER the search term.
+  -- user.inc did not LOWER the search term.
+  -- Release 5.x.2.8
+
+20-AUG-2007
+  -- FIxes documentation of mysite_display().
+
+19-AUG-2007
+  -- #167148 by icefire. Adds delete user page function.
+  -- #165324 by heebiejeebieclub. Adds post.inc to allow the selection of individual nodes.
+  -- #165632 by patchak.  Corrects documentation regarding the removal of page regions.
+      When set to TRUE, only the left and right rails are disabled.
+  -- #167364 Fixes error with blog title for user 0.  Allows block handler to accept 0 as a valid id.
+  -- Changes the node.inc settings so that no configuration allows all types. Simplifying configuration.
+  -- Changes the term.inc settings so that no configuration allows all terms.  Simplifying configuration.
+  -- Allows the forum vocabulary to be included in the terms list.
+  -- Fixes error in mysite_type_term_block(); admin filters were not applied.
+  -- Removes comment as a category class.
+  -- Changes the name of Posts to Post Types in the admin UI.
+  -- Adds type string to data error messages for easier debugging.
+  -- Creates 5.x.2.7 release.
+
+10-AUG-2007
+  -- #166170 patch by alienator fixes error in pgsql installer.
+
+07-AUG-2007
+  -- #165262 typo in mysite_type_comment_clear().
+  -- #164918 comment #8, fixes permission check for adding feeds.
+  -- #165260 fixes errors in mysite_type_hook_block_node.
+  -- Creates 5.x.2.6 release.
+
+
+06-AUG-2007
+  -- #164918 by xeniox.  Fixes error in mysite_type_feed_active().  Fixes caching issue related to drag-and-drop sorting.
+  -- #153560 by mounte.  Allows users to reset their personal content to the default settings state.
+  -- #152917 by mounte.  Allows the administrator to lock certain content so that it appears on all user MySite pages.
+  -- Cleans up handling of mysite_type_hook_block_node.
+  -- Adds comment.inc to handle comments on individual posts.
+  -- Creates 5.x.2.5 release.  Requires running update.php and modifications to custom layout files.
+
+29-JUL-2007
+  -- Adds mysite_render() and mysite_display() to allow the presentation of MySite-generated content in external locations like theme snippets, panels, and blocks.
+  -- Cleaning up API documentation errors and small typos.
+  -- Fixed a permissions check typo in mysite_page().
+  -- Fixed a permissions check typo in book.inc
+
+22-JUL-2007
+  -- 5.x.2.4 release.
+  -- #160310 patch by mdekkers.  Error in menu callback caused autocomplete functions to fail.
+  -- #158378 by kforet. MySite cache mechanism requires all format files to be preloaded.  Also needs to check expiry in case garbage collection has not run.
+  -- #159581. Fixes logic error that allowed profiles to be stored with type_if of both 0 (zero) and UID.
+  -- Prevents alias creation for path mysite/0.
+  -- Cleans up and adds some Doxygen comments.
+
+07-JUL-2007
+  -- #153570 by kforet and #157164 by Zahor.  Passing empty arrays when theme_mysite_*_help() invoked.
+
+01-JUL-2007
+  -- Fixes CSS class typo in stacks.php.
+
+30-JUN-2007 (2)
+  -- Opens #155879 to track typos.
+  -- Fixes UI typo in profile.inc.
+
+30-JUN-2007
+  -- #155172 by greggles.  Fixes omission of page region assignment for users without JavaScript.
+  -- #154743 by olio.  Cache errors in popular.inc causing display issues.
+  -- Adds install notes for users without JavaScript.
+
+28-JUN-2007
+  -- #155022 by sos4nt. Fixes error with infinite loop under certain conditions.
+  -- #154764 by kokoyote.  Fixes problem when profile categories have spaces in names.
+  -- Fixes typo in API.php
+
+25-JUN-2007
+  -- #150919 by a great place... fixed by sos4nt, errors in mysite_icon.install.
+  -- Incorporates dww change to remove $Name: DRUPAL-5--3-3 $ from .info files.
+  -- Release of 5.x.2.2
+
+13-JUN-2007
+  -- MySite 5.x.2.1 released
+  -- #151574 by ilera.  Personal theme settings fails because theme.inc was not loaded properly.
+  -- #151151 by bloggybusiness.  Will now send users to their own page when they try to view a private MySite page.
+  -- Fixes wrong css div call when theming help for users with blank MySite content.  See theme_mysite_content_help().
+  -- Corrects format load error when displaying an empty region.  Change is in mysite_prepare_columns().
+  -- Use of sort($rows) in mysite_content() reversed the region ordering of the content array.  Removed.
+  -- The update query in mysite_content_add() failed to pass the $position value and did not update the sort column correctly.
+
+12-JUN-2007 (3)
+  -- Cleans up API.php document @mainpage.
+
+12-JUN-2007 (2)
+  -- #151151 by bloggybusiness.  Fixes permission check issues in mysite_page() and mysite_user().
+  -- Also uncovered accidental profile.inc error in checking data to show to anonymous users.
+  -- Edit to theme_mysite_anonymous_help() for clarity.
+
+12-JUN-2007
+  -- #151249 by mounte.  Error in configuration for feed.inc allows empty array to be passed to a foreach loop.
+  -- Cleans up small typos in README.
+
+09-JUN-2007 (2)
+  -- MySite 5.x.2.0 released.
+  -- Fixes title error in refine.inc.
+  -- Returns storylink.inc plugin to the contrib folder
+  -- Removes empty lines from blog.inc
+  -- Minor change to descriptions in mysite_icon_menu().
+
+09-JUN-2007
+  -- Returns the refine-by-taxonomy plugin to the contrib folder
+  -- Removes trailing s from settings submenu items.
+  -- Adds INSTALL.txt note about API changes.
+
+08-JUN-2007
+  -- Removes the deletion options from node.inc under mysite_type_node_settings().  These options were confusing and inconsistent.
+  -- Adds mysite_activate() to let admins activate plugins from type settings pages.  Just for yelvington.
+  -- Fixes misuse of callback arguments in mysite_menu().
+
+05-JUN-2007
+  -- #149514 by suchold-it.  Menu permissions issues.  Corrects a bug in the menu callbacks that required users to have both the View All MySites and the Edit MySite permission.
+  -- Adds access checking to user help theme functions.
+  -- Fixes the ugly CSS hack for the submenu during MySite settings pages.  Now floats properly without the extra padding.
+  -- Missing .= in mysite_type_theme_active().
+  -- Adds theme_mysite_no_options() to present message to users when no content is present.
+
+04-JUN-2007
+  -- #149033 by suchold-it.  Fixes problem where elements inside a MySite content block are not clickable.
+  -- Edits the mysite.js file to use a handler element for dragging items.
+  -- Tightens up the content listing CSS.
+
+02-JUN-2007 (2)
+  -- Adds the weblinks.inc file to contributions.  See #138754 by suchold-it.
+  -- Adds biblio.inc to contributions.  See #98029 by csc4.
+
+02-JUN-2007
+  -- Fixes theme_mysite_icon_default to use absolute URLs since the CSS url() command is invoked by a theme and we don't know which
+      directory the theme is in relative to mysite/plugins/icons.
+  -- Truncates icon text to 32 characters to prevent sloppy default icons.
+  -- Moved mysite_icon_change_form_validate() and mysite_icon_add_form_validate() into their respective _submit() functions because
+      otherwise the new filename created by mysite_validate_icon() does not get passed correctly from _validate() to _submit().
+  -- Adds winter.CSS file to Styles.
+  -- Adds a MySite tab to the user view page.
+  -- Renames menu permissions.  Separating $owner from $create and checking $owner status once.
+  -- Finished updating README.txt
+  -- Makes author a link if UID is present in teasers.theme.
+  -- Updating API.php and functions definitions.
+  -- Removes erroneous module_exists('blog') check in popular.inc
+  -- Removes trailing ?> from profile.inc
+  -- Removes useless mysite_load_includes("themes") from mysite_edit_form().
+  -- Moves Doxygen definitions in to API.php from mysite.module
+  -- Fixes array_splice / unset mistake in displaying Content Types in mysite_configure()
+  -- #147926. Changes Interface "axis" setting to "float".
+  -- Edits mysite_type_droplet_active() to require a droplet be created.
+  -- Changes the display name of Droplets from Content to Droplet.
+  -- Edits droplet.inc to use theme_mysite_icon() in add/change form.
+  -- Changes the Special content type to MySite content type for sorting.
+  -- Updates mysite_help() to version 5.x.2.
+
+22-MAY-2007 (2)
+  -- #145951 fixes CSS alignment issue in mysite-footer div.
+
+22-MAY-2007
+  -- Makes the MySite Icon folder name required.
+  -- Corrects errors in mysite_type_term_settings_form default values.
+  -- Updates INSTALL.txt to version 5.x.2.0.
+  -- Begins update of README.txt to version 5.x.2.0.
+
+21-MAY-2007
+  -- Fixes logic error in mysite_type_term_active() in calculating null settings. Switch from array_flip and unset to array_sum().
+  -- Changes user.inc to use array_sum() in hook_active().
+  -- Remove debug print statement from popular.inc
+  -- Slices the options array in popular.inc to return only the top 100 items.
+  -- Improves logic in mysite_edit_form() to avoid loading items not needed.
+  -- Removes the "mysite" element from profile options in profile.inc.
+
+19-MAY-2007 (2)
+  -- Changes mysite_get() to retrieve layout, style, and format information.
+  -- Makes format setting the default per user and lets the user set format per item in their collection.
+  -- Now users the user stylesheet for displaying format options.
+
+19-MAY-2007
+  -- Adds forest.CSS file and sunset.css file.
+  -- Renames blue.css to sky.css
+  -- Renames red.css to fire.css
+  -- Adds update sql to rename styles stored in database.
+  -- Adds popular.inc to show the most popular content items added to user MySite pages.
+
+18-MAY-2007
+  -- Fixes logic error in mysite_content() sorting table.  $i == 0 not $ == 1 to start.
+  -- Removes dependency on collapse.js.  Since <fieldset> is only XHTML valid for forms, the mysite.js file
+     now handles collapsing elements with <div> tags.  Also integrates better with jQuery interface and
+     makes for easier CSS styling of content display.
+  -- Changes to all layout files to follow new CSS/JS syntax.
+  -- Prefixes sortable ids with am _m_ because you cannot use a number for a CSS classname.
+  -- Changes to all css files for new CSS/JS syntax.
+  -- Adds midnight.css file.
+  -- Adds stacks.php layout file and stacks.png image.
+  -- Changes mysite_content() to account for empty regions in the layout.
+  -- Adds individual documentation README files for the plugins directories.
+
+17-MAY-2007
+  -- #144656 patch by Frando, reported by jamon8888.  Fixes Call-time pass-by-reference errors.
+  -- Fixes path error in mysite_type_feed_image().
+
+16-MAY-2007
+  -- Minor change to mysite.css drag colors.
+  -- CSS changes to make the cursor a pointer only on section headings.
+  -- Rewrites profile.inc so that it always loads the profile of the page owner, regardless of $type_id.
+      Doing so prevents users from showing the profiles of other users on their MySite page.
+  -- Corrects missing $position variable in mysite_content_add() sql.
+  -- Corrected mysite_type_hook_update() to mysite_type_hook_updated() to avoid conflicts with hook_update().
+
+15-MAY-2007
+  -- #144187 by haimoura. Fixes empty array error when viewing a MySite page with no content.
+  -- Fixes logic error that caused mysite.css to be omitted on admin pages.
+  -- Fixes logic error in mysite_content_settings_form_submit()
+  -- Fixes error in book.inc to include the parent node as part of the data collection.
+  -- Removed redundant module_exists('user') check in user.inc
+  -- Fixes key naming error in mysite_user().
+  -- Adds profile.inc to handle user profiles
+  -- Deprecates the mysite profile link in layout files in favor of profile.inc
+  -- Adds updated to the mysite_get() return
+  -- Fixes typos in lines 213 and 220 of mysite_update_5().
+  -- Adds $settings to mysite_type_hook_data() function
+
+14-MAY-2007
+  -- #143890 by groovy.  Fixes duplicate page output error for users with no MySite page.
+  -- Finished up drag-and-drop elements.
+  -- Moves default.css into mysite.css.
+  -- Adds mysite_layout_hook() for layout data.
+  -- Adds individual settings for content items.
+  -- Adds 'settings' column to {mysite_data}
+  -- Introduces mysite_type_hook_content_form() to add elements to the item configuration form.
+  -- Adds the following to plugins/icons/
+    -- backing.png
+    -- move.png
+    -- settings.png
+  -- Updates the layout icons to look nicer.
+  -- Adds triple.png to layouts folder.
+  -- Removes redundant css calls from blue.css and red.css
+
+13-MAY-2007
+  -- Returns drag-and-drop sorting to MySite.
+  -- Requires jQuery Update and jQuery Interface modules.
+  -- Adds triple.php layout file.
+  -- Temporary 'mysite-grabber' style to highlight drag-and-drop
+
+11-MAY-2007 (3)
+  -- Removes redundant call to prefix/suffix in mysite_icon module.
+
+11-MAY-2007 (2)
+  -- Fixes typo in pgsql routine of mysite_update_5().
+
+11-MAY-2007
+  -- Fixes typo in mysite.install mysite_update_5().
+  -- Fixes file name error in uploads for MySite Icon module.
+  -- Fixed logic error in mysite_menu() that caused default settings to fail.
+  -- Added the FALSE parameter to check_markup for Droplet contents.  All users need to see the assigned format filter.
+      See http://api.drupal.org/api/5/function/check_markup for information.
+  -- mysite_type_book_options() accidentally called mysite_type_blog_title().
+  -- Fixes logic error in mysite_type_node_active().
+  -- Cleans up icon handling to check that the files/mysite directory exists before any icon handling is attempted.
+  -- Cleans up some dirty logic in mysite_menu().
+  -- Fixes logic error in mysite_type_droplet_settings_form_validate().  Title checking not necessary on delete.
+  -- Prints a message to site admins if a content type using mysite_type_hook_settings() is not configured.
+      The new function mysite_check_settings($type) handles this message.
+  -- Updates the icon set used by MySite Icons.
+  -- Minor changes to mysite.css icon classes.
+  -- Corrected MySite Icon module to work with private file downloads.
+
+09-MAY-2007
+  -- Code cleanup via the coder.module
+  -- Writing API.php for documentation
+  -- #135378 by jenadmin. Adds public/private default setting under MySite settings.
+
+02-MAY-2007 (2)
+  -- Preparing Doxygen documentation.
+  -- Renamed mysite_form_content() to mysite_content_form().
+
+02-MAY-2007
+  -- Added a 'category' element to the mysite_type() array.  Allows sorting of type plugins by category.
+  -- Changes logic check for loading 'content' submenu to: is_numeric(arg(1)) from arg(1) == $user->uid.
+  -- Adds a user.inc file for tracking specific user posts.
+  -- User selection can be restricted by role in user.inc.
+  -- Adds an 'admin' element to the mysite_type() array.  This lets us drop a redundant $options lookup.
+  -- API documentation now will be provided by the API module (http://drupal.org/project/api).
+      The README.txt file will be rewritten as a result.
+  -- API documentation will be stored at http://therickards.com/api
+
+29-APR-2007 (2)
+  -- #118934 by zaphod280380.  Adds node.inc to handle CCK and other generic node types.
+  -- Removes the redundant module_exists('block') check in mysite_type_droplet().  Block is required.
+  -- Corrected a case where an infinite loop can be called during mysite_type_{name}_title.  Load options must be FALSE.
+  -- Corrected error where mysite_type_options() didn't use mysite_type_title() consistently.
+
+29-APR-2007
+  -- Introduces the MySIte Icons module for option icon-based content selection and administrative icon handling.  This is an optional module.
+  -- #135378 by jenadmin. Fixes book.inc access restrictions by wrapping the options in db_rewrite_sql().
+  -- Updates the type includes to use the new icon handling API.
+  -- Adds three classes to mysite.css for icon handling.
+  -- Changed name of "Icon Settings" to "Action Buttons" to avoid confusion with new icon handling.
+  -- Set default Action Buttons to '1' instead of '0' -- now used action icons by default.
+  -- Cleaned up user_access checks in mysite_menu() to eliminate redundancy.
+  -- Fixed 'first' and 'last' in the mysite_pager() function.
+  -- Turned submenu nav variables into globals so they don't have to be loaded multiple times.
+  -- Added css to make the action buttons float: right.  Standardized the css files.
+  -- Added mysite_teaser() function to generate themeable teasers for CCK nodes.
+  -- Removes the restriction that required feeds to be categorized.
+  -- Fixed a layout issue with the icon panel not breaking groups correctly.
+  -- Adds mysite_type_{name}_active() check for administrators to give configuration warnings.
+  -- Changes the behavior of feed images. These are now handled like other icons.
+
+18-APR-2007
+  -- Updated INSTALL.txt
+  -- Fixes layout logic error with icon panel.
+  -- Saves aggregator feed icons locally. (Pending testing).
+  -- Removes threshold definitions from type includes.
+  -- Adds icon element to the $options array.
+  -- Cleans up icon theming.
+  -- Fixes some capitalization issues.
+
+17-APR-2007
+  -- Adds icon-based browsing of content.
+  -- Deprecates the "THRESHOLD" setting for a universal variable, set by the admin
+  -- Minor text correction to blog.inc
+
+17-APR-2007
+  -- Adds icon upload for custom Droplets.
+  -- Adds generic icons for content types. (color coded)
+  -- Replaces old icon set with new, custom icons created for MySite
+  -- Adds check_plain() to mysite_get_custom title generation.
+  -- Removes translation files.  I will no longer maintain these files.
+
+16-APR-2007
+  -- Finishes code to allow the creation of droplets from blocks and views.
+
+15-APR-2007 (3)
+  -- Fixes a drupal_goto() error upon deletion of a droplet.
+
+15-APR-2007 (2)
+  -- Allows the automated creation of droplets from blocks.
+
+15-APR-2007
+  -- #136520 Prevents the loading of inactive type includes.
+
+13-APR-2007
+  -- Initial commit of "Droplets" of content.
+  -- Adds droplet.inc plugin.
+
+06-APR-2007 (5)
+  -- Paves the way for "droplets" of content to be added to MySite.
+  -- Fixes logic error in placing footer on fullscreen views.
+
+06-APR-2007 (4)
+  -- Updating documentation in README.txt and INSTALL.txt.
+  -- Revising online help text.
+
+06-APR-2007 (3)
+  -- Removes &nbsp; from output.
+
+06-APR-2007 (2)
+  -- Fixes some author name errors and layout issues with teasers.theme
+  -- Better sample data for format selection screen.
+  -- Fixes minor display issue for sub title elements.
+
+06-APR-2007
+  -- Added $header and $footer messages to properly address two issues.
+      1. Messages to anonymous users should not be passed via drupal_set_message(), since this invalidates page cache.
+      2. With MySite pages printed without blocks, the site footer was omitted.
+      Both of these elements are part of the layout files now.  They are printed wrapped in default Drupal css to maximize compatibility.
+
+04-APR-2007
+  -- SQL parameter error in feed.inc corrected.
+
+03-APR-2007
+  -- #124955. Fix in theme.inc
+
+03-APR-2007
+  -- Massive code changes.  Bad form, I know.
+  -- Created mysite_sitename() function.
+  -- Fixed bad comma in line 45 of blog.inc
+  -- Changes user strings referring to 'MySite'  -- users don't care what the name of the module is.
+  -- theme_mysite_block_help incorrectly used $owner instead of $user.
+  -- Added auto-create function for new users hitting /edit or /content for the first time.
+  -- Successfully split the Add Content page into sub-pages -- test if only one option is available.
+  -- Minor change to feed.inc (changed the label to work with new menu).
+  -- Fixes group collapse settings in columns.php
+  -- Adds setting to show MySite pages fullscreen -- eliminating blocks and rails.
+  -- Changed item THRESHOLD to 25.  Now paginated.
+  -- Split the user page edit screen into discrete stages! Much easier to use.
+  -- Admins can now set default content for anonymous and new users!
+  -- Fixed a layout issue; only shows profile link when $user->name is present.
+
+20-MAR-2007
+  -- #129228 by dsp1.  Fixes removal of UTF directive in mysite.install.  Requires running update.php.
+  -- Corrected syntax for updating to UTF-8.
+  -- #128374.  Added permission check for the 'edit own blog' to show blog link in block.
+  -- #129624.  Check privacy flag on MySite within hook_user().
+
+13-MAR-2007
+  -- #125774 by esilou.  Tagged forum posts do not appear in term lists
+  -- #127549. Escaped characters in author output.
+  -- #127560.  Columns layout not collapsible.
+  -- #127062 by Dan DG.  Title element in hook_user should be "My sitename".
+
+07-MAR-2007
+  -- Fixes error in blog.inc. http://drupal.org/node/125688
+  -- Corrects title of the MySite block to be "My Site_Name"
+  -- NOTE: translation files in HEAD are not current!
+
+04-MAR-2007
+  -- Adds path.inc and theme.inc to the plugins group
+
+25-FEB-2007 (2)
+  -- Resets permissions correctly on mysite-sort menu item.
+  -- Adds proper $Id tag to mysite.js
+  -- Removes unused #mysite .buttons call from mysite.css
+
+25-FEB-2007
+  -- HEAD diverges from 5.x.1-dev.
+  -- Adds drag-and-drop placement of elements on the user's MySite page.  See http://drupal.org/node/101471.
+  -- Adds mysite.js file.
+
+23-FEB-2007
+  -- Fixes numerous errors with pgsql compliance.  See http://drupal.org/node/120077.
+  -- Proper {table} format for db_next_id().
+
+13-FEB-2007
+  -- Fixes cache_set() error.  http://drupal.org/node/118337
+
+12-FEB-2007
+  -- Fixes typo in line 394 of mysite.module. 'user_acces()'.
+
+11-FEB-2007
+  -- Released 5.x.1.7
+  -- Fixed block error in presenting special characters.
+
+09-FEB-2007 (2)
+  -- Minor correction to the README.
+
+09-FEB-2007
+  -- Minor menu change that fixes http://drupal.org/node/117600.
+
+08-FEB-2007 (4)
+  -- Adds padding to the 'read more' link.
+
+08-FEB-2007 (3)
+  -- Fixed a minor layout issue by adding proper <p> tags.
+
+08-FEB-2007 (2)
+  -- Updates the mysite.po file.
+
+08-FEB-2007
+  -- Allows the mysite_page() function to be accessed externally.  See http://drupal.org/node/103206.
+
+11-JAN-2007
+  -- Fixes a misspelling on the Help page.  Very minor.
+
+02-JAN-2007
+  --  Fixes http://drupal.org/node/106407 bug in menu system.
+
+20-DEC-2006 (2)
+  -- Fixed an error using drupal_add_js (2nd parameter should be 'module').
+      Addresses http://drupal.org/node/104314
+
+20-DEC-2006
+  -- Cleaned up references to admin links, due to changes in the admin menu structure.
+      See http://drupal.org/node/104395.
+
+18-DEC-2006 (2)
+  -- Edits to mysite.po file to reflect recent changes.
+
+18-DEC-2006
+  -- Corrected form error described in http://drupal.org/node/99958
+
+15-DEC-2006
+  -- Fixed XSS vulnerability described at http://drupal.org/node/103958
+
+14-DEC-2006
+  -- Fixed error in feed.inc. See http://drupal.org/node/103288
+
+1-DEC-2006
+  -- Fixed error in mysite.install.
+  -- Released 5.x.1.1.
+
+29-NOV-2006 (2)
+  -- Added description to admin/settings/mysite menu item.
+  -- Committed to 5.x.1.dev only.
+
+29- NOV-2006
+  -- Cleaned up strings in preparation for new translation files.
+
+28-NOV-2006
+  -- Initial port for Drupal 5.
+  -- Removed contrib elements, as they reference modules with no v5 releases.
+
+27-NOV-2006
+  -- Released v 4.7.x.3.0
+  -- Corrected the mysite.install file for new release and db update.
+  -- Added storylinks.po file.
+
+26-NOV-2006 (3)
+  -- Added storylinks.inc and .po files to contrib.  http://drupal.org/node/91018
+
+26-NOV-2006 (2)
+  -- Updated .po files
+  -- Added biblio.inc to the contrib directory. http://drupal.org/node/98029
+
+26-NOV-2006
+  -- MySite content titles are now editable for individual users.
+  -- Introduced mysite_type_{name}_update hook to enable plugins to act on user changes.
+  -- Enabled the addition of new refine-by-taxo groups through the settings page.
+  -- Fixed error that allowed adding content above the item limit when using block links.
+  -- Fix to mysite.install.  See http://drupal.org/node/99457.
+
+22-NOV-2006 (2)
+  -- Added mysite.css file to handle form-item display.
+  -- Made titles editable for refine.inc
+
+22-NOV-2006
+  -- Fixed sql error in term.inc
+  -- Revised the refine.inc file
+  -- Changes menu behavior for type settings
+
+21-NOV-2006 (4)
+  -- Made mysite_type_{name}_options an optional function, for types that don't appear on the /content page.
+  -- Added support for string-based keys to identify content.
+  -- Added refine.inc for testing refine-by-taxo.module.
+
+21-NOV-2006 (3)
+  -- Enabled a default MySite page.
+  -- Added the mysite_content table in preparation for http://drupal.org/node/93060
+
+21-NOV-2006 (2)
+  -- Moved settings into type include files.
+
+21-NOV-2006
+  -- Fixed array error http://drupal.org/node/97185.
+
+13-NOV-2006
+  -- Added book.inc to the types directory.
+  -- Added translation support for book.inc
+
+10-NOV-2006
+  -- Moved user_access check into mysite_block from the individual mysite_type_{name}_block() functions.
+
+10-NOV-2006
+  -- Fixed misuse of check_plain when saving MySite titles
+  -- Changed mysite_user text header to 'MySite'
+
+09-NOV-2006
+  -- See http://drupal.org/node/92757
+  -- Error handling on missing plugins.
+
+09-NOV-2006
+  -- See http://drupal.org/node/93012
+  -- Fixed div class for profile link.
+  -- Fixed access control for profile link.
+  -- Made layout themes unique, to allow theme override functions.
+  -- Updated README documentation.
+
+03-NOV-2006
+  -- Fixed node_load() changes in 4.7
+  -- Fixed theme('page') changes in 4.7
+  -- See http://drupal.org/node/22218
+
+02-NOV-2006
+  -- Fixed db_queryd() error in forum.inc
+  -- Added mysite_type_{name}_block_node() function handler.
+
+31-OCT-2006
+  -- Added support for node_access and taxonomy_access rules using db_rewrite_sql.
+  -- Changed default node ordering to ignore 'sticky' and use 'changed'.
+
+30-OCT-2006
+  -- Better array handling in the columns layout.
+  -- Corrected a missing t() string in mysite.module. Updated po files.
+  -- Added a submissions directory to handle plugins from Drupal.org
+
+24-OCT-2006
+  -- Changed some strings and page titles due to string parsing error in .po files
+  -- Added default .po translations files
+
+23-OCT-2006
+  -- Created proper DRUPAL-4-7 branch
+  -- Added this changelog file.
+
+20-OCT_2006
+  -- Corrected a debug error.
+
+19-OCT-2006
+  -- Initial release

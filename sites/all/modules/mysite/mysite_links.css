@@ -1,0 +1,69 @@
+/* $Id: mysite_links.css,v 1.4 2008/04/27 17:34:47 agentken Exp $ */
+
+/**
+ * Link css for dynamic link popups
+ * Modified from Suckerfish Dropdowns, www.htmldog.com
+ * Suckerfish by Patrick Griffiths and Dan Webb.
+ */
+/* all lists */
+#mysite-links, #mysite-links ul {
+  display: inline;
+  z-index: 100;
+}
+
+#mysite-links a {
+  display: block;
+}
+
+/* all list items */
+/* width needed or else Opera goes nuts */
+#mysite-links li {
+  list-style-image: none;
+  background-image: none;
+}
+
+#mysite-links li li {
+  width: 160px;
+}
+
+/* second-level lists */
+/* using left instead of display to hide menus because display: none isn't read by screen readers */
+#mysite-links li ul {
+  position: absolute;
+  background: none;
+  margin: 0;
+  left: -999em;
+  line-height: 1em;
+}
+
+#mysite-links li:hover ul ul, #mysite-links li:hover ul ul ul, #mysite-links li.mysite-hover ul ul, #mysite-links li.mysite-hover ul ul ul {
+  left: -999em;
+}
+
+/* lists nested under hovered list items */
+#mysite-links li:hover ul, #mysite-links li li:hover ul, #mysite-links li li li:hover ul, #mysite-links li.mysite-hover ul, #mysite-links li li.mysite-hover ul, #mysite-links li li li.mysite-hover ul {
+  left: auto;
+}
+
+#mysite-links ul a {
+  padding: 0 0.25em 0.25em 0.25em;
+}
+
+#mysite-links ul a:hover {
+  background-color: #fff;
+}
+
+#mysite-links ul.display {
+  background-color: #fed;
+  padding: 0px 10px 10px 10px;
+  border: 1px solid #ba9;
+  margin-left: 1px;
+}
+
+#mysite-links a.mysite-anchor {
+  display: inline;
+  padding-right: 1em;
+  background-image: url(plugins/icons/menu-collapsed.png);
+  background-position: 100% 50%;
+  background-repeat: no-repeat;
+}

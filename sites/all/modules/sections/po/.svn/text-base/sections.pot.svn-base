@@ -1,0 +1,181 @@
+# $Id: sections.pot,v 1.2.2.4 2008/06/01 12:46:21 hass Exp $
+#
+# LANGUAGE translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  sections.module,v 1.16.2.15 2008/06/01 12:42:08 hass
+#  sections.info,v 1.1.2.1 2007/07/23 20:51:37 hass
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2008-06-01 14:43+0200\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: sections.module:15 sections.info:0
+msgid "Allows you to define sections of your site and apply themes to those sections."
+msgstr ""
+
+#: sections.module:51 sections.info:0
+msgid "Sections"
+msgstr ""
+
+#: sections.module:52
+msgid "Define sections of your site and apply themes to them."
+msgstr ""
+
+#: sections.module:58
+msgid "List"
+msgstr ""
+
+#: sections.module:66;229;230;245
+msgid "Add section"
+msgstr ""
+
+#: sections.module:76
+msgid "Edit section"
+msgstr ""
+
+#: sections.module:84
+msgid "Delete section"
+msgstr ""
+
+#: sections.module:125
+msgid "Section"
+msgstr ""
+
+#: sections.module:126
+msgid "Status"
+msgstr ""
+
+#: sections.module:127
+msgid "Theme"
+msgstr ""
+
+#: sections.module:128;180
+msgid "Weight"
+msgstr ""
+
+#: sections.module:129
+msgid "Operations"
+msgstr ""
+
+#: sections.module:136;167;309
+msgid "Enabled"
+msgstr ""
+
+#: sections.module:136;309
+msgid "Disabled"
+msgstr ""
+
+#: sections.module:139
+msgid "Edit"
+msgstr ""
+
+#: sections.module:140;259;279
+msgid "Delete"
+msgstr ""
+
+#: sections.module:155
+msgid "Section settings"
+msgstr ""
+
+#: sections.module:159
+msgid "Name"
+msgstr ""
+
+#: sections.module:163
+msgid "Give the name of the section."
+msgstr ""
+
+#: sections.module:169
+msgid "Enable or disable this section."
+msgstr ""
+
+#: sections.module:173
+msgid "Select theme"
+msgstr ""
+
+#: sections.module:176
+msgid "Select the theme you want to use for this section. Disabled themes are not used until they are enabled on <a href=\"@url\">themes</a> page."
+msgstr ""
+
+#: sections.module:187
+msgid "Page specific visibility settings"
+msgstr ""
+
+#: sections.module:200
+msgid "Show on every page except the listed pages."
+msgstr ""
+
+#: sections.module:200
+msgid "Show on only the listed pages."
+msgstr ""
+
+#: sections.module:201
+msgid "Enter one page per line as Drupal paths. The '*' character is a wildcard. Example paths are %blog for the blog page and %blog-wildcard for every personal blog. %front is the front page."
+msgstr ""
+
+#: sections.module:204
+msgid "Show if the following PHP code returns <code>TRUE</code> (PHP-mode, experts only)."
+msgstr ""
+
+#: sections.module:205
+msgid "If the PHP-mode is chosen, enter PHP code between %php. Note that executing incorrect PHP-code can break your Drupal site."
+msgstr ""
+
+#: sections.module:209
+msgid "Activate section on the specific pages"
+msgstr ""
+
+#: sections.module:215
+msgid "Pages"
+msgstr ""
+
+#: sections.module:223
+msgid "Edit section %name"
+msgstr ""
+
+#: sections.module:225;238
+msgid "Save section"
+msgstr ""
+
+#: sections.module:240;247
+msgid "The sections configuration has been saved."
+msgstr ""
+
+#: sections.module:261
+msgid "The section %name has been deleted."
+msgstr ""
+
+#: sections.module:276
+msgid "Delete section %name"
+msgstr ""
+
+#: sections.module:278
+msgid "Are you sure you want to delete the section %name?"
+msgstr ""
+
+#: sections.module:280
+msgid "Cancel"
+msgstr ""
+
+#: sections.module:309
+msgid "@name (@status)"
+msgstr ""
+
+#: sections.module:28
+msgid "administer sections"
+msgstr ""
+
+#: sections.module:0
+msgid "sections"
+msgstr ""
+

@@ -1,0 +1,4063 @@
+<?php
+// $Id: mysite.module,v 1.98 2008/10/01 14:01:37 agentken Exp $
+
+
+/**
+ * @defgroup mysite Mysite: Allows users to create custom pages of site content.
+ *
+ * Before reading the API, you should refer to http://drupal.org/node/119576,
+ * which offers a short tutorial on MySite plugins.
+ *
+ * Please be sure to also read http://drupal.org/node/318 for Drupal coding standards and refer to
+ * http://api.drupal.org for core Drupal documentation.
+ *
+ * The best starting point for this API is probably http://therickards.com/api/group/hooks/MySite.
+ * This section shows you the common functions used by MySite plugins.
+ *
+ * If you find errors in the documentation, please file an issue at http://drupal.org/project/issues/mysite.
+ *
+ * -- agentrickard
+ */
+
+/**
+ * @file
+ * Core module file for the MySite module.
+ *
+ * @ingroup mysite
+ */
+
+/**
+ * Implementation of hook_help().
+ */
+function mysite_help($section) {
+  switch ($section) {
+    case 'admin/help#mysite':
+      include_once('mysite_help.inc');
+      $output = mysite_helptext();
+      return $output;
+      break;
+    case 'admin/settings/mysite':
+      $output = t('<p>The MySite module gives users a customized view of site data,
+        arranged in the order they prefer.  The behavior and presentation of the MySite
+        module can be controlled through the following settings.  For detailed instructions,
+        see the README.txt file in your MySite folder.</p>');
+      return $output;
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_menu().
+  */
+function mysite_menu($may_cache) {
+  global $user;
+  $items = array();
+  // Run access checks once for the entire menu.
+  $admin = FALSE;
+  $view = user_access('view mysite');
+  if (user_access('administer mysite')) {
+    $admin = TRUE;
+    $owner = TRUE;
+    $create = TRUE;
+  }
+  else {
+    $create = user_access('edit mysite');
+    $owner = FALSE;
+    if ($create && $user->uid == arg(1)) {
+      $owner = TRUE;
+    }
+  }
+
+  // Load the MySite data for the menu, if needed
+  $show_pages = FALSE;
+  if (arg(0) == 'mysite') {
+    $uid = arg(1);
+    $mysite = mysite_get($uid);
+    $show_pages = TRUE;
+    $access = mysite_menu_check($mysite->status, $owner, $view);
+    // conditional functions needed by MySite's user interface
+    // add the css to override form-item and format icons
+    drupal_add_css(drupal_get_path('module', 'mysite') .'/mysite.css');
+    // we use the collapse feature in the interface, so make sure it loads.
+    if (function_exists('jquery_interface_add') && ($admin || $owner)) {
+      drupal_add_js(drupal_get_path('module', 'mysite') .'/mysite.js', 'module');
+      // add interface support
+      jquery_interface_add();
+    }
+  }
+  if ($may_cache) {
+    $items[] = array('path' => 'admin/settings/mysite',
+      'title' => t('MySite'),
+      'description' => t('Adjust the features and settings for the MySite module.'),
+      'callback' => 'mysite_configure',
+      'access' => $admin);
+    // menu items for default settings
+    $items[] = array('path' => 'admin/settings/mysite/edit',
+      'title' => t('Default page settings'),
+      'description' => t('Edit the default MySite content settings.'),
+      'callback' => 'drupal_goto',
+      'weight' => -8,
+      'type' => MENU_LOCAL_TASK,
+      'callback arguments' => array('mysite/0/edit'),
+      'access' => $admin);
+    $items[] = array('path' => 'admin/settings/mysite/content',
+      'title' => t('Default page content'),
+      'description' => t('Edit the default MySite content settings.'),
+      'weight' => -6,
+      'callback' => 'drupal_goto',
+      'type' => MENU_LOCAL_TASK,
+      'callback arguments' => array('mysite/0/content'),
+      'access' => $admin);
+    // activate a plugin
+    $items[] = array('path' => 'admin/settings/mysite/type/activate',
+      'title' => mysite_sitename(),
+      'callback' => 'mysite_activate',
+      'type' => MENU_CALLBACK,
+      'access' => $admin);
+    // default page view items
+    $items[] = array('path' => 'mysite',
+      'title' => mysite_sitename(),
+      'callback' => 'mysite_view',
+      'access' => $view);
+     // admin tasks
+    $items[] = array('path' => 'mysite/0/admin',
+      'title' => t('Settings'),
+      'callback' => 'drupal_goto',
+      'type' => MENU_LOCAL_TASK,
+      'callback arguments' => array('admin/settings/mysite'),
+      'weight' => -5,
+      'access' => $admin);
+    $items[] = array('path' => 'mysite/0/view',
+      'title' => t('Default pages'),
+      'callback' => 'mysite_view',
+      'type' => MENU_LOCAL_TASK,
+      'weight' => -3,
+      'access' => $admin);
+    $items[] = array('path' => 'mysite/0/edit',
+      'title' => t('Default settings'),
+      'callback' => 'mysite_edit',
+      'type' => MENU_LOCAL_TASK,
+      'access' => $admin);
+    $items[] = array('path' => 'mysite/0/content',
+      'title' => t('Default content'),
+      'callback' => 'mysite_content',
+      'type' => MENU_LOCAL_TASK,
+      'access' => $admin);
+    $items[] = array('path' => 'mysite-all',
+      'title' => t('View all personal sites'),
+      'callback' => 'mysite_view_all',
+      'access' => $view);
+    $items[] = array('path' => 'mysite-default',
+      'title' => mysite_sitename(),
+      'callback' => 'mysite_view_default',
+      'type' => MENU_CALLBACK,
+      'access' => $view);
+    $items[] = array('path' => 'autocomplete/mysite',
+      'title' => t('MySite autocomplete'),
+      'callback' => 'mysite_autocomplete',
+      'type' => MENU_CALLBACK,
+      'access' => $create);
+  }
+  else {
+    // add a tab to the user page
+    if (arg(0) == 'user' && is_numeric(arg(1))) {
+      $items[] = array('path' => 'user/'. arg(1) .'/mysite',
+        'title' => mysite_sitename(),
+        'access' => $owner,
+        'callback' => 'mysite_page',
+        'callback arguments' => array(arg(1)),
+        'type' => MENU_LOCAL_TASK, 'weight' => 10);
+    }
+    // Ajax handling items
+    $items[] = array('path' => 'ajax/mysite/'. arg(2) .'/'. arg(3),
+      'title' => t('Ajax MySite'),
+      'callback' => 'mysite_ajax',
+      'callback arguments' => array(arg(2), arg(3)),
+      'type' => MENU_CALLBACK,
+      'access' => $create);
+    $items[] = array('path' => 'ajax/mysite-sort',
+      'title' => t('Ajax MySite'),
+      'callback' => 'mysite_ajax_sort',
+      'type' => MENU_CALLBACK,
+      'access' => $create);
+    if (arg(0) == 'mysite' && is_numeric(arg(1))) {
+      $items[] = array(
+        'title' => $mysite->title,
+        'path' => 'mysite/'. arg(1),
+        'type' => MENU_NORMAL_ITEM,
+        'weight' => -10,
+        'callback' => 'mysite_view',
+        'callback arguments' => array(arg(1)),
+        'access' => $access);
+      $items[] = array('path' => 'mysite/'. arg(1) .'/delete',
+        'title' => t('Delete'),
+        'callback' => 'drupal_get_form',
+        'callback arguments' => array('mysite_delete_form', arg(1)),
+        'access' => $owner,
+        'weight' => 10,
+        'type' => MENU_LOCAL_TASK);
+      $items[] = array('path' => 'mysite/'. arg(1) .'/reset',
+        'title' => t('Reset'),
+        'callback' => 'drupal_get_form',
+        'callback arguments' => array('mysite_reset_form'),
+        'access' => $owner,
+        'type' => MENU_CALLBACK);
+      if ($show_pages) {
+        // Load data for sub-pages.
+        $pages = mysite_get_pages($uid);
+        // Menu actions to implement
+        $actions = array(
+          'view' => array('title' => t('View'), 'weight' => -10, 'path' => 'view', 'callback' => 'mysite_page'),
+          'edit' => array('title' => t('Settings'), 'weight' => -8, 'path' => 'edit', 'callback' => 'mysite_edit'),
+          'content' => array('title' => t('Content'), 'weight' => -6, 'path' => 'content', 'callback' => 'mysite_content')
+        );
+        // prep the submenu tasks
+        $weight = -10;
+        $test = arg(2);
+        $arg = (empty($test)) ? 'view' : $test;
+        $i = arg(3);
+        $page = (empty($i)) ? 0 : $i;
+        $page = ($page == 'add-page') ? 0 : $page;
+        // We can only remove pages if it is not the default page.
+        if ($page > 0 && count($pages) > 0) {
+          $actions['remove'] = array('title' => t('Remove page'), 'weight' => -4, 'path' => 'remove-page', 'callback' => 'mysite_remove_page');
+        }
+        if ($arg == 'view') {
+          $items[] = array(
+            'title' => t('View'),
+            'path' => 'mysite/'. arg(1) .'/view',
+            'type' => MENU_DEFAULT_LOCAL_TASK,
+            'weight' => -10,
+            'callback' => 'mysite_view',
+            'callback arguments' => array(arg(1)),
+            'access' => $access
+          );
+          if (count($pages) < variable_get('mysite_pages', 5)) {
+            $items[] = array(
+              'title' => t('Add new page'),
+              'path' => 'mysite/'. arg(1) .'/view/add-page',
+              'type' => MENU_LOCAL_TASK,
+              'weight' => 100,
+              'callback' => 'mysite_add_page',
+              'callback arguments' => array(arg(1)),
+              'access' => $owner
+            );
+          }
+        }
+        $content_set = MENU_CALLBACK;
+        if ($test == 'settings') {
+          $content_set = MENU_LOCAL_TASK;
+        }
+        $items[] = array('path' => 'mysite/'. arg(1) .'/settings/'. arg(3) .'/'. arg(4),
+          'title' => t('Customize'),
+          'callback' => 'mysite_content_settings',
+          'callback arguments' => array(arg(1), arg(4)),
+          'access' => $owner,
+          'weight' => 10,
+          'type' => $content_set
+        );
+        foreach ($actions as $action => $settings) {
+          if ($action == $arg && !empty($pages)) {
+            $items[] = array(
+              'title' => $settings['title'],
+              'path' => 'mysite/'. arg(1) .'/'. $settings['path'],
+              'type' => MENU_LOCAL_TASK,
+              'weight' => $settings['weight'],
+              'callback' => $settings['callback'],
+              'callback arguments' => array(arg(1)),
+              'access' => ($arg == 'view') ? $access : $owner
+            );
+            foreach ($pages as $key => $value) {
+              $type = MENU_LOCAL_TASK;
+              $page_access = $owner;
+              if ($settings['path'] == 'view') {
+                $page_access = mysite_menu_check($value['status'], $owner, $view);
+                if ($key == 0) {
+                  $type = MENU_DEFAULT_LOCAL_TASK;
+                }
+              }
+              $items[] = array(
+                'title' => $value['title'],
+                'path' => 'mysite/'. arg(1) .'/'. $settings['path'] .'/'. $key,
+                'type' => $type,
+                'weight' => (-10 + $value['page']),
+                'callback' => $settings['callback'],
+                'callback arguments' => array(arg(1), arg(3)),
+                'access' => $page_access
+              );
+              $weight++;
+            }
+          }
+          $items[] = array(
+            'title' => $settings['title'],
+            'path' => 'mysite/'. arg(1) .'/'. $settings['path'] .'/'. $page,
+            'type' => MENU_LOCAL_TASK,
+            'weight' => $settings['weight'],
+            'callback' => $settings['callback'],
+            'callback arguments' => array(arg(1), arg(3)),
+            'access' => $owner
+          );
+          if ($arg == 'edit') {
+            $_mysite_edit = mysite_edit_menu();
+            foreach ($_mysite_edit as $key => $value) {
+              foreach ($value as $path => $element) {
+                $items[] = array('path' => 'mysite/'. arg(1) .'/edit/'. $key .'/'. $path,
+                  'title' => $element['label'],
+                  'callback' => 'mysite_edit',
+                  'callback arguments' => array(arg(1), arg(3), arg(4)),
+                  'access' => $owner,
+                  'type' => MENU_LOCAL_TASK
+                );
+              }
+            }
+          }
+        }
+      }
+      // theme switching check
+      if (arg(0) == 'mysite' && is_numeric(arg(1))) {
+        $types = variable_get('mysite_content', NULL);
+        $themes =  variable_get('mysite_theme_settings', array());
+        if (!empty($pages[$page]['theme']) && !empty($types['theme']) && !empty($themes[$mysite->theme])) {
+          global $custom_theme;
+          $custom_theme = $pages[$page]['theme'];
+        }
+      }
+      $items[] = array('path' => 'mysite/'. arg(1) .'/remove/'. arg(3),
+        'title' => t('Remove item'),
+        'callback' => 'mysite_content_remove',
+        'callback arguments' => array(arg(1), arg(3)),
+        'access' => $owner,
+        'weight' => 10,
+        'type' => MENU_CALLBACK);
+      $items[] = array('path' => 'mysite/'. arg(1) .'/promote/'. arg(3) .'/'. arg(4),
+        'title' => t('Promote item'),
+        'callback' => 'mysite_content_promote',
+        'callback arguments' => array(arg(1), arg(3), arg(4)),
+        'access' => $owner,
+        'weight' => 10,
+        'type' => MENU_CALLBACK);
+      $items[] = array('path' => 'mysite/'. arg(1) .'/add',
+        'title' => t('Add item'),
+        'callback' => 'mysite_content_add',
+        'callback arguments' => array(arg(1)),
+        'access' => $owner,
+        'weight' => 10,
+        'type' => MENU_CALLBACK);
+    }
+    if ($admin && arg(0) == 'admin' && arg(2) == 'mysite') {
+      $types = mysite_load_includes('types', NULL, $load_all = TRUE);
+      $items[] = array('path' => 'admin/settings/mysite/type',
+        'title' => t('Settings'),
+        'description' => t('Adjust the features and settings for the MySite module.'),
+        'type' => MENU_DEFAULT_LOCAL_TASK,
+        'access' => $admin,
+        'weight' => -10);
+      $items[] = array('path' => 'admin/settings/mysite/type/settings',
+        'title' => t('MySite'),
+        'description' => t('Adjust the features and settings for the MySite module.'),
+        'type' => MENU_DEFAULT_LOCAL_TASK,
+        'access' => $admin,
+        'weight' => -10);
+      if (is_array($types)) {
+        foreach ($types as $type) {
+          $check = module_invoke('mysite_type', $type, FALSE);
+          if ((function_exists('mysite_type_'. $type .'_title') || function_exists('mysite_type_'. $type .'_settings')) && is_array($check)) {
+            $items[] = array('path' => 'admin/settings/mysite/type/'. $type,
+            'title' => t('@type', array('@type' => ucwords($type))),
+            'description' => t('Settings for the @type plugin', array('@type' => ucwords($type))),
+            'callback' => 'mysite_type_settings',
+            'callback arguments' => array($type),
+            'type' => MENU_LOCAL_TASK,
+            'access' => $admin,
+            'weight' => 0);
+          }
+        }
+      }
+    }
+  }
+  return $items;
+}
+
+/**
+ * Installer function that sets MySite pages to show on all domains.
+ *
+  */
+function mysite_enable() {
+  $pages = variable_get('domain_grant_all', "user/*/track");
+  if (strpos($pages, 'mysite/*') == 0) {
+    $pages .= "\r\nmysite/*";
+    variable_set('domain_grant_all', $pages);
+  }
+}
+
+/**
+ * Implementation of hook_perm().
+  */
+function mysite_perm() {
+  $array = array('administer mysite', 'edit mysite', 'view mysite');
+  // if using aggregator, we have an additional permission
+  if (module_exists('aggregator')) {
+    $array[] = 'add mysite feeds';
+  }
+  return $array;
+}
+
+/**
+ * Implementation of hook_user().
+  */
+function mysite_user($type, &$edit, &$user) {
+  if ($type == 'view' && user_access('edit mysite', $user)) {
+    $mysite = mysite_get($user->uid);
+    if ($mysite->uid > 0 && user_access('administer mysite') || $mysite->status == 1) {
+      $items['mysite'] = array('title' => mysite_sitename(),
+        'value' => l($mysite->title, "mysite/$user->uid/view", array('title' => t("Read @username's personal page.", array('@username' => $user->name)))),
+        'class' => 'mysite',
+      );
+      return array(t('History') => $items);
+    }
+  }
+}
+
+/**
+ * Implementation of hook_block().  Calls mysite_type_hook_block().
+ *
+ * @param $nid
+ *   We invoke this hook from mysite_link as well, so this variable lets us
+ *   make minor changes to the output call, as needed.  Passing the node id
+ *   gives us both the data and the logic necessary to invoke the MySite hooks.
+  */
+function mysite_block($op = 'list', $delta = 0, $nid = NULL) {
+  global $user;
+  if ($op == 'list') {
+    $blocks[0]['info'] = t('MySite');
+    return $blocks;
+  }
+  else if ($op == 'view' && user_access('edit mysite')) {
+    // Each of the type includes must check the path. No point in calling arg() more than once.
+    for ($i = 0; $i < 5; $i++) {
+      $arg[$i] = arg($i);
+    }
+    $content = '';
+    // if the user has a mysite, generate a link to it.
+    $mysite = mysite_get($user->uid);
+    if ($mysite->uid > 0) {
+      $content .= '<ul>';
+      $content .= '<li>'. l($mysite->title, 'mysite/'. $mysite->uid .'/view') .'</li>';
+      if (user_access('view all mysites') && empty($nid)) {
+        $content .= '<li>'. l(t('View custom sites'), 'mysite-all') .'</li>';
+      }
+      $content .= '</ul>';
+    }
+    // if not, help them create a mysite.
+    else {
+      $content = theme_mysite_block_help();
+    }
+    // load the type includes and check for block content. See the README for more.
+    if (user_access('edit mysite')) {
+      static $result, $pages, $page_count, $page, $check = FALSE;
+      if (!isset($page)) {
+        $page = mysite_find_empty_page($user->uid);
+      }
+      if ($page >= 0) {
+        $types = mysite_load_includes('types');
+        foreach ($types as $key => $value) {
+          $content .= module_invoke('mysite_type', $value .'_block', $arg, $op);
+        }
+        // universal handler for nodes, where $nid may be passed from mysite_link()
+        // or inferred from the path when viewing a node
+        if (!empty($nid) || ($arg[0] == 'node' && is_numeric($arg[1]))) {
+          if (!$nid) {
+            $nid = $arg[1];
+          }
+          $query = db_fetch_object(db_query("SELECT n.type, n.nid FROM {node} n WHERE n.nid = %d", $nid));
+          if ($query->nid > 0) {
+            foreach ($types as $key => $value) {
+              $content .= module_invoke('mysite_type', $value .'_block_node', $query->nid, $query->type);
+            }
+          }
+        }
+      }
+      else {
+        if (count($pages) < variable_get('mysite_pages', 5)) {
+          $content .= l(t('Create new personal page'), 'mysite/'. $user->uid .'view/add-page');
+        }
+        else {
+          $content .= t('Your personal page is currently full. Go to <a href="@url">add or remove content</a> to delete an item.', array('@url' => url("mysite/$user->uid/content")));
+        }
+      }
+    }
+  }
+  // if we returned $content, then print the block.
+  if (!empty($content)) {
+    $block['subject'] = mysite_sitename();
+    $block['content'] = $content;
+  }
+  return $block;
+}
+
+/**
+ * Implementation of hook_link()
+ */
+function mysite_link($type, $node = NULL, $teaser = FALSE) {
+  if ($type == 'node' && $node->nid) {
+    $show = variable_get('mysite_links', 1);
+    // 0 == no; 1 == always, 2 == page view only
+    if ($show == 1 || ($show == 2 && !$teaser)) {
+      global $user;
+      if ($user->uid > 0 && user_access('edit mysite')) {
+        $link = l(mysite_sitename(), 'mysite/'. $user->uid .'/view', array('class' => 'mysite-anchor'));
+        drupal_add_js(drupal_get_path('module', 'mysite') .'/mysite_links.js', 'module');
+        drupal_add_css(drupal_get_path('module', 'mysite') .'/mysite_links.css');
+        $links = array();
+        // we already prepare the links in hook_block, so get them and theme them.
+        $data = mysite_block('view', 0, $node->nid);
+        $string = str_replace('<ul>', '', $data['content']);
+        $content = str_replace('</ul>', '', $string);
+        $links['mysite'] = array(
+            'title' => theme('mysite_links', $link, $content),
+            'html' => TRUE
+        );
+        return $links;
+      }
+    }
+  }
+}
+
+/**
+ * Menu callback; presents general configuration options.
+ */
+function mysite_configure() {
+  // run the cron hook if cron isn't configured properly.
+  mysite_cron();
+  // set the interface variable
+  if (!function_exists('jquery_interface_add') && !$_POST) {
+    drupal_set_message(t('To enable drag-and-drop sorting of content, you must install and enable the <a href="!jq">jQuery Update</a> and <a href="!ji">jQuery Interface</a> modules.', array('!jq' => 'http://drupal.org/project/jquery_update', '!ji' => 'http://drupal.org/project/jquery_interface')));
+  }
+  return drupal_get_form('mysite_configure_form');
+}
+
+/**
+ * Cron hook for cleaning out bad data
+ * We use this routine to remove MySite references
+ * to deleted content containers.
+  */
+function mysite_cron() {
+  // run this once per day, if cron is disabled, it runs from the settings page
+  $cron= variable_get('mysite_cron', '0');
+  $date = date("Ymd", time() - (3600 * 24)); // get yesterday's date
+  if ($date != $cron) {
+    variable_set('mysite_cron', $date);
+    $types = mysite_load_includes('types');
+    foreach ($types as $type) {
+      $data[$type] = module_invoke('mysite_type', $type .'_clear', $type);
+    }
+    // iterate through the returns and set user messages
+    if (!empty($data)) {
+      foreach ($data as $key => $value) {
+        if (is_array($value) && !empty($value)) {
+          foreach ($value as $item) {
+            $sql = "DELETE FROM {mysite_data} WHERE mid = %d";
+            db_query($sql, $item['mid']);
+            $sql = "SELECT message FROM {mysite} WHERE uid = %d";
+            $obj = db_fetch_object(db_query($sql, $uid));
+            $message = $obj->message;
+            $message .= t('<p>@title content is no longer available and has been removed from your personal page.</p>', array('@title' => $item['title']));
+            $sql = "UPDATE {mysite} SET message = '%s' WHERE uid = %d";
+            db_query($sql, $message, $item['uid']);
+          }
+        }
+      }
+    }
+  }
+}
+
+/**** PAGE VIEW FUNCTIONS  ****/
+
+/**
+ * Take user to the correct MySite page, based on mysite_configure().
+ */
+function mysite_view($uid = NULL) {
+  global $user;
+  if (is_null($uid)) {
+    $list = variable_get('mysite_list', 0);
+    if ($list) {
+      drupal_goto('mysite-all');
+    }
+    $uid = arg(1);
+  }
+  $mysite = mysite_get($uid);
+  if ($mysite->uid > 0 && user_access('view mysite')) {
+    drupal_goto('mysite/'. $mysite->uid .'/view');
+  }
+  else if ($user->uid > 0) {
+    return theme('mysite_create_help', $user);
+  }
+  else {
+    return theme('mysite_anonymous_help');
+  }
+}
+
+/**
+ * View all active MySite users
+ */
+function mysite_view_all() {
+  $output = '';
+  $header = array(
+    array('data' => t('Name'), 'field' => 'name'),
+    array('data' => t('Collection Title'), 'field' => 'title'),
+    array('data' => t('Updated'), 'field' => 'updated')
+    );
+  $sql = 'SELECT m.uid, m.title, m.created, m.updated, u.name, u.picture FROM {mysite} m INNER JOIN {users} u ON m.uid = u.uid WHERE u.status = 1 AND m.status = 1'. tablesort_sql($header);
+  if (user_access('administer mysite')) {
+    $sql = 'SELECT m.uid, m.title, m.created, m.updated, u.name, u.picture FROM {mysite} m INNER JOIN {users} u ON m.uid = u.uid WHERE u.status = 1'. tablesort_sql($header);
+  }
+  $result = pager_query($sql, 25);
+  $rows = array();
+  while ($owner = db_fetch_object($result)) {
+    $updated = $owner->created;
+    if (!empty($owner->updated)) {
+      $updated = $owner->updated;
+    }
+    $rows[] = array('data' => array($owner->name, l($owner->title, 'mysite/'. $owner->uid .'/view'), format_date($updated, $type = 'medium', $format = '', $timezone = NULL)));
+    if ($owner->uid == $user->uid) {
+      $nopage = FALSE;
+    }
+  }
+  // no users found
+  if (!empty($rows)) {
+    $output .= theme_table($header, $rows);
+    $output .= theme('pager', NULL, 25, 0);
+  }
+  else {
+    $top_output .= l(t('There are no publicly viewable personal collections.'), "mysite/". $user->uid);
+  }
+  // can this user create a mysite?
+  $mysite = mysite_get($user->uid);
+  if (user_access('edit mysite') && empty($mysite)) {
+    $top_output .= l(t('Create your own personal collection.'), "mysite/". $user->uid .'/edit');
+  }
+  $output = $top_output . $output;
+  return $output;
+}
+
+/**
+ * Show the default user page
+ */
+function mysite_view_default() {
+  // show the default mysite
+  $default = (int) variable_get('mysite_default_user', 0);
+  drupal_goto('mysite/'. $default .'/view');
+}
+
+/**
+ * The default MySite page view.
+ *
+ * @param $uid
+ * The user id of the owner of the mysite.
+ * @param $page
+ * The current page of the mysite collection.
+ * @param $pageview
+ *  Boolean flag that indicates the data will be viewed using theme_page.
+ *  If you want to access this data externally, set $pageview = FALSE.
+ * @return
+ *  $content array.
+ *  If $pageview = FALSE, the function will return a $content array with three elements.
+ *    $content['owner'] = the $user object of the MySite page's owner.
+ *    $content['mysite'] = MySite data for the page's owner.
+ *    $content['data'] = MySite data as defined by mysite_type_{name}_data().
+ *  If the user does not have a MySite page, $content will return an empty array().
+ */
+function mysite_page($uid = NULL, $page = 0, $pageview = TRUE) {
+  global $user;
+
+  // get the $owner of this mysite, use as a $user surrogate
+  if (is_null($uid)) {
+    $uid = arg(1);
+  }
+  if (is_numeric($uid)) {
+    $owner = user_load(array('uid' => $uid));
+  }
+  if (!isset($owner->uid)) {
+    $owner = $user;
+  }
+  // Load the settings for this page.
+  $mysite = mysite_load_page($owner->uid, $page);
+
+  // access control set by the user 'status' flag
+  $show = FALSE;
+  // if the user is looking at the MySite data
+  if ($user->uid == $owner->uid) {
+    $show = TRUE;
+    if ($pageview) {
+      // get any system messages waiting for this user
+      mysite_message($owner->uid);
+
+      // this user has no page, give them help making one
+      if (user_access('edit mysite')) {
+        if (!isset($mysite->uid)) {
+          $output = theme('mysite_create_help', $owner);
+          return $output;
+        }
+      }
+      else {
+        return drupal_access_denied();
+      }
+    }
+  }
+  // access checks: can this user view this data?
+  // these checks are here for external use of this function
+  else if (user_access('administer mysite') || $mysite->uid == 0 || $mysite->status == 1) {
+    $show = TRUE;
+  }
+  // show the page or return the data
+  if ($show) {
+    mysite_load($mysite, $pageview);
+    // the cache wrapper
+    $content = NULL;
+    $cache_set = variable_get('mysite_cache', 0);
+    if ($cache_set > 0) {
+      $expire = db_result(db_query("SELECT expire FROM {cache} WHERE cid = '%s'", 'mysite:'. $mysite->uid .':'. $mysite->page));
+      if (time() < $expire) {
+        $data = cache_get('mysite:'. $mysite->uid .':'. $mysite->page, 'cache');
+        $content = unserialize($data->data);
+      }
+      if (isset($content['owner']) && empty($content['data'])) {
+        // This page is blank in the cache, so just render the approprate message.
+        return mysite_output($owner, $mysite, $content = array(), $pageview);
+      }
+    }
+    if (empty($content)) {
+      $data = array();
+      /* get the data for this user
+          for each type of content listed in the user's mysite_data set
+          run the appropriate include / theme function
+          append the themed data to the $data array
+          using the order value as the key
+      */
+      $sql = 'SELECT mid, uid, page, title, type, type_id, sort, position, format, settings, locked FROM {mysite_data} WHERE (uid = %d OR (uid = 0 AND locked = 1)) AND page = %d ORDER BY position ASC, sort ASC';
+      $result = db_query($sql, $owner->uid, $page);
+      $i = 0;
+      $allowed = variable_get('mysite_content', array());
+      while ($item = db_fetch_object($result)) {
+        // check to see if the content option is still valid
+        if (!empty($allowed[$item->type])) {
+          mysite_load_includes('types', $item->type);
+          // enable the format files
+          mysite_load_includes('formats', $item->format);
+          $data[$item->position][$i]['title'] = check_plain($item->title);
+          $data[$item->position][$i]['mid'] = $item->mid;
+          $data[$item->position][$i]['format'] = $item->format;
+          $data[$item->position][$i]['locked'] = $item->locked;
+          $settings = unserialize($item->settings);
+          $data[$item->position][$i]['output'] = module_invoke('mysite_type', $item->type .'_data', $item->type_id, $settings);
+          $data[$item->position][$i]['link'] = $data[$i]['output']['base'];
+          if (!$item->locked && (user_access('edit mysite') && $user->uid == $uid) || user_access('administer mysite')) {
+            $data[$item->position][$i]['actions'] = theme('mysite_actions', $item->uid, $item->mid, $page);
+          }
+          $i++;
+        }
+        else {
+          $sql = "DELETE FROM {mysite_data} WHERE mid = %d";
+          db_query($sql, $item->mid);
+          drupal_set_message(t('The %title item is no longer available.', array('%title' => $item->title)));
+        }
+      }
+      // cast the data sets as a single array so they can be passed
+      $content['owner'] = $owner;
+      $content['mysite'] = $mysite;
+      $content['data'] = $data;
+      if ($cache_set > 0) {
+        cache_set('mysite:'. $mysite->uid .':'. $mysite->page, 'cache', serialize($content), time() + $cache_set);
+      }
+    }
+    else {
+      // if reading from cache, we must load all the format includes
+      mysite_load_includes('formats', NULL, TRUE);
+    }
+    return mysite_output($owner, $mysite, $content, $pageview);
+  }
+  else if ($user->uid > 0 && user_access('edit mysite')) {
+    drupal_goto('mysite/'. $user->uid .'/view');
+  }
+  else {
+    return drupal_access_denied();
+  }
+}
+
+/**
+ * Return the proper content based on the request.
+ *
+ * @param $owner
+ * The $user object for the owner of this page.
+ * @param $mysite
+ *  Information about this MySite collection, taken from mysite_get().
+ * @param $content
+ *  The content elements to render for this page.
+ * @param $pageview
+ *  Boolean flag that indicates the data will be viewed using theme_page.
+ *  If you want to access this data externally, set $pageview = FALSE.
+ * @return
+ *  Normally returns a themed HTML page.  If accessed from an external
+ *  function, may return the $content array.
+ */
+function mysite_output($owner, $mysite, $content = array(), $pageview = TRUE) {
+  if ($pageview) {
+    if (!empty($content['data'])) {
+      print theme('mysite_'. $mysite->layout .'_layout', $content);
+    }
+    else {
+      global $user;
+      $output = '';
+      $_mysite_menu = mysite_content_menu();
+      if ($user->uid == $owner->uid) {
+        drupal_set_message(t('%name, you have no content saved.', array('%name' => $owner->name)));
+      }
+      else {
+        drupal_set_message(t('%name has no content saved.', array('%name' => $owner->name)));
+      }
+      $output .= theme('mysite_content_help', $owner);
+      print theme('page', $output, variable_get('mysite_fullscreen', 1));
+    }
+    return;
+  }
+  else {
+    return $content;
+  }
+}
+
+/**
+ * Prepare the output into the proper column for the layout.
+ *
+ * If a column is empty or does not exist, this function will collapse the data
+ * into the nearest available column.  For example, if the user had a three-column
+ * layout, with items assigned $position 1, 2, and 3, and switches to a one-column
+ * layout, this function will collapse items in positions 2 and 3 into position 1.
+ *
+ * The function does not save position changes to the database.
+ *
+ * All layout functions must call this function to prepare data for presentation.
+ *
+ * @param $mysite
+ *   Data object for this user's MySite page taken from the {mysite} table.
+ * @param $data
+ *   The $data array passed to the layout function by mysite_page().
+ * @param $cols
+ *   The number of columns (or regions) on the layout.
+ * @return
+ *   $data array
+ *   An array of data as defined by mysite_page(), but with empty regions collapsed
+ *   and filled with a message to the user.
+ */
+function mysite_prepare_columns($mysite, $data = array(), $cols = 1) {
+  global $user;
+  // reset the key to zero if there is only one column
+  if (count($data) == 1) {
+    sort($data);
+    $new = $data;
+  }
+  else {
+    // otherwise, slide existing data to a new array and unset the old
+    $new = array();
+    for ($i = 0; $i < $cols; $i++) {
+      $new[$i] = $data[$i];
+      unset($data[$i]);
+    }
+    // if there is leftover data, merge it into the last element of the new array;
+    if (!empty($data)) {
+      // set the columns correctly for the new keys
+      $set = $cols - 1;
+      if (empty($new[$set])) {
+        $new[$set] = array();
+      }
+      // loop the remaining data and merge it to the last region
+      foreach ($data as $array) {
+        if (!empty($array)) {
+          $new[$set] = array_merge($new[$set], $array);
+        }
+      }
+    }
+  }
+  if ($cols > 1) {
+    // handles empty regions gracefully
+    for ($i = 0; $i < $cols; $i++) {
+      if (empty($new[$i])) {
+        if (user_access('administer mysite') || (user_access('edit mysite') && $user->uid == $mysite->uid)) {
+          $new[$i][0]['title'] = t('Add content');
+          $new[$i][0]['mid'] = NULL;
+          $new[$i][0]['format'] = $mysite->format;
+          $new[$i][0]['output']['items'][0]['content'] = theme('mysite_empty_column', $mysite);
+        }
+        else {
+          // this should probably be themed
+          $new[$i][0] = array();
+        }
+      }
+    }
+  }
+  // We only have one column, so return it.
+  else {
+    $new = $new[0];
+  }
+  return $new;
+}
+
+/**
+ * Edit a MySite page using a multi-stage form.
+ *
+ * @param $uid
+ * The user id of the owner of the MySite.
+ * @param $page
+ * The current page of the mysite collection.
+ * @param $action
+ * The MySite settings form stage defined by mysite_edit_menu().
+ */
+function mysite_edit($uid = NULL, $page = 0, $action = NULL) {
+  global $user;
+
+  $check = FALSE;
+  // get the $owner of this mysite, use as a $user surrogate
+  if (is_numeric($uid) && $uid > 0) {
+    $owner = user_load(array('uid' => $uid));
+  }
+  // set values if we are updating the admin settings
+  if ($uid == 0 && user_access('administer mysite')) {
+    $owner->uid = 0;
+    $check = TRUE;
+  }
+
+  // must have a valid uid to continue
+  if ($owner->uid > 0 || $check) {
+    // Create an account, if needed.  mysite_get() will return -1 if no account exists.
+    $mysite = mysite_get($owner->uid, TRUE);
+    if ($mysite == -1) {
+      $edit['uid'] = $owner->uid;
+      // create a new account
+      $mysite = mysite_create_account($owner);
+    }
+    // get the user's current settings
+    $data = mysite_load_page($uid, $page);
+    $edit = (array) $data;
+    // add user styles
+    $inc = mysite_load_includes('styles', $edit['style']);
+
+    // print the submenu
+    $_submenu = mysite_edit_menu();
+    $submenu = $_submenu[$page];
+
+    if (is_string($action) && array_key_exists($action, $submenu)) {
+      $only = $action;
+    }
+    else {
+      drupal_goto('mysite/'. $owner->uid .'/edit/'. $page .'/'. key($submenu));
+    }
+
+    $output = theme('mysite_submenu', $submenu, $page, FALSE);
+    $output .= '<div class="mysite-mainmenu">';
+    $output .= '<h3>'. filter_xss_admin($submenu[$only]['label']) .'</h3>';
+    $output .= '<p>'. filter_xss_admin($submenu[$only]['help']) .'</p>';
+
+    // get any system messages waiting for this user
+    mysite_message($owner->uid);
+    if (!isset($edit['status'])) {
+      $edit['status'] = variable_get('mysite_private_status', 1);
+    }
+    if (empty($edit['theme'])) {
+      $edit['theme'] = variable_get('theme_default', 'garland');
+    }
+    if (empty($edit['layout'])) {
+      $edit['layout'] ='default';
+    }
+    if (empty($edit['style'])) {
+      $edit['style'] ='default';
+    }
+    if (empty($edit['format'])) {
+      $edit['format'] ='default';
+    }
+    if (empty($edit['title'])) {
+      $edit['title'] = $owner->name;
+    }
+    drupal_set_title(check_plain($edit['title']) .' : '. mysite_sitename());
+    $output .= drupal_get_form('mysite_edit_form', $edit, $page, $only);
+    $output .= '</div>';
+    print theme('page', $output, variable_get('mysite_fullscreen', 1));
+  }
+  else {
+    drupal_not_found();
+    return;
+  }
+}
+
+/**
+ * Page for adding content to a MySite page.
+ *
+ * @param $uid
+ *   The user id of the owner of the mysite.
+ * @param $page
+ * The current page of the MySite collection.
+ * @param $type
+ *  The type of content options to display.
+ */
+function mysite_content($uid = NULL, $page = 0, $type = NULL) {
+  global $user;
+  $submenu = mysite_content_menu();
+  $check = FALSE;
+
+  // get the $owner of this MySite page, use as a $user surrogate
+  $uid = arg(1);
+  if (is_numeric($uid) && $uid > 0) {
+    $owner = user_load(array('uid' => $uid));
+  }
+
+  // Make sure the $type is valid and active.
+  $type = arg(4);
+  $allowed = variable_get('mysite_content', array());
+  if ($type === $allowed[$type]) {
+    $only = $type;
+  }
+  else {
+    drupal_goto('mysite/'. $uid .'/content/'. $page);
+  }
+
+  // set values if we are updating the admin settings
+  if ($uid == 0 && user_access('administer mysite')) {
+    $owner->uid = 0;
+    $check = TRUE;
+  }
+
+  // must have a valid uid to continue
+  if ($owner->uid > 0 || $check) {
+    // get any system messages waiting for this user
+    mysite_message($owner->uid);
+
+    // create a new account, if needed.
+    $mysite = mysite_get($owner->uid, TRUE);
+    if (!isset($mysite->uid)) {
+      $mysite = mysite_create_account($owner);
+    }
+
+    if ($_POST) {
+      $edit = $_POST['edit'];
+    }
+    // add submenu links
+    if (!empty($submenu)) {
+      $output .= theme('mysite_submenu', $submenu, $page);
+    }
+    $output .= '<div class="mysite-mainmenu">';
+    if (empty($only)) {
+      $layout = mysite_get_layout($owner->uid);
+      $output .= t('<h3>Content</h3>');
+      // ajax-generated message class
+      $output .=  '<div class="mysite-ajax"></div>';
+      $header = array(t('position'), t('sort'), t('title'), t('actions'), t('rename'));
+      $sql = 'SELECT mid, uid, page, title, type, type_id, sort, position FROM {mysite_data} WHERE uid = %d AND page = %d ORDER BY position ASC, sort ASC';
+      $result = db_query($sql, $owner->uid, $page);
+      $rows = array();
+      $edit = array();
+      $mid = array();
+      while ($entry = db_fetch_array($result)) {
+        $mid[] = $entry['mid'];
+        // check the position against the layout
+        $pos = $entry['position'];
+        if ($pos > $layout['count'] - 1) {
+          $pos = $layout['count'] - 1;
+        }
+        $rows[$pos][] = array('data' => array(check_plain($entry['title']), theme('mysite_actions', $entry['uid'], $entry['mid'], $page)));
+        $edit[] = $entry;
+      }
+      for ($i = 0 ; $i <= $layout['count'] - 1; $i++) {
+        if (empty($rows[$i])) {
+          $rows[$i][] = array('data' => array(t('This region is empty'), NULL));
+        }
+      }
+      if (!empty($rows)) {
+        $output .= '<div class="mysite-current">';
+        $output .= t('<h3>Current content</h3>');
+        $i = 0;
+        $move = drupal_get_path('module', 'mysite') .'/plugins/icons/move.png';
+        $msg = t('Click and drag to sort');
+        foreach ($rows as $key => $data) {
+          $output .= '<h5 class="mysite-divider">'. t('!name region', array('!name' => $layout['regions'][$key])) .'</h5>';
+          $output .= '<div class="mysite-sortable" id="mysite-sort'. $key .'">';
+          foreach ($data as $row) {
+            $output .= '<div class="mysite-dnd sortable-item" id="m'. $mid[$i] .'">';
+            if (!empty($row['data'][1])) {
+              $output .= '<div class="mysite-grabber"><span class="mysite-header">'. theme('image', $move, $msg, $msg) .'</span></div>';
+            }
+            foreach ($row['data'] as $key => $data) {
+              $output .= '<div class="mysite-table-'. $key .'">'. $data .'</div>';
+            }
+            $output .= '</div>';
+            $i++;
+          }
+          $output .= '</div>';
+        }
+        $output .= '</div>';
+        $output .= theme('mysite_submenu', $submenu, $page, TRUE, TRUE, 'mysite-options');
+      }
+      else {
+        $output .= t('<p>You have no content saved.</p>');
+        $output .= theme('mysite_content_help', $owner, $page);
+      }
+    }
+
+    // set the page title
+    drupal_set_title(check_plain($mysite->title) .' : '. mysite_sitename());
+
+    // show the add content forms
+    if (!empty($only)) {
+      $max = variable_get('mysite_items', 10);
+      $result = db_fetch_object(db_query("SELECT COUNT(mid) as count FROM {mysite_data} WHERE uid = %d AND page = %d", $owner->uid, $page));
+      if ($result->count < $max) {
+        $output .= mysite_content_form($owner, $edit, $only, $page);
+      }
+      else {
+        $output .= t('<h3>Personal content is full</h3>');
+        $output .= t('<p>You cannot add any new content without first removing an item.</p><p>Only @max items can be displayed on your personal page at one time.</p>', array('@max' => $max));
+        $output .= '<p>'. l(t('View your personal page'), 'mysite/'. $owner->uid .'/view') .'</p>';
+      }
+    }
+    $output .= '</div>';
+    print theme('page', $output, variable_get('mysite_fullscreen', 1));
+  }
+  else {
+    drupal_not_found();
+    return;
+  }
+}
+
+/**
+ * Generates a user settings page for individual mysite content items.
+ *
+ * This function generates a basic form that lets users change titles of items.
+ * It also calls content-type specific functions for extending the form.
+ *
+ * See mysite_type_profile_content_form() for an example.
+ *
+ * @param $uid
+ *   The user id of the person whose MySite page is being altered.
+ * @param $mid
+ *   The mysite id (mid) of the content item being altered.
+ */
+function mysite_content_settings($uid = NULL, $mid = NULL) {
+  global $user;
+  if ($user->uid == $uid || (user_access('administer mysite') && is_numeric($uid))) {
+    $mysite = mysite_get($uid);
+    // add user styles
+    mysite_load_includes('styles', $mysite->style);
+    $data = db_fetch_array(db_query("SELECT * FROM {mysite_data} WHERE mid = %d AND uid = %d", $mid, $uid));
+    drupal_set_title(check_plain($data['title']));
+    $output = t('<p>Use the form below to save custom options for this item on your personal page.</p>');
+    $output .= drupal_get_form('mysite_content_settings_form', $data);
+    print theme('page', $output, variable_get('mysite_fullscreen', 1));
+    return;
+  }
+  else {
+    return drupal_access_denied();
+  }
+}
+
+/**
+ * Allows a MySite element to be used by an external application or menu callback
+ *
+ * @param $type
+ *   A string indicating the content type
+ * @param $type_id
+ *   The content id (such as term id) to retrieve
+ * @param $uid
+ *   The user account to retrieve MySite page settings for. Optional.
+ * @return
+ *   An array formatted according to mysite_type_hook_data on success
+ *   or FALSE on failure.
+ */
+function mysite_render($type, $type_id, $uid = 0) {
+  $types = variable_get('mysite_content', array());
+  if ($types[$type] == $type) {
+    // load the include and set the callback
+    mysite_load_includes('types', $type);
+    $func = 'mysite_type_'. $type .'_data';
+    // get the settings, if applicable
+    $settings = NULL;
+    $sql = "SELECT settings FROM {mysite_data} WHERE type = '%s' AND type_id = %d AND uid = %d";
+    $settings = db_result(db_query($sql, $type, $type_id, $uid));
+    if ($settings) {
+      $settings = unserialize($settings);
+    }
+    $data = $func($type_id, $settings);
+  }
+  else {
+    $data = FALSE;
+    watchdog('mysite', t('The requested content type %type is not available.', array('%type' => $type)));
+  }
+  return $data;
+}
+
+/**
+ * Display a MySite content element outside of the MySite page
+ *
+ * @param $type
+ *   A string indicating the content type
+ * @param $type_id
+ *   The content id (such as term id) to retrieve
+ * @param $uid
+ *   The user account to retrieve MySite page settings for. Optional.
+ * @param $format
+ *    The name of the MySite format plugin to use for output.  Optional.
+ * @return
+ *   A themed HTML element ready for display, or a message on failure.
+ */
+function mysite_display($type, $type_id, $uid = 0, $format = 'default') {
+  $data = mysite_render($type, $type_id, $uid);
+  if ($data) {
+    // load the format file
+    mysite_load_includes('formats', $format);
+    // call the correct theme function
+    $func = 'mysite_'. $format .'_item';
+    $output = theme($func, $data['items']);
+  }
+  else {
+    $output = t('The requested content failed to load.');
+  }
+  return $output;
+}
+
+/**** MULTIPLE PAGE SUPPORT ****/
+
+/**
+ * Return an array of all pages in a user collection.
+ *
+ * @param $uid
+ * The user id of the MySite collection owner.
+ * @return
+ * An array of page data, with page numbers as the keys. Or '0' if the user has no page.
+ */
+function mysite_get_pages($uid) {
+  $pages = array(0);
+  $result = db_query("SELECT page, uid, created, updated, status, title, layout, style, format, theme FROM {mysite_page} WHERE uid = %d", $uid);
+  while ($data = db_fetch_array($result)) {
+    $pages[$data['page']] = $data;
+  }
+  return $pages;
+}
+
+/**
+ * Creates an entry in {mysite_page} for the current user.
+ *
+ * @param $uid
+ * The user id of the MySite collection owner.
+ * @param $page
+ * The current page of the MySite collection.
+ */
+function mysite_create_page($uid, $page = 0) {
+  $mysite = mysite_get($uid, TRUE);
+  if (isset($mysite->uid)) {
+    $page_check = db_result(db_query("SELECT COUNT(*) FROM {mysite_page} WHERE uid = %d AND page = %d", $uid, $page));
+    if (empty($page_check)) {
+      if ($page > 0) {
+        $mysite->title .= "-$page";
+        $mysite->created = time();
+        $mysite->updated = NULL;
+      }
+      db_query("INSERT INTO {mysite_page} (page, uid, created, updated, status, title, layout, style, format, theme)
+        VALUES (%d, %d, %d, %d, %d, '%s', '%s', '%s', '%s', '%s')",
+        $page, $mysite->uid, $mysite->created, $mysite->updated, $mysite->status, $mysite->title, $mysite->layout, $mysite->style, $mysite->format, $mysite->theme);
+    }
+  }
+}
+
+/**
+ * Adds a new page to the user collection and takes them to the settings form for that page.
+ *
+ * @param $uid
+ * The user id of the MySite collection owner.
+ */
+function mysite_add_page($uid) {
+  $pages = mysite_get_pages($uid);
+  $count = count($pages);
+  if ($count < variable_get('mysite_pages', 5)) {
+    mysite_create_page($uid, $count);
+    drupal_goto('mysite/'. $uid .'/edit/'. $count);
+  }
+}
+
+/**
+ * Remove a single page from a user collection.
+ *
+ * @param $uid
+ * The user id of the MySite collection owner.
+ * @param $page
+ * The current page of the MySite collection.
+ */
+function mysite_remove_page($uid, $page) {
+  return drupal_get_form('mysite_remove_page_form', $uid, $page);
+}
+
+/**
+ * Return data for a single page from a user collection.
+ *
+ * @param $uid
+ * The user id of the MySite collection owner.
+ * @param $page
+ * The current page of the MySite collection.
+ * @return
+ * An object containing information for the current page, identical to mysite_get().
+ */
+function mysite_load_page($uid, $page = 0) {
+  $data = db_fetch_object(db_query("SELECT page, uid, created, updated, status, title, layout, style, format, theme FROM {mysite_page} WHERE uid = %d AND page = %d", $uid, $page));
+  return $data;
+}
+
+/**
+ * Get the page for a mysite item.
+ *
+ * @param $mid
+ * The MySuite id for a content element.
+ * @return
+ * The page number that this item belongs to.
+ */
+function mysite_item_page($mid) {
+  static $data = array();
+  if (!isset($data[$mid])) {
+    $data[$mid] = db_result(db_query("SELECT page FROM {mysite_data} WHERE mid = %d", $mid));
+  }
+  return $data[$mid];
+}
+
+/**
+ * Find the first page in a collection that can accept new content.
+ *
+ * @param $uid
+ * The user id of the MySite collection owner
+ * @return
+ * The page number.
+ */
+
+function mysite_find_empty_page($uid) {
+  static $page = array();
+  if (!isset($page[$uid])) {
+    $pages = mysite_get_pages($user->uid);
+    foreach ($pages as $key => $value) {
+      $sql = "SELECT COUNT(mid) as count FROM {mysite_data} WHERE uid = %d AND page = %d";
+      $result = db_result(db_query($sql, $user->uid, $key));
+      // The first empty page is set to active.
+      if ($result < variable_get('mysite_items' , 10)) {
+        $page[$uid] = $key;
+        break;
+      }
+    }
+  }
+  return $page[$uid];
+}
+
+/**
+ * Mullt-access control check, used in place of user_access() for some menu items.
+ *
+ * @param $access
+ * The default access status for this menu item.  TRUE/FALSE
+ * @param $owner
+ * Is the current user the owner of this collection.  TRUE/FALSE
+ * @param $view
+ * Does the current user have the 'view mysite' permission.  TRUE/FALSE
+ * @return
+ * TRUE or FALSE, where TRUE grants access.
+ */
+function mysite_menu_check($access, $owner, $view) {
+  if ($owner) {
+    $access = TRUE;
+  }
+  else if ($view && $access) {
+    $access = TRUE;
+  }
+  else {
+    $access = FALSE;
+  }
+  return $access;
+}
+
+/**** FORM FUNCTIONS ****/
+
+/**
+ * FormsAPI for mysite_configure().
+ */
+function mysite_configure_form() {
+  $form['mysite'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Display Settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['mysite']['mysite_sitename'] = array(
+    '#type' => 'textfield', '#title' => t('MySite Sitename'),
+    '#default_value' => variable_get('mysite_sitename', t('My !site', array('!site' => variable_get('site_name', 'drupal')))),
+    '#size' => 40, '#maxlength' => 80,
+    '#description' => t('Enter the title string to be used for MySite menu items and page titles.')
+  );
+  $form['mysite']['mysite_list'] = array(
+    '#type' => 'radios', '#title' => t('MySite Behavior'), '#default_value' => variable_get('mysite_list', 0),
+    '#options' =>  array(0 => t('Go to user MySite page'), 1 => t('Show list of all user mysites')),
+    '#description' => t('Create an overview page with links to all custom user MySite pages?')
+  );
+  $form['mysite']['mysite_private_status'] = array(
+    '#type' => 'radios', '#title' => t('MySite Privacy'), '#default_value' => variable_get('mysite_private_status', 1),
+    '#options' =>  array(1 => t('Default setting is "public"'), 0 => t('Default setting is "private"')),
+    '#description' => t('When creating new user MySite pages, should they default to public or private?')
+  );
+  // Note: fullscreen printing is a TRUE/FALSE option. FALSE == 0 == strip blocks from output.
+  $form['mysite']['mysite_fullscreen'] = array(
+    '#type' => 'radios', '#title' => t('MySite Page Setup'), '#default_value' => variable_get('mysite_fullscreen', 1),
+    '#options' =>  array(1 => t('Show MySite within normal site theme'), 0 => t('Show MySite pages full screen')),
+    '#description' => t('The full screen option will remove the left and right rail regions from a MySite page view.')
+  );
+  $form['mysite']['mysite_confirm_delete'] = array(
+    '#type' => 'radios', '#title' => t('MySite Item Deletion'), '#default_value' => variable_get('mysite_confirm_delete', 0),
+    '#options' =>  array(0 => t('Delete items on request'), 1 => t('Prompt user to confirm deletions')),
+    '#description' => t('Should users be asked to confirm the deletion of content? Users may choose to ignore the prompt.')
+  );
+  $form['mysite']['mysite_links'] = array(
+    '#type' => 'radios', '#title' => t('MySite Node Links'), '#default_value' => variable_get('mysite_links', 1),
+    '#options' =>  array(1 => t('Show links on all node views'), 2 => t('Show links on full page view only'), 0 => t('Do not show MySite links')),
+    '#description' => t('Should MySite add content-sensitive action links to nodes?')
+  );
+  $form['mysite_content'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Content Settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  // types configuration based on includes found
+  $types = mysite_get_includes('types');
+  $sort = array();
+  foreach ($types as $key => $type) {
+    $info = NULL;
+    mysite_load_includes('types', $key, $load_all = TRUE);
+    $info = module_invoke('mysite_type', $key, $get_options = FALSE);
+    if (is_array($info) && !empty($info['include'])) {
+      $sort[$key] = $info;
+    }
+  }
+
+  // sort the options and get the category labels for display
+  $options = mysite_sort_options($sort);
+  $labels = $options['category_labels'];
+  unset($options['category_labels']);
+  // warn the admin of additional configuration.  See mysite_type_hook_active() for details.
+  $current_types = variable_get('mysite_content', array());
+  $message = NULL;
+  $i = 0;
+  $label = '';
+
+  foreach ($options as $key => $value) {
+    if (function_exists('mysite_type_'. $key .'_active')) {
+      $active = module_invoke('mysite_type', $key .'_active', $key);
+      // if this is false, then activation failed
+      if (!$active[$key]) {
+        $message .= '<li>'. $options[$key]['data'] .'<br /><em>'. $active['message'] .'</em></li>';
+        unset($options[$key]);
+        unset($current_types[$key]);
+        unset($labels[$i]);
+      }
+    }
+    $i++;
+  }
+  // takes the options array and appends category titles as needed.
+  $title =  t('MySite Content Types');
+  foreach ($options as $key => $value) {
+    $val = $value['data'];
+    $data[$key] = $val;
+  }
+  // reset the variable since we removed inactive types
+  variable_set('mysite_content', $current_types);
+  $form['mysite_content']['mysite_content'] = array(
+    '#type' => 'checkboxes',
+    '#title' => $title,
+    '#default_value' => variable_get('mysite_content', NULL),
+    '#options' => $data,
+    '#description' => array('text' => t("Which types of content can users add to a MySite collection?"), 'labels' => $labels)
+  );
+
+  if (!empty($message)) {
+    $form['mysite_content']['mysite_content_message'] = array(
+      '#prefix' => '<p><b>'. t('Disabled Content Types:') .'</b><ul>',
+      '#value' => $message,
+      '#suffix' => '</ul><div class="description">'. t('The options listed above require additional configuration before they can be activated.') .'</div></p>'
+    );
+  }
+  $form['mysite_browser'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Content Browser'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  // these settings only matter if MySite Icons is turned on
+  if (module_exists('mysite_icon')) {
+    $form['mysite_browser']['mysite_browser'] = array(
+      '#type' => 'radios',
+      '#title' => t('Content Browsing'), '#default_value' => variable_get('mysite_browser', 'table'),
+      '#options' => array('table' => t('Display a text-only table'), 'rows' => t('Display rows of icons')),
+      '#description' => t("Show users a table of text or an icon panel?")
+    );
+    $form['mysite_browser']['mysite_browser_max'] = array(
+      '#type' => 'select',
+      '#title' => t('Content Layout'), '#default_value' => variable_get('mysite_browser_max', 4),
+      '#options' => drupal_map_assoc(array(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)),
+      '#description' => t("Items per row for the icon panel.")
+    );
+  }
+  $form['mysite_browser']['mysite_browser_pager'] = array(
+    '#type' => 'select',
+    '#title' => t('Items per Page'), '#default_value' => variable_get('mysite_browser_pager', 25),
+    '#options' => drupal_map_assoc(array(10, 25, 50)),
+    '#description' => t("Content choices to show per page.")
+  );
+  $form['mysite_max'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('User Limits'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  // how much content can a user have?
+  $options = drupal_map_assoc(array(5, 10, 20));
+  $form['mysite_max']['mysite_items'] = array(
+    '#type' => 'select',
+    '#title' => t('Item Count'), '#default_value' => variable_get('mysite_items', 10),
+    '#options' => $options,
+    '#description' => t("How many items can users add to a MySite collection?")
+  );
+  $options = drupal_map_assoc(array(3, 5, 10, 15, 20));
+  $form['mysite_max']['mysite_elements'] = array(
+    '#type' => 'select',
+    '#title' => t('Element Count'), '#default_value' => variable_get('mysite_elements', 5),
+    '#options' => $options,
+    '#description' => t("How many story elements should be displayed per item?")
+  );
+  $options = drupal_map_assoc(array(1, 3, 5, 8, 10, 15, 20));
+  $form['mysite_max']['mysite_pages'] = array(
+    '#type' => 'select',
+    '#title' => t('Page Count'), '#default_value' => variable_get('mysite_pages', 5),
+    '#options' => $options,
+    '#description' => t("How many pages may a MySite user create?")
+  );
+  // icons usage.  mysite comes with GPL icons.
+  $form['mysite_icons'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Action Buttons'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $icons = drupal_get_path('module', 'mysite') .'/plugins/icons/';
+  $up = theme_image($icons .'up.png', 'move item up', 'move item up', NULL, TRUE);
+  $down = theme_image($icons .'down.png', 'move item down', 'move item down', NULL, TRUE);
+  $remove = theme_image($icons .'cancel.png', 'remove item', 'remove item', NULL, TRUE);
+  $configure = theme_image($icons .'settings.png', 'configure item', 'configure item', NULL, TRUE);
+  $form['mysite_icons']['mysite_use_icons'] = array(
+    '#type' => 'radios',
+    '#title' => t('Action Labels'), '#default_value' => variable_get('mysite_use_icons', 1),
+    '#options' => array(1 => t('Icons'), 0 => t('Text'), 2 => 'Icons and Text'),
+    '#prefix' => '<p>'. t('The action button icon set: ') . $up .' '. $down .' '. $remove .' '. $configure .'</p>',
+    '#description' => t("Use the provided icon set for actions?")
+  );
+  // cache settings.  These may help high-traffic sites.
+  $form['mysite_cache'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Cache Settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  // clear the mysite_cache if it is disabled.
+  $caching = variable_get('mysite_cache', 0);
+  if ($caching == 0) {
+    cache_clear_all('mysite:', 'cache', TRUE);
+  }
+  $options = array('0' => t('Cache Off'), '300' => t('5 min.'), '900' => t('15 min.'), '1800' => t('30 min.'), '3600' => t('1 hour'));
+  $form['mysite_cache']['mysite_cache'] = array(
+    '#type' => 'select',
+    '#title' => t('MySite Cache'), '#default_value' => $caching,
+    '#options' => $options,
+    '#description' => t("Set the cache duration for user MySite page views.  Recommended for high-traffic sites.")
+  );
+  // default page settings.
+  $default = variable_get('mysite_default_user', NULL);
+  $form['mysite_default'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Default Page Settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['mysite_default']['mysite_default_user'] = array(
+    '#type' => 'textfield',
+    '#title' => t('MySite Default User'),
+    '#size' => 5,
+    '#default_value' => $default,
+    '#description' => t("Optional: Enter the UID of the user to display at http://example.com/mysite-default.")
+  );
+  return system_settings_form($form);
+}
+
+/**
+ * Form function for mysite_edit().
+ *
+ * @param $edit
+ *   The values passed to the form by mysite_edit().
+ *   Perhaps this should be a reference &$edit?
+ * @param $page
+ * The current page of the mysite collection.
+ * @param $only
+ *    A string value indicating which parts of the form are active
+ */
+function mysite_edit_form($edit, $page, $only = 'personal') {
+  $submenu = mysite_edit_menu();
+  $path = drupal_get_path('module', 'mysite') .'/plugins';
+  // get the variables we need to check
+  $types = variable_get('mysite_content', NULL);
+
+  $form = array();
+  $form['mysite_edit'] = array(
+    '#type' => 'fieldset',
+    '#collapsible' => FALSE,
+    '#collapsed' => FALSE,
+  );
+  $form['mysite_edit']['page'] = array('#type' => 'value', '#value' => $page);
+  // personal settings
+  if ($only == 'personal') {
+    $form['mysite_edit']['title'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Personal page title'),
+      '#default_value' => $edit['title'],
+      '#weight' => -10,
+      '#size' => 40,
+      '#maxlength' => 80,
+      '#required' => TRUE,
+      '#description' => t('Naming each page helps you personalize the site.')
+      );
+    $form['mysite_edit']['status'] = array(
+      '#type' => 'radios',
+      '#title' => t('Allow others to see this personal page'),
+      '#default_value' => $edit['status'],
+      '#options' => array(0 => t('No'), 1 => t('Yes'))
+    );
+  }
+  else {
+    $form['mysite_edit']['title'] = array('#type' => 'value', '#value' => $edit['title']);
+    $form['mysite_edit']['status'] = array('#type' => 'value', '#value' => $edit['status']);
+  }
+  // theme settings
+  if ($only == 'theme') {
+    $themes = variable_get('mysite_theme_settings', array());
+    if (!empty($types['theme']) && !empty($themes)) {
+      mysite_load_includes('types', 'theme');
+      $allowed = mysite_type_theme_data($themes);
+      $form['mysite_edit']['theme'] = array(
+        '#type' => 'radios',
+        '#title' => t('Theme'),
+        '#default_value' => $edit['theme'],
+        '#options' => $allowed['name'],
+        '#description' => array('desc' => t('Select a theme for your personal page.'), 'screens' => $allowed['screenshot'])
+      );
+      $form['#theme'] = 'mysite_edit_theme';
+    }
+    else {
+      $form['mysite_edit']['theme'] = array('#type' => 'hidden', '#value' => $edit['theme']);
+    }
+  }
+  else {
+    $form['mysite_edit']['theme'] = array('#type' => 'hidden', '#value' => $edit['theme']);
+  }
+  // layout settings
+  if ($only == 'layout') {
+    $options = array();
+    $images = array();
+    $details = array();
+    $layouts = mysite_load_includes('layouts');
+    $path = drupal_get_path('module', 'mysite');
+    foreach ($layouts as $key => $value) {
+      $layout = module_invoke('mysite_layout', $value);
+      $options[$value] = $layout['name'];
+      $images[$value] = theme_image($path .'/plugins/layouts/'. $layout['image'], $layout['name'], $layout['name']);
+      $details[$value] = $layout['description'];
+    }
+    $description = array('desc' => t('Select a layout for your personal page.'), 'images' => $images, 'details' => $details);
+    if ($options != array('default')) {
+      $form['mysite_edit']['layout'] = array(
+        '#type' => 'radios',
+        '#title' => t('Layout'),
+        '#default_value' => $edit['layout'],
+        '#options' => $options,
+        '#description' => $description
+      );
+      $form['#theme'] = 'mysite_edit_layout';
+    }
+    else {
+      $form['mysite_edit']['layout'] = array('#type' => 'hidden', '#value' => $edit['layout']);
+    }
+  }
+  else {
+    $form['mysite_edit']['layout'] = array('#type' => 'hidden', '#value' => $edit['layout']);
+  }
+  // style settings
+  if ($only == 'style') {
+    $options = array();
+    $samples = array();
+    $styles = mysite_load_includes('styles');  // load these, since they affect display
+    foreach ($styles as $style) {
+      $options[$style] = ucwords($style);
+      $samples[$style] = 'mysite-'. $style .'-edit';
+    }
+    if ($options != array('default')) {
+      $form['mysite_edit']['style'] = array(
+        '#type' => 'radios',
+        '#title' => t('Style'),
+        '#default_value' => $edit['style'],
+        '#options' => $options,
+        '#description' => array('desc' => t('Select a style for your personal page.'), 'samples' => $samples)
+      );
+      $form['#theme'] = 'mysite_edit_style';
+    }
+    else {
+      $form['mysite_edit']['style'] = array('#type' => 'hidden', '#value' => $edit['style']);
+    }
+  }
+  else {
+    $form['mysite_edit']['style'] = array('#type' => 'hidden', '#value' => $edit['style']);
+  }
+  // format settings
+  if ($only == 'format') {
+    $options = array();
+    $samples = array();
+    $formats = mysite_load_includes('formats');
+    foreach ($formats as $format) {
+      $data = module_invoke('mysite_theme', $format);
+      $options[$format] = $data['format'];
+      $samples[$format] = $data['sample'];
+    }
+    if ($options != array('default')) {
+      $form['mysite_edit']['format'] = array(
+        '#type' => 'radios',
+        '#title' => t('Content format'),
+        '#prefix' => t('This setting will be the default for new content on this page.  You may configure individual items to use different formats.'),
+        '#default_value' => $edit['format'],
+        '#options' => $options,
+        '#description' => array('desc' => t('Select a format for this personal page.'), 'samples' => $samples)
+      );
+      $form['mysite_edit']['format_update'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Update all content to this format'),
+        '#return_value' => 1,
+        '#default_value' => 1,
+        '#description' => t("Set all page content to use the selected format?")
+      );
+      $form['#theme'] = 'mysite_edit_format';
+    }
+    else {
+      $form['mysite_edit']['format'] = array('#type' => 'hidden', '#value' => $edit['format']);
+    }
+  }
+  else {
+    $form['mysite_edit']['format'] = array('#type' => 'hidden', '#value' => $edit['format']);
+  }
+
+  // Set the pointer for the "Save and Continue" button
+  // Arrays don't let you set the pointer by key??
+  $list = array_keys($submenu[$page]);
+  while ($only != current($list)) {
+    next($list);
+  }
+  $next = next($list);
+  if ($next === FALSE) {
+    $next = reset($list);
+  }
+  $pages = mysite_get_pages($edit['uid']);
+  if (count($pages) > 1) {
+    // Flag to set all pages to this value.
+    $form['mysite_edit']['set_all'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Use these settings for all pages in my collection.'),
+      '#checked' => FALSE,
+    );
+  }
+  else {
+    $form['mysite_edit']['set_all'] = array('#type' => 'value', '#value' => 0);
+  }
+  // hidden values
+  $form['mysite_edit']['only'] = array('#type' => 'value', '#value' => $only);
+  $form['mysite_edit']['next'] = array('#type' => 'value', '#value' => $next);
+  $form['mysite_edit']['uid'] = array('#type' => 'value', '#value' => $edit['uid']);
+  $form['mysite_edit']['submit'] = array('#type' => 'submit', '#submit' => TRUE, '#value' => t('Save and view changes'));
+  $form['mysite_edit']['continue'] = array('#type' => 'submit', '#submit' => TRUE, '#value' => t('Save settings and continue >>'));
+  return $form;
+}
+
+/**
+ * Form submit for mysite_edit_form().
+ * Implementation of the Forms API.
+ */
+function mysite_edit_form_submit($form_id, $form_values) {
+  $check = 0;
+  $uid = $form_values['uid'];
+  $page = $form_values['page'];
+  if ($uid === 0) {
+    $check = 1;
+  }
+  $result = mysite_load_page($uid, $form_values['page']);
+  if (isset($result->uid)) {
+    // Page zero is the master settings page, still stored in the old {mysite} table.
+    if ($page == 0) {
+      $sql = "UPDATE {mysite} SET title = '%s', updated = %d, layout = '%s', style = '%s', format = '%s', status = %d, theme = '%s' WHERE uid = %d";
+      db_query($sql, $form_values['title'], time(), $form_values['layout'], $form_values['style'], $form_values['format'], $form_values['status'], $form_values['theme'], $uid);
+    }
+    $sql = "UPDATE {mysite_page} SET title = '%s', updated = %d, layout = '%s', style = '%s', format = '%s', status = %d, theme = '%s' WHERE uid = %d AND page = %d";
+    db_query($sql, $form_values['title'], time(), $form_values['layout'], $form_values['style'], $form_values['format'], $form_values['status'], $form_values['theme'], $uid, $page);
+    if ($form_values['format_update'] == 1) {
+      db_query("UPDATE {mysite_data} SET format = '%s' WHERE uid = %d AND page = %d", $form_values['format'], $uid, $page);
+    }
+    // Do we update all pages to the settings indicated?
+    if ($form_values['set_all']) {
+      switch ($form_values['only']) {
+        case 'personal':
+            // Update the status, but not the title.
+            db_query("UPDATE {mysite} SET status = %d WHERE uid = %d", $form_values['status'], $uid);
+            db_query("UPDATE {mysite_page} SET status = %d WHERE uid = %d", $form_values['status'], $uid);
+          break;
+        case 'theme':
+            // Update the theme
+            db_query("UPDATE {mysite} SET theme = '%s' WHERE uid = %d", $form_values['theme'], $uid);
+            db_query("UPDATE {mysite_page} SET theme = '%s' WHERE uid = %d", $form_values['theme'], $uid);
+          break;
+        case 'layout':
+            // Update the layout
+            db_query("UPDATE {mysite} SET layout = '%s' WHERE uid = %d", $form_values['layout'], $uid);
+            db_query("UPDATE {mysite_page} SET layout = '%s' WHERE uid = %d", $form_values['layout'], $uid);
+          break;
+        case 'style':
+            // Update the style
+            db_query("UPDATE {mysite} SET style = '%s' WHERE uid = %d", $form_values['style'], $uid);
+            db_query("UPDATE {mysite_page} SET style = '%s' WHERE uid = %d", $form_values['style'], $uid);
+          break;
+        case 'format':
+            // Update the format
+            db_query("UPDATE {mysite} SET format = '%s' WHERE uid = %d", $form_values['format'], $uid);
+            db_query("UPDATE {mysite_page} SET format = '%s' WHERE uid = %d", $form_values['format'], $uid);
+            // Update current formatting as well.
+            if ($form_values['format_update'] == 1) {
+              db_query("UPDATE {mysite_data} SET format = '%s' WHERE uid = %d", $form_values['format'], $uid);
+            }
+          break;
+      }
+    }
+    mysite_updated($result->uid);
+    drupal_set_message(t('Settings updated.'), 'status');
+  }
+  else {
+    if ($uid > 0 || $check == 1) {
+      // When we create this in the {mysite} table, it will copy into the {mysite_page} table on the next page load.
+      $sql = "INSERT INTO {mysite} (uid, title, created, updated, layout, style, format, status, theme) VALUES (%d, '%s', %d, %d, '%s', '%s', '%s', %d, '%s')";
+      db_query($sql, $form_values['uid'], $form_values['title'], time(), time(), $form_values['layout'], $form_values['style'], $form_values['format'], $form_values['status'], $form_values['theme']);
+      drupal_set_message(t('Personal page created'), 'status');
+      mysite_updated($uid);
+    }
+    else {
+      drupal_set_message(t('Failure.  Invalid UID'), 'error');
+    }
+  }
+  if ($form_values['op'] == $form_values['submit']) {
+    if ($uid > 0) {
+      drupal_goto('mysite/'. $form_values['uid'] .'/view/'. $page);
+    }
+    else {
+      drupal_goto('admin/settings/mysite');
+    }
+  }
+  else {
+    $goto = 'mysite/'. $form_values['uid'] .'/edit/'. $page .'/'. $form_values['next'];
+    drupal_goto($goto);
+  }
+
+}
+
+/**
+ * Form for mysite_content()
+ *
+ * @param $owner
+ * The $user object for the owner of this MySite page.
+ * We use $owner throughout to differentiate from the $user looking at the page.
+ * @param $edit
+ * The values passed to the form by mysite_content().
+ * Perhaps this should be a reference &$edit?
+ * @param $only
+ * Restricts the returned elements to only the specific include type.
+ * @param $page
+ * The current page of the mysite collection.
+ * @return
+ * A Drupal-themed table of content, with linked actions.
+ */
+function mysite_content_form($owner, $edit, $only = NULL, $page = 0) {
+  $form = array();
+  $style = variable_get('mysite_browser', 'table');
+  // load the types options
+  $types = mysite_load_includes('types', $only);
+
+  if (empty($types)) {
+    drupal_set_message(t('No content is available.'), 'error');
+    return;
+  }
+  // get the available content as defined by the .inc files
+  $options = array();
+  foreach ($types as $key => $value) {
+    if (module_hook('mysite_type', $value)) {
+      $options[$value] = module_invoke('mysite_type', $value);
+    }
+  }
+  // if no options returned, print a friendly message
+  if (empty($options[$only]['options'])) {
+    return theme('mysite_no_options', $owner, $options[$only]['name']);
+  }
+  $table = '';
+  foreach ($options as $key => $value) {
+    // if $options returned values, then this will fail, by design
+    if ($key != $value && !empty($value['options'])) {
+      $table .= mysite_get_content_element($owner, $edit, $key, $value, $style, $page);
+    }
+  }
+  return $table;
+}
+
+/**
+ * Given values, generate a table that behaves like a form so that users my add content to their MySite page.
+ *
+ * @param $owner
+ * The $user object for the owner of this MySite page.
+ * @param $edit
+ * The values passes from mysite_content_form().  Originally, this was going to be
+ * a form, but it was easier to make it links to menu callbacks.
+ * @param $label
+ * The name of the content type as defined by the mysite_type() array.
+ * @param $options
+ * The content options available to be added to a MySite page.
+ * @param $style
+ * The layout to use for the form.  Values are 'table' and 'grid.'
+ * @param $page
+ * The current page of the mysite collection.
+ * @return
+ * A Drupal-themed table of content choices, with action links.
+ */
+function mysite_get_content_element($owner, $edit, $label, $options, $style = 'table', $page = 0) {
+  global $user;
+
+  // paginate the content browser
+  $pager = $_GET['page'];
+  if (empty($pager) || !is_numeric($pager)) {
+    $pager = 1;
+  }
+  $item = $options['options'];
+  // find items already added
+  $items = array();
+  $current = db_query("SELECT type, type_id FROM {mysite_data} WHERE uid = %d OR (uid = 0 AND locked = 1)", $owner->uid);
+  $check = array();
+  while ($data = db_fetch_object($current)) {
+    $check[] = $data->type .'-'. $data->type_id;
+  }
+  for ($i = 0; $i < count($item['name']); $i++) {
+    $test = $item['type'][$i] .'-'. $item['type_id'][$i];
+    if (!in_array($test, $check)) {
+      $items['group'][] = $item['group'][$i];
+      $items['name'][] = $item['name'][$i];
+      $items['type_id'][] = $item['type_id'][$i];
+      $items['type'][] = $item['type'][$i];
+      $items['icon'][] = $item['icon'][$i];
+    }
+  }
+  $item = $items;
+
+  // layout settings
+  $threshold = variable_get('mysite_browser_pager', 25);
+  $max = variable_get('mysite_browser_max', 4);
+
+  // pagination logic
+  $start = ($pager -1) * $threshold;
+  $end = $start + $threshold - 1;
+  if ($end >= count($item['name'])) {
+    $end = count($item['name']) - 1;
+  }
+  $pages = ceil(count($item['name']) / $threshold);
+  $pager_output = theme('mysite_pager', $pages, $pager);
+  $count = count($item['type_id']);
+  $total = $item['count'];
+  $depth = 0;
+  if (is_array($item['group'])) {
+    $titles = array();
+    $pos = array();
+    $titles = array_unique($item['group']);
+    $depth = count($titles);
+    foreach ($titles as $title) {
+      $pos[$title] = array_search($title, $item['group']);
+    }
+  }
+  if ($style == 'table') {
+    $max = 2;
+    $header = array(ucwords($options['name']), t('Actions'));
+  }
+  else if (module_exists('mysite_icon')) {
+    $j = 0;
+    $sub = array();
+    if ($count < $max) {
+      $max = $count;
+    }
+    $icon_link = FALSE;
+    if (user_access('administer mysite')) {
+      $icon_link = TRUE;
+    }
+    $header = array(array('data' => ucwords($options['name'])), 'attributes' => array('colspan' => $max));
+  }
+  $rows = array();
+  $group = '';
+  // using positional arrays lets us keep the $items array to one-dimension, avoiding array loop issues
+  for ($i = $start; $i <= $end; $i++) {
+    if (($i == $start) || current($pos) == $i) {
+      $group = $item['group'][$i];
+      array_shift($pos);
+      $rows[] = array(array('data' => t('<b>@sub</b>', array('@sub' => $item['group'][$i])), 'colspan' => $max));
+    }
+    // insert a content group row
+    $blank_rows = FALSE;
+    if (current($pos) == $i+1) {
+      if ($i > 0) {
+        $blank_rows = TRUE;
+      }
+    }
+    $name = check_plain($item['name'][$i]);
+    $add = mysite_add_link($owner->uid, $item['type'][$i], $item['type_id'][$i], $page);
+    if ($style == 'table') {
+      $rows[] = array('data' => array($name, l(t('add'), $add)));
+    }
+    else {
+      $icon_edit = '';
+      if ($icon_link) {
+        $icon_edit = theme('mysite_icon_add_link', $item['type'][$i], $item['type_id'][$i]);
+      }
+      $image = theme('mysite_icon', $item['type'][$i], $item['type_id'][$i], $name, $item['icon'][$i]);
+      $sub[] = array('data' => '<div class="mysite-browser">'. l($image, $add, array(), NULL, NULL, FALSE, TRUE) . l($name, $add) . $icon_edit .'</p></div>');
+      $j++;
+      if ($j == $max || $i == $end || $blank_rows) {
+        $rows[] = $sub;
+        unset($sub);
+        $j = 0;
+      }
+    }
+  }
+  $table = '';
+  $table = t('<h3>@cat to your personal page</h3>', array('@cat' => $options['label']));
+  $table .= '<a name="'. filter_xss_admin($options['name']) .'"></a>';
+  $table .= '<p class="help">'. filter_xss_admin($options['help']) .'</p>';
+  $table .= '<fieldset>';
+  if ($options['search'] && function_exists('mysite_type_'. $label .'_search')) {
+    $table .= module_invoke('mysite_type', $label .'_search', $owner->uid);
+  }
+  if (!empty($rows)) {
+    $table .= '<b>'. t('Browse available options') .'</b>';
+    $table .= theme_table($header, $rows);
+    if ($pager_output) {
+      $table .= $pager_output;
+    }
+  }
+  else {
+    $table .= '<p>'. t('All available @type content is already on your personal page.', array('@type' => $label)) .'</p>';
+  }
+  $table .= '</fieldset>';
+
+  // if this type has a unique form, it goes here
+  if ($options['form']) {
+    $table .= module_invoke('mysite_type', $label .'_form', $owner);
+  }
+  return $table;
+}
+
+/**
+ * FormsAPI for mysite_content_settings()
+ *
+ * This function will invoke type-specific form additions if present.  See
+ * mysite_type_profile_content_form() for an example.
+ *
+ * @param $data
+ * Array with information from the {mysite_data} table for this given content.
+ */
+function mysite_content_settings_form($edit) {
+  // the default elements are simply the title and format, other plugins may add elements
+  $form['data']['title'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Content title'),
+    '#size' => '40',
+    '#maxsize' => '240',
+    '#default_value' => $edit['title']
+  );
+  $form['data']['original'] = array(
+    '#type' => 'value',
+    '#value' => $edit['title']
+  );
+  $form['data']['uid'] = array(
+    '#type' => 'value',
+    '#value' => $edit['uid']
+  );
+  // let the administrator lock this item
+  if (user_access('administer mysite') && $edit['uid'] == 0) {
+    $form['data']['locked'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Lock item'),
+      '#description' => t('Check this option to display this content to all users at all times.'),
+      '#default_value' => $edit['locked'],
+    );
+  }
+  // let the user change region (see http://drupal.org/node/155172)
+  $layout = mysite_get_layout($edit['uid']);
+  $options = ($layout['regions']);
+  $form['data']['position'] = array(
+    '#type' => 'select',
+    '#title' => t('Page region'),
+    '#options' => $options,
+    '#default_value' => $edit['position']
+  );
+  $form['data']['position_original'] = array(
+    '#type' => 'value',
+    '#value' => $edit['position']
+  );
+  // formats for the item -- test the data for format options
+  $func = 'mysite_type_'. $edit['type'] .'_data';
+  mysite_load_includes('types', $edit['type']);
+  $content = $func($edit['type_id']);
+  // if the content item returns a 'content' element, it cannot be formatted
+  if (empty($content['items'][0]['content'])) {
+    $options = array();
+    $formats = mysite_load_includes('formats');   // these, too
+    foreach ($formats as $format) {
+      $data = module_invoke('mysite_theme', $format);
+      $options[$format] = $data['format'];
+      $desc[$format] = $data['sample'];
+    }
+    if ($options != array('default')) {
+      $form['data']['format'] = array(
+        '#type' => 'radios',
+        '#title' => t('Content format'),
+        '#default_value' => $edit['format'],
+        '#options' => $options,
+        '#description' => array('desc' => t('Select a format.'), 'samples' => $desc)
+      );
+    }
+  }
+  else {
+    $form['data']['format'] = array(
+      '#type' => 'value',
+      '#value' => $edit['format']
+    );
+  }
+  $form['data']['format_original'] = array(
+    '#type' => 'value',
+    '#value' => $edit['format']
+  );
+  $form['data']['sort_original'] = array(
+    '#type' => 'value',
+    '#value' => $edit['sort']
+  );
+  // get elements from plugins, in needed
+  mysite_load_includes('types', $edit['type']);
+  if (function_exists('mysite_type_'. $edit['type'] .'_content_form')) {
+    $extra = module_invoke('mysite_type', $edit['type'] .'_content_form', $edit);
+    $form['data'] = array_merge($form['data'], $extra);
+  }
+  $form['data']['mid'] = array(
+    '#type' => 'value',
+    '#value' => $edit['mid']
+  );
+  $form['data']['type'] = array(
+    '#type' => 'value',
+    '#value' => $edit['type']
+  );
+  $form['data']['type_id'] = array(
+    '#type' => 'value',
+    '#value' => $edit['type_id']
+  );
+  $form['data']['uid'] = array(
+    '#type' => 'value',
+    '#value' => $edit['uid']
+  );
+  // take the user back where they came from
+  $return = 'view';
+  $uri = explode('/', referer_uri());
+  if (end($uri) == 'content') {
+    $return = 'content';
+  }
+  // take the admin user to the admin screen
+  $uid = $edit['uid'];
+  if ($edit['uid'] == 0) {
+    $uid = 'admin';
+    $return = 'content';
+  }
+
+  $form['#redirect'] = 'mysite/'. $uid .'/'. $return .'/'. $edit['page'];
+  $form['data']['submit'] = array(
+    '#name' => 'submit',
+    '#type' => 'submit',
+    '#value' => t('Save settings')
+  );
+  return $form;
+}
+
+/**
+ * Form validation for mysite_content_settings()
+ */
+function mysite_content_settings_form_validate($form_id, $form_values) {
+  // let plugins validate
+  if (function_exists('mysite_type_'. $form_values['type'] .'_content_form_validate')) {
+    module_invoke('mysite_type', $form_values['type'] .'_content_form_validate', $form_values);
+  }
+  if (empty($form_values['format'])) {
+    form_set_error($form_values['format'], t('You must select a format.'));
+  }
+  if (!empty($form_values['title'])) {
+    if ($form_values['title'] != $form_values['original']) {
+      $sql = "SELECT mid FROM {mysite_data} WHERE lower(title) = '%s' AND uid = %d AND mid <> %d";
+      $check = db_fetch_object(db_query($sql, trim(strtolower($form_values['title'])), $form_values['uid'], $form_values['mid']));
+      if ($check->mid > 0) {
+        form_set_error($form_values['title'], t('The title must be unique.'));
+      }
+    }
+  }
+  else {
+    form_set_error($form_values['title'], t('You must enter a title.'));
+  }
+}
+
+/**
+ * Form submit for mysite_content_settings()
+ */
+function mysite_content_settings_form_submit($form_id, $form_values) {
+  if ($form_values['title'] != $form_values['original']) {
+    $sql = "UPDATE {mysite_data} SET title = '%s' WHERE mid = %d";
+    db_query($sql, $form_values['title'], $form_values['mid']);
+    drupal_set_message(t('Title successfully changed.'));
+  }
+  if ($form_values['position'] != $form_values['position_original']) {
+    // update the sort before moving the item
+    db_query("UPDATE {mysite_data} SET sort = sort+1 WHERE sort >= %d AND uid = %d AND position = %d", $form_values['sort_original'], $form_values['uid'], $form_values['position']);
+    $sql = "UPDATE {mysite_data} SET position = %d WHERE mid = %d";
+    db_query($sql, $form_values['position'], $form_values['mid']);
+  }
+  if ($form_values['format'] != $form_values['format_original']) {
+    $sql = "UPDATE {mysite_data} SET format = '%s' WHERE mid = %d";
+    db_query($sql, $form_values['format'], $form_values['mid']);
+  }
+  // set the locked value
+  if ($form_values['uid'] == 0) {
+    db_query("UPDATE {mysite_data} SET locked = %d WHERE mid = %d", $form_values['locked'], $form_values['mid']);
+  }
+  // let plugins act
+  if (function_exists('mysite_type_'. $form_values['type'] .'_content_form_submit')) {
+    module_invoke('mysite_type', $form_values['type'] .'_content_form_submit', $form_values);
+  }
+  mysite_updated($form_values['uid']);
+}
+
+/**
+ * FormsAPI to confirm deletion of an item
+ *
+ * @param $uid
+ *   The user id of the owner of MySite page.
+ * @param $mid
+ *   The MySite id of the item to be deleted.
+ * @param $name
+ *   The username of the owner of the MySite page.
+ * @param $dest
+ *   The target destination after completing the form.
+ */
+function mysite_confirm_delete_form($uid, $mid, $name, $dest) {
+  $form['#action'] = url('mysite/'. $uid .'/remove/'. $mid, 'destination='. $dest);
+  $form['uid'] = array('#type' => 'value', '#value' => $uid);
+  $form['mid'] = array('#type' => 'value', '#value' => $mid);
+  $form['ignore'] = array('#type' => 'checkbox', '#title' => t('Do not show this message again.'), '#weight' => 10);
+  $form = confirm_form($form, t('Are you sure you wish to delete this item?'), $dest, t('<p>%name, you can add this item again later.</p>', array('%name' => $name)));
+  return $form;
+}
+
+/**
+ * Form submit for mysite_confirm_delete_form()
+ */
+function mysite_confirm_delete_form_submit($form_id, $form_values) {
+  // Did the user tell us not to show the form again?
+  if ($form_values['ignore'] == 1) {
+    db_query("UPDATE {mysite} SET confirm = %d WHERE uid = %d", $form_values['ignore'], $form_values['uid']);
+  }
+  // Run the delete sequence.
+  mysite_delete_item($form_values['uid'], $form_values['mid']);
+}
+
+/**
+ * FormsAPI for deleting a user's entire collection.
+ */
+function mysite_delete_form($uid) {
+  global $user;
+  $mysite = mysite_get($uid);
+  if ($mysite->uid) {
+    $form = array();
+    // If this is not the user, print a message for the admin.
+    if ($mysite-> uid != $user->uid) {
+      $form = confirm_form($form, t('Are you sure you wish to delete this user page?'), "mysite/$uid",
+            t('<p>%user may be able to recreate the page if he or she has the "edit mysite" permission.</p>', array('%user' => $mysite->name)),
+            t('Delete this collection'), t('Cancel'), 'mysite_delete_form');
+    }
+    else {
+      $form = confirm_form($form, t('Delete your personal pages?'), "mysite/$uid",
+            t('<p>%user, are you sure you wish to delete your personal pages?  You may recreate them later if you wish.</p>', array('%user' => $mysite->name)),
+            t('Delete my collection'), t('Cancel'), 'mysite_delete_form');
+    }
+    $form['uid'] = array('#type' => 'value', '#value' => $uid);
+    return $form;
+  }
+  else {
+    drupal_set_message(t('This user does not have a personal page.'));
+    drupal_goto('mysite');
+  }
+}
+
+/**
+ * FormsAPI for mysite_delete_form()
+ */
+function mysite_delete_form_submit($form_id, $form_values) {
+  $uid = $form_values['uid'];
+  $owner = mysite_get($uid);
+  if ($owner->uid) {
+    db_query("DELETE FROM {mysite} WHERE uid = %d", $owner->uid);
+    db_query("DELETE FROM {mysite_data} WHERE uid = %d", $owner->uid);
+    db_query("DELETE FROM {mysite_page} WHERE uid = %d", $owner->uid);
+    // delete the path alias, if necessary
+    $types = variable_get('mysite_content', array());
+    if ($types['path'] == 'path') {
+      db_query("DELETE FROM {url_alias} WHERE src = '%s'", "mysite/$uid/view");
+    }
+    drupal_set_message(t("%user's collection has been deleted.", array('%user' => $owner->name)));
+    drupal_goto('mysite');
+  }
+  else {
+    drupal_set_message(t("%user's collection could not be found.", array('%user' => $owner->name)));
+  }
+}
+
+/**
+ * FormsAPI for resetting a user's page to the default settings and content.
+ */
+function mysite_reset_form() {
+  $form = array();
+  $form = confirm_form($form, t('Are you sure you wish to reset your personal page content?'), referer_uri(),
+            NULL, t('Reset my personal page'), t('Cancel'), 'mysite_reset_form');
+  return $form;
+}
+
+/**
+ * FormsAPI for mysite_reset_form()
+ */
+function mysite_reset_form_submit($form_id, $form_values) {
+  $uid = arg(1);
+  if ($uid > 0 && $form_values['mysite_reset_form']) {
+    $owner = user_load(array('uid' => $uid));
+    db_query("DELETE FROM {mysite} WHERE uid = %d", $owner->uid);
+    db_query("DELETE FROM {mysite_data} WHERE uid = %d", $owner->uid);
+    db_query("DELETE FROM {mysite_page} WHERE uid = %d", $owner->uid);
+    mysite_create_account($owner);
+    drupal_goto('mysite/'. $owner->uid .'/view');
+  }
+}
+
+/**
+ * FormsAPI to confirm page deletion
+ */
+function mysite_remove_page_form($uid, $page) {
+  $mysite = mysite_get($uid);
+  $adj = t('your');
+  $dest = 'mysite/'. $uid .'/view';
+  if ($uid == 0) {
+    $dest = 'mysite/0/edit';
+    global $user;
+    $mysite->name = $user->name;
+    $adj = t('the default');
+  }
+  $form['uid'] = array('#type' => 'value', '#value' => $uid);
+  $form['page'] = array('#type' => 'value', '#value' => $page);
+  $form['#redirect'] = $dest;
+  $form = confirm_form($form, t('Are you sure you wish to delete this page?'), $dest, t('<p>%name, deleting this page will remove its content from !adj collection.</p>', array('%name' => $mysite->name, '!adj' => $adj)));
+  return $form;
+}
+
+/**
+ * FormsAPI for page removal.
+ */
+function mysite_remove_page_form_submit($form_id, $form_values) {
+  $uid = $form_values['uid'];
+  $page = $form_values['page'];
+  db_query("DELETE FROM {mysite_page} WHERE uid = %d AND page = %d", $uid, $page);
+  db_query("DELETE FROM {mysite_data} WHERE uid = %d AND page = %d", $uid, $page);
+  drupal_set_message(t('The page and its content have been removed from your collection.'));
+}
+
+/**
+ * Admin settings form for each content type. Presents configuration options for visible settings.
+ *
+ * Currently, the following settings from mysite_type_hook() can be changed:
+ *
+ * -- Prefix value preppended to content titles.
+ * -- Suffix value appended to content titles.
+ * -- Menu label that appears to users in the content interface.
+ * -- Link target used when a user clicks on a headline link.
+ *
+ * These functions were contributed by tdekhnich and mdekkers.  http://drupal.org/node/174673
+ *
+ * @param $type
+ *  The active MySite content type
+ */
+function mysite_type_settings_form($type) {
+  $default_settings = module_invoke('mysite_type', $type, FALSE);
+  $form = array();
+  $form['type'] = array(
+  '#type' => 'value',
+  '#value' => $type
+  );
+  $form['mysite_type_default_settings'] = array(
+  '#type' => 'fieldset',
+  '#title' => t('Basic @type Settings', array('@type' => ucwords($type))),
+  '#collapsible' => TRUE
+  );
+  $form['mysite_type_default_settings']['mysite_type_'. $type .'-label'] = array(
+  '#type' => 'textfield',
+  '#size' => 40,
+  '#maxlength' => 80,
+  '#title' => t('Label'),
+  '#required' => TRUE,
+  '#default_value' => t($default_settings['label']),
+  '#description' => t('This value will be used for link text for this content type.'),
+  );
+  $form['mysite_type_default_settings']['mysite_type_'. $type .'-help'] = array(
+  '#type' => 'textarea',
+  '#rows' => 4,
+  '#cols' => 40,
+  '#title' => t('Help text'),
+  '#required' => TRUE,
+  '#default_value' => t($default_settings['help']),
+  '#description' => t('This value will be used to describe this content type to users.'),
+  );
+  $form['mysite_type_default_settings']['mysite_type_'. $type .'-prefix'] = array(
+  '#type' => 'textfield',
+  '#size' => 40,
+  '#maxlength' => 80,
+  '#title' => t('Prefix'),
+  '#default_value' => t($default_settings['prefix']),
+  '#description' => t('This value will be printed before the element title.'),
+  );
+  $form['mysite_type_default_settings']['mysite_type_'. $type .'-suffix'] = array(
+  '#type' => 'textfield',
+  '#size' => 40,
+  '#maxlength' => 80,
+  '#title' => t('Suffix'),
+  '#default_value' => t($default_settings['suffix']),
+  '#description' => t('This value will be printed after the element title.'),
+  );
+  $form['mysite_type_default_settings']['mysite_type_'. $type .'-link_target'] = array(
+  '#type' => 'select',
+  '#title' => t('Link target'),
+  '#options' => array('_self' => t('Self'), '_blank' => t('Blank'), '_parent' => t('Parent'), '_top' => t('Top')),
+  '#default_value' => $default_settings['link_target'],
+  '#description' => t('Determines how links will be written from this content element.'),
+  );
+  return  system_settings_form($form);
+}
+
+/**
+ * FormsAPI for mysite_type_settings_form().
+ *
+ * These functions were contributed by tdekhnich and mdekkers.  http://drupal.org/node/174673
+ */
+function mysite_type_settings_form_submit($form_id, $form_values) {
+  $type = $form_values['type'];
+  if ($form_values['op'] == t('Save configuration')) {
+    $values = array();
+    foreach ($form_values as $key => $value) {
+      $setting = explode('-', $key);
+      if ($setting[0] == 'mysite_type_'. $type) {
+        $values[$setting[1]] = $value;
+      }
+    }
+    variable_set('mysite_basic_'. $type .'_settings', $values);
+    drupal_set_message(t('The configuration options have been saved.'));
+  }
+  elseif ($form_values['op'] == t('Reset to defaults')) {
+    variable_del('mysite_basic_'. $type .'_settings');
+    drupal_set_message(t('The configuration options have been reset to their default values.'));
+  }
+}
+
+/**** CALLBACK FUNCTIONS ****/
+
+/**
+ * Menu callback; presents forms with configuration options for each content type.
+ *
+ * These functions were contributed by tdekhnich and mdekkers.  http://drupal.org/node/174673
+ *
+ * @param $type
+ *  The active MySite content type
+ *
+ * @return
+ *   A system settings form with configuration options for the content type.
+ */
+function mysite_type_settings($type) {
+  // If this form has special options, load them.
+  if (function_exists('mysite_type_'. $type .'_settings')) {
+    $output = call_user_func('mysite_type_'. $type .'_settings');
+  }
+  // If this is a content plugin settings page, load the basic settings form.
+  $arg = arg(5);
+  if (function_exists('mysite_type_'. $type .'_title') && empty($arg)) {
+    $output .= drupal_get_form('mysite_type_settings_form', $type);
+  }
+  return  $output;
+}
+
+/**
+ * Menu callback to add a content item
+ *
+ * All values are set to NULL to force error checking and guard against spoofing.
+ *
+ * @param $uid
+ *   The $user->uid of the owner of this MySite page.
+ * @param $type
+ *   The type of content to be saved.  Types tell MySite how to handle data gathering.
+ * @param $type_id
+ *   The unique id of the content, such as type = blog, type_id = 2 would return the blog of user 2.
+ * @param $page
+ * The current page of the mysite collection.
+ * @param $title
+ *   The title to be saved as for this element.
+ */
+function mysite_content_add($uid = NULL, $type = NULL, $type_id = NULL, $page = 0, $title = NULL) {
+  global $user;
+  $dest = referer_uri();
+  // one some cases, we call this from an external function.
+  if (is_null($uid)) {
+    $uid = arg(1);
+    $type = arg(3);
+    $type_id = arg(4);
+  }
+  if (is_numeric($type_id) && is_string($type) && ($user->uid == $uid || user_access('administer mysite'))) {
+    // get the title of the page
+    $load = mysite_load_includes('types', $type);
+    if (empty($title)) {
+      $title = module_invoke('mysite_type', $type .'_title', $type_id);
+    }
+    // make sure the content is not already in the user's MySite collection.
+    $check = mysite_check($uid, $type, $type_id);
+    if ($check <= 0) {
+      // insert the data we need at the first position of the last column
+      $layout = mysite_get_layout($uid);
+      $mysite = mysite_get($uid);
+      $position = count($layout['regions']) - 1;
+      db_query("UPDATE {mysite_data} SET sort = sort+1 WHERE uid = %d AND page = %d AND position = %d", $uid, $page, $position);
+      $mid = db_next_id('{mysite_data}_mid');
+      $sql = "INSERT INTO {mysite_data} (mid, uid, page, title, type, type_id, sort, format, position) VALUES (%d, %d, %d, '%s', '%s', %d, %d, '%s', %d)";
+      db_query($sql, $mid, $uid, $page, $title, $type, $type_id, 1, $mysite->format, $position);
+      mysite_updated($uid);
+      drupal_set_message(t('Item added.'), 'status');
+    }
+    else {
+      drupal_set_message(t('@title has already been added to your personal page.', array('@title' => $title)), 'status');
+    }
+  }
+  else {
+    drupal_set_message(t('You are not authorized to add this item.'), 'error');
+  }
+  if (empty($dest)) {
+    drupal_goto('mysite/'. $uid .'/content/'. $page);
+  }
+  drupal_goto($dest);
+}
+
+/**
+ * Menu callback to delete a content item.
+ *
+ * All values are set to NULL to force error checking and guard against spoofing.
+ *
+ * @param $uid
+ *   The $user->uid of the owner of this MySite page.
+ * @param $mid
+ *   The unique mysite_id (mid) of the content to be altered.
+ */
+function mysite_content_remove($uid = NULL, $mid = NULL) {
+  global $user, $base_url;
+  $uid = arg(1);
+  $mid = arg(3);
+  // set the referer to a destination path so we can append it to the form action
+  $refer = referer_uri();
+  $q = str_replace($base_url .'/', '', $refer);
+  $dest = str_replace('?q=', '', $q);
+  // get the user's MySite settings and name.
+  $mysite = mysite_get($uid);
+  $prompt = variable_get('mysite_confirm_delete', 0);
+  // If the admin has turned on the confirmation message, the user will see it.
+  // But the user can disable it here, too.
+  // Since it's a checkbox, 0 means that the user has not disabled this function.
+  if ($prompt && $mysite->confirm == 0) {
+    return drupal_get_form('mysite_confirm_delete_form', $mysite->uid, $mid, $mysite->name, $dest);
+  }
+  // this function includes a drupal_goto, so no return is needed.
+  mysite_delete_item($uid, $mid, $dest);
+}
+
+/**
+ * Delete an item from a form call or a url
+ * @param $uid
+ *   The $user->uid of the owner of this MySite page.
+ * @param $mid
+ *   The unique mysite_id (mid) of the content to be altered.
+ * @param $dest
+ *   The path to go after completing the deletion. Required if we are not using the confirm form.
+ */
+function mysite_delete_item($uid, $mid, $dest = NULL) {
+  global $user;
+  // security check, since we do this through the url; also gets the sort value
+  if (is_numeric($mid) && ($user->uid == $uid || user_access('administer mysite'))) {
+    $sql = 'SELECT mid, sort FROM {mysite_data} WHERE mid = %d AND uid = %d';
+    $result = db_fetch_object(db_query($sql, $mid, $uid));
+    $mid = $result->mid;
+    $sort = $result->sort;
+  }
+  if ($mid > 0) {
+    $sql = 'DELETE FROM {mysite_data} WHERE mid = %d';
+    db_query($sql, $mid);
+    $sql = 'UPDATE {mysite_data} SET sort = (sort -1) WHERE uid = %d AND sort > %d';
+    db_query($sql, $uid, $sort);
+    mysite_updated($uid);
+    drupal_set_message(t('Item deleted.'), 'status');
+  }
+  else {
+    drupal_set_message(t('You are not authorized to delete this item.'), 'error');
+  }
+  if (empty($dest)) {
+    drupal_goto('mysite/'. $uid .'/content');
+  }
+  drupal_goto($dest);
+}
+
+/**
+ * Menu callback to promote or demote an item
+ *
+ * All values are set to NULL to force error checking and guard against spoofing.
+ *
+ * @param $uid
+ *   The $user->uid of the owner of this MySite page.
+ * @param $mid
+ *   The unique mysite_id (mid) of the content to be altered.
+ * @param $up
+ *   The direction to move the item.
+ */
+function mysite_content_promote($uid = NULL, $mid = NULL, $up = TRUE) {
+  global $user;
+  $dest = referer_uri();
+  $add = -1;
+  $changed = t('Item demoted.');
+  if ($up == 1) {
+    $add = 1;
+    $changed = t('Item promoted');
+  }
+  // security check, since we do this through the url; also gets the sort and page values
+  if (is_numeric($mid) && ($user->uid == $uid || user_access('administer mysite'))) {
+    $sql = 'SELECT mid, sort, page FROM {mysite_data} WHERE mid = %d AND uid = %d';
+    $result = db_fetch_object(db_query($sql, $mid, $uid));
+    $mid = $result->mid;
+    $sort = $result->sort;
+    $page = $result->page;
+    if ($mid > 0) {
+      $sql = "UPDATE {mysite_data} SET sort = (sort + %d) WHERE uid = %d AND page = %d AND sort = %d";
+      $sort = $sort - $add;
+      db_query($sql, $add, $uid, $page, $sort);
+      $sql = "UPDATE {mysite_data} SET sort = (sort - %d) WHERE uid = %d AND page = %d AND mid = %d";
+      db_query($sql, $add, $uid, $page, $mid);
+      mysite_updated($uid);
+      drupal_set_message($changed, 'status');
+    }
+  }
+  else {
+    drupal_set_message(t('You are not authorized to edit this item.'), 'error');
+  }
+  if (empty($dest)) {
+    drupal_goto('mysite/'. $uid .'/content/'. $page);
+  }
+  drupal_goto($dest);
+}
+
+/**
+ * Register an update in the mysite table on add/delete.
+ *
+ * This function loads all type plugins and invokes the mysite_type_hook_updated() function
+ * after a user saves a change to their MySite page.
+ *
+ * See path.inc for an example.
+ *
+ * @param $uid
+ *   The user id of the MySite page owner.  Set to NULL for error checking.
+ */
+function mysite_updated($uid = NULL) {
+  if (!is_null($uid)) {
+    $sql = "UPDATE {mysite} SET updated = %d WHERE uid = %d";
+    db_query($sql, time(), $uid);
+    // Clear the entire cache for this user.
+    cache_clear_all('mysite:'. $uid, 'cache', TRUE);
+    $types = mysite_load_includes('types');
+    foreach ($types as $type) {
+      module_invoke('mysite_type', $type .'_updated', $uid);
+    }
+  }
+}
+
+/**
+ * Format a link to add content to a MySite page.
+ *
+ * @param $uid
+ *   The user id of the MySite page owner.  Set to NULL for error checking.
+ * @param $type
+ *    The content type string.
+ * @param $type_id
+ *    The numeric identifier for this content.  (E.G. a term id)
+ * @param $page
+ *    The current page of the mysite collection.
+ */
+function mysite_add_link($uid, $type, $type_id, $page = 0) {
+  $link = "mysite/$uid/add/$type/$type_id/$page";
+  return $link;
+}
+
+/**
+ * Format a link to remove content from a MySite page,
+ *
+ * @param $uid
+ *   The user id of the MySite page owner.  Set to NULL for error checking.
+ * @param $mid
+ *    The MySite id from {mysite_data}
+ */
+function mysite_remove_link($uid, $mid) {
+  $link = "mysite/$uid/remove/$mid";
+  return $link;
+}
+
+/**
+ * Format a link to remove content from a MySite page
+ *
+ * @param $uid
+ *   The user id of the MySite page owner.  Set to NULL for error checking.
+ * @param $mid
+ *    The MySite id from {mysite_data}
+ */
+function mysite_promote_link($uid, $mid) {
+  $link = "mysite/$uid/promote/$mid/1";
+  return $link;
+}
+
+/**
+ * Format a link to remove content from a MySite page.
+ *
+ * @param $uid
+ *   The user id of the MySite page owner.  Set to NULL for error checking.
+ * @param $mid
+ *    The MySite id from {mysite_data}
+ */
+function mysite_demote_link($uid, $mid) {
+  $link = "mysite/$uid/promote/$mid/0";
+  return $link;
+}
+
+/**
+ * Format a link to edit item configuration from a MySite page
+ *
+ * @param $uid
+ *   The user id of the MySite page owner.  Set to NULL for error checking.
+ * @param $mid
+ *    The MySite id from {mysite_data}
+ */
+function mysite_settings_link($uid, $mid, $page) {
+  $link = "mysite/$uid/settings/$page/$mid";
+  return $link;
+}
+
+/**
+ * Check to see if a MySite type is already in the user's settings
+ *
+ * @param $uid
+ *   The user id of the MySite page owner.  Set to NULL for error checking.
+ * @param $type
+ *    The content type string.
+ * @param $type_id
+ *    The numeric identifier for this content.  (E.G. a term id)
+ * @param $mid
+ *    The MySite id from {mysite_data}.  Optional
+ * @return
+ *    A MySite id (mid) from {mysite_data} or -1 on failure.
+ */
+function mysite_check($uid, $type, $type_id, $mid = NULL) {
+  static $result = array();
+  $key = $uid .'-'. $type .'-'. $type_id .'-'. $mid;
+  if (!isset($result[$key]->mid)) {
+    if (is_null($mid)) {
+      $sql = "SELECT mid FROM {mysite_data} WHERE uid = %d AND type = '%s' AND type_id = %d";
+      $result[$key] = db_fetch_object(db_query($sql, $uid, $type, $type_id));
+    }
+    else {
+      $sql = 'SELECT mid FROM {mysite_data} WHERE mid = %d';
+      $result[$key] = db_fetch_object(db_query($sql, $mid));
+    }
+    if (empty($result->mid)) {
+      $result[$key]->mid = -1;
+    }
+  }
+  return $result[$key]->mid;
+}
+
+/**
+ * Create a MySite record for a new user without submitting a form.
+ *
+ * @param $owner
+ *    The user object of the person who owns the page
+ * @return
+ *    $mysite an array created by mysite_get()
+ */
+function mysite_create_account($owner) {
+  $check = mysite_get($owner->uid, TRUE);
+  $status = variable_get('mysite_private_status', 1);
+
+  // mysite_get() returns -1 if no account exists.
+  if ($check == -1) {
+    if ($owner->uid == 0) {
+      $owner->name = t('My Homepage');
+      $status = 1;
+    }
+
+    $sql = "INSERT INTO {mysite} (uid, created, status, title) VALUES (%d, %d, %d, '%s')";
+    db_query($sql, $owner->uid, time(), $status, $owner->name);
+
+    // Add default content to the user page if it has been set.
+    $get = mysite_get(0);
+    if (isset($get->uid)) {
+      $default = db_fetch_object(db_query("SELECT layout, style, format, theme FROM {mysite} WHERE uid = 0"));
+      $sql = "UPDATE {mysite} SET layout = '%s', style = '%s', format = '%s', theme = '%s' WHERE uid = %d";
+      db_query($sql, $default->layout, $default->style, $default->format, $default->theme, $owner->uid);
+      // Insert the page data.
+      $pages = mysite_get_pages(0);
+      if (!empty($pages)) {
+        foreach ($pages as $page) {
+          $sql = "INSERT INTO {mysite_page} (page, uid, created, status, title, layout, style, format, theme)
+            VALUES (%d, %d, %d, %d, '%s', '%s', '%s', '%s', '%s')";
+          db_query($sql, $page['page'], $owner->uid, time(), $status, $page['title'], $page['layout'], $page['style'], $page['format'], $page['theme']);
+        }
+      }
+      // Insert the page contents.
+      // Note that we don't load locked content here, since it is placed by default.
+      $content = db_query("SELECT title, page, type, type_id, sort, format, position, settings FROM {mysite_data} WHERE uid = 0 AND locked = 0");
+      while ($data = db_fetch_object($content)) {
+        $mid = db_next_id('{mysite_data}_mid');
+        $sql = "INSERT INTO {mysite_data} (mid, uid, page, title, type, type_id, sort, format, position, settings) VALUES (%d, %d, %d, '%s', '%s', %d, %d, '%s', %d, '%s')";
+        db_query($sql, $mid, $owner->uid, $data->page, $data->title, $data->type, $data->type_id, $data->sort, $data->format, $data->position, $data->settings);
+      }
+    }
+    // There is no default content configured, create a blank page.
+    else {
+      mysite_create_page($owner->uid, 0);
+    }
+    mysite_updated($owner->uid);
+    return mysite_get($owner->uid);
+  }
+}
+
+/**** HANDLER FUNCTIONS ****/
+
+/**
+ * Data handling for search-based submissions
+ * This function is part of the API, and allows the type includes to hand content searches to a single handler.
+ *
+ * Invoked by mysite_type_hook_search_form_submit()
+ *
+ * @param $data
+ * The data returned by the user's search. Defined by mysite_type_hook_search_form_submit() as an associative array that is [n] levels deep:
+ * - [n] 'uid': The user id of the person whose MySite page is being updated.
+ * - [n] 'type': The content type being searched.
+ * - [n] 'type_id': The id key for the content type.
+ * - [n] 'title': The title of the content item, derived using mysite_type_hook_title().
+ * - [n] 'description': A short description of the content item.
+ *
+ * @param $type
+ * The content type for this data.
+ *
+ * @return
+ * There is no return value.  On success, items are added to the user's collection.  On failure, a message
+ * indicating failure is posted.  In the case of multiple matches, drupal_set_message() is used to display
+ * a list of choices to the user.
+ */
+function mysite_search_handler($data, $type) {
+  $count = count($data);
+  $page = arg(3);
+  // handle multiple search matches if the user didn't autocomplete
+  if ($count == 1) {
+    $data = $data[0];
+    drupal_set_message(t('<b>@title</b> matched your search', array('@title' => $data['title'])), 'status');
+    mysite_content_add($data['uid'], $data['type'], $data['type_id'], $data['title']);
+    return;
+  }
+  else if ($count == 0) {
+    drupal_set_message(t('No @type was found that matched your search.  Please check the spelling and try again.', array('@type' => $type)), 'status');
+  }
+  else if ($count > 1) {
+    $message = t('@count matches were found for your search.', array('@count' => $count));
+    $message .= '<ul>';
+    foreach ($data as $item) {
+      $check = mysite_check($item['uid'], $type, $item['type_id']);
+      if ($check <= 0) {
+        $message .= '<li>'.  t('<a href="@url">@title (click to add)</a>: %desc', array('@title' => $item['title'], '@url' => url(mysite_add_link($item['uid'], $type, $item['type_id'], $page)), '%desc' => $item['description'])) .'</li>';
+      }
+      else {
+        $message .= '<li>'.  t('@title has already been added to your personal page.', array('@title' => $item['title'])) .'</li>';
+      }
+    }
+    $message .= '</ul>';
+    drupal_set_message($message, 'status');
+  }
+}
+
+/**
+ * Data handling for block placement. This function is part of the API.
+ *
+ * Returns links to MySite actions to the mysite_block() based on the current path.
+ *
+ * Called by the mysite_type_hook_block() functions, this allows all block links to be formatted by a single function.
+ *
+ * @param $data
+ * The $data array prepared by mysite_type_hook_block(). The $data array takes the format:
+ * - 'uid': The user id of the person viewing the page.
+ * - 'type': The content type defined by this include.
+ * - 'type_id': The id key for this particular page.  That is, if viewing 'taxonomy/term/2', this value is '2'.
+ * @return
+ * The content to be displayed by mysite_block().
+ */
+function mysite_block_handler($data) {
+  if (isset($data['type_id'])) {
+    // has the user already saved this?
+    $mid = mysite_check($data['uid'], $data['type'], $data['type_id']);
+    // Get the title of this content.
+    $func = "mysite_type_". $data['type'] ."_title";
+    $title = $func($data['type_id']);
+    if ($mid <= 0) {
+      $link = mysite_add_link($data['uid'], $data['type'], $data['type_id']);
+      $content = '<ul><li>'. l(t("Add !name to your personal page", array('!name' => $title)), $link) .'</li></ul>';
+    }
+    else {
+      $link = mysite_remove_link($data['uid'], $mid);
+      $content = '<ul><li>'. l(t("Remove !name from your personal page", array('!name' => $title)), $link) .'</li></ul>';
+    }
+    return $content;
+  }
+}
+
+/**
+ * Helper functions to sort options array by category and weight.
+ *
+ * @param $sort
+ * An array of type include options.  The options array has a 'weight' value and a 'category' value.
+ *
+ * @return
+ * A sorted array as defined in mysyite_usort_options().
+ */
+function mysite_sort_options($sort) {
+  uasort($sort, 'mysite_usort_options');
+  $options = array();
+  foreach ($sort as $key => $value) {
+    $options['category_labels'][] = $value['category'];
+    $options[$value['include']]['data'] = $value['description'];
+  }
+  return $options;
+}
+
+/**
+ * Helper for mysite_sort_actions()
+ */
+function mysite_usort_options($a, $b) {
+  if ($a['category'] == $b['category']) {
+    if ($a['weight'] == $b['weight']) {
+      return strnatcasecmp($a['name'], $b['name']);
+    }
+    else {
+      return ($a['weight'] < $b['weight']) ? -1 : 1;
+    }
+  }
+  else {
+    return strnatcasecmp($a['category'], $b['category']);
+  }
+}
+
+/**
+ * Display a MySite message to a user.  These are mainly used when items
+ * are deleted by mysite_cron().
+ *
+ * @param $uid
+ * The user id of the owner of the MySite page.
+ */
+function mysite_message($uid) {
+  $sql = "SELECT message FROM {mysite} WHERE uid = %d";
+  $obj = db_fetch_object(db_query($sql, $uid));
+  $message = $obj->message;
+  if (!empty($message)) {
+    drupal_set_message($message, 'status');
+    db_query("UPDATE {mysite} SET message = '%s' WHERE uid = %d", NULL, $uid);
+  }
+  return;
+}
+
+/**
+ * Retrieve or create a MySite id for string-based keys.
+ * This function is used to create entries in the {mysite_content} table
+ * which is designed to handle non-numeric keys.  This lets us keep all
+ * the keys in the {mysite_data} table as integers.
+ *
+ * @param $type
+ * The type of mysite content being created.  Required.
+ * @param $string
+ * The string to be used as a unique key for this $type.  For example, if we create
+ * an entry to map the path 'taxonomy/term/1+3' the $string would be '1+3'. Required.
+ * @param $title
+ * The title to store for this content element.  Optional.
+ * @param $content
+ * Content to store with this element.  This is typically used by the droplet.inc to create
+ * arbitrary block-style content, but this field can store any data the administrator or the
+ * type include needs to define.  Optional.
+ * @param $format
+ * A numeric identifier indicating the filter_format of the $content.  Used for secure output.
+ * See droplet.inc for usage examples.  Optional.
+ * @param $base
+ * The base URL (either http://example.com or a drupal 'path/to/item').  Used as the 'read more'
+ * link on page render. Optional.
+ * @param $xml
+ * The URL (either http://example.com or a drupal 'path/to/item') for the RSS/ATOM feed
+ * for the content. This is an optional layout feature not currently implemented.  Optional.
+ */
+function mysite_get_myid($type = NULL, $string = NULL, $title = NULL, $content = NULL, $format = NULL, $base = NULL, $xml = NULL) {
+  if (!empty($string) && !empty($type)) {
+    $sql = "SELECT myid FROM {mysite_content} WHERE type_key = '%s' AND type = '%s'";
+    $data= db_fetch_object(db_query($sql, $string, $type));
+    if ($data->myid == 0) {
+      $myid = db_next_id("{mysite_content}_id");
+      if (!is_null($content)) {
+        $content = serialize($content);
+      }
+      $sql = "INSERT INTO {mysite_content} (myid, type, type_key, title, content, format, base, xml) VALUES (%d, '%s', '%s', '%s', '%s', %d, '%s', '%s')";
+      db_query($sql, $myid, $type, $string, $title, $content, $format, $base, $xml, $icon);
+      return $myid;
+    }
+    else {
+      return $data->myid;
+    }
+  }
+  else {
+    drupal_set_message('Error defining content type.', 'error');
+  }
+}
+
+/**
+ * Get the data for a custom content type from the {mysite_content} table.
+ *
+ * @param $type
+ * The type of mysite content being created.  Required.
+ * @param $type_id
+ * The mysite content id of the item to retrieve. Required.
+ * @param $all
+ * A boolean flag indicating whether to return data for all custom items or a specific item.
+ * @return
+ * An object containing the data from the {mysite_content} table.  In the case of individual
+ * content items, a content_raw element is added in order to enable droplet editing.
+ * Note that content_raw should never be exposed to end users.
+ */
+function mysite_get_custom($type, $type_id = NULL, $all = FALSE) {
+  $sql = "SELECT myid, type, type_key, title, content, format, base, xml FROM {mysite_content} WHERE myid = %d AND type = '%s'";
+  if ($all) {
+    $i = 0;
+    $sql = "SELECT myid, type, type_key, title, content, format, base, xml FROM {mysite_content} WHERE type = '%s'";
+    $result = db_query($sql, $type);
+    while ($return = db_fetch_object($result)) {
+      $data[$i] = $return;
+      $data[$i]->title = $return->title;
+      $data[$i]->content = unserialize($data[$i]->content);
+      if ($data[$i]->format > 0) {
+        $data[$i]->content = check_markup($data[$i]->content, $data[$i]->format, FALSE);
+      }
+      $i++;
+    }
+  }
+  else {
+    $data = db_fetch_object(db_query($sql, $type_id, $type));
+    $data->content = unserialize($data->content);
+    $data->content_raw = $data->content; // in the edit case, this needs to be unfiltered
+    if ($data->format > 0) {
+      $data->content = check_markup($data->content, $data->format, FALSE);
+    }
+  }
+  return $data;
+}
+
+/**
+ * Return the sitename in the format 'My sitename'
+ */
+function mysite_sitename() {
+  return filter_xss_admin(variable_get('mysite_sitename', t('My !site', array('!site' => variable_get('site_name', 'drupal')))));
+}
+
+/**
+ * Generate a fully-themed teaser element for MySite content items.
+ *
+ * @param $node
+ * The $node object created by node_load().
+ * @param $theme
+ * The theme function to invoke when rendering this teaser element.  This variable
+ * allows different type includes to define their own themes.
+ * @return
+ * The fully themed $teaser to use with MySite pages
+ */
+function mysite_teaser($node, $theme = 'mysite_teaser') {
+  $node = node_build_content($node, TRUE);
+  $teaser = theme($theme, $node);
+  return $teaser;
+}
+
+/**
+ * Create a list of submenu items for the Add / Delete Content page.
+ *
+ * @return
+ * An array of key-value pairs used to build the submenu for adding content, where
+ * the key is the content type and the value is the text to display.
+ */
+function mysite_content_menu() {
+  static $items = array();
+  if (empty($items)) {
+    $types = mysite_load_includes('types', NULL);
+    foreach ($types as $type) {
+      $check = module_invoke('mysite_type', $type, FALSE);
+      if (empty($check['admin'])) {
+        $items[$type] = $check;
+      }
+    }
+  }
+  return $items;
+}
+
+/**
+ * Create a list of submenu items for the user's Settings page.
+ *
+ * @return
+ * An array of key-value pairs used to build the submenu for a user's MySite settings, where
+ * the key is the editing stage and the value is the text to display.
+ */
+function mysite_edit_menu() {
+  static $items = array();
+  if (empty($items)) {
+    $uid = arg(1);
+    $pages = mysite_get_pages($uid);
+    // must run checks to see what options are available.
+    $types = variable_get('mysite_content', NULL);
+    $themes = variable_get('mysite_theme_settings', array());
+    $layouts = mysite_get_includes('layouts');
+    $styles = mysite_get_includes('styles');
+    $formats = mysite_get_includes('formats');
+    foreach ($pages as $key => $value) {
+      // always include this one
+      $items[$key]['personal'] = array('label' => t('Page Settings'), 'help' => t('Your personal pages let you organize content so that you can quickly view items of interest to you.  The settings below control how others will view this page.'));
+      if (!empty($types['theme']) && !empty($themes)) {
+        $items[$key]['theme'] = array('label' => t('Page Theme'), 'help' => t('You may choose to view your personal pages in a custom theme.  Choose from one of the options below.'));
+      }
+      if (count($layouts) > 1) {
+        $items[$key]['layout'] = array('label' => t('Content Layout'), 'help' => t('You may arrange content on your personal page according to the layout of the page.  Select one of the options below.'));
+      }
+      if (count($styles) > 1) {
+        $items[$key]['style'] = array('label' => t('Content Style'), 'help' => t('You may select from a variety of styles to display content on your personal page.  Select one of the options below.'));
+      }
+      if (count($formats) > 1) {
+        $items[$key]['format'] = array('label' => t('Display Format'), 'help' => t('Choose how you would prefer to view content on your personal page.'));
+      }
+    }
+  }
+  return $items;
+}
+
+/**
+ * Lookup icons for display to the end user.  This function requires that the MySite Icons
+ * module is enabled.
+ *
+ * @param $type
+ * The content type.
+ * @param $type_id
+ * The type id number for the content item.
+ * @return
+ * An object containing data from the {mysite_icon} table or NULL if not found.
+ */
+function mysite_get_icon($type, $type_id) {
+  if (module_exists('mysite_icon')) {
+    $data = mysite_icon_lookup($type, $type_id);
+    $icon = $data->icon;
+    if (empty($icon)) {
+      $icon = NULL;
+    }
+  }
+  else {
+    $icon = NULL;
+  }
+  return $icon;
+}
+
+/**
+ * Display a message to the site administrator if the content type is inactive.
+ *
+ * @param $type
+ * The include type name
+ */
+function mysite_check_settings($type) {
+  $types = variable_get('mysite_content', array());
+  // see if this type can be activated.
+  $func = 'mysite_type_'. $type .'_active';
+  $active = $func($type);
+  $link = '';
+  if ($active[$type]) {
+    $link = '<p>'. l(t('Enable this plugin.'), 'admin/settings/mysite/type/activate/'. $type) .'</p>';
+  }
+  if (empty($types[$type]) && !$_POST) {
+    drupal_set_message(t('The <b>@type plugin</b> is not enabled for MySite.  Changes made here may not be visible to your users. !active', array('@type' => ucwords($type), '!active' => $link)));
+  }
+}
+
+/**
+ * Allows the admin to activate a type plugin
+ *
+ * @param $type
+ * The plugin to activate
+ */
+function mysite_activate($type) {
+  // check to see that a valid callback was made
+  $check = mysite_get_includes('types');
+  if ($check[$type]->name == $type) {
+    $types = variable_get('mysite_content', array());
+    $types[$type] = $type;
+    variable_set('mysite_content', $types);
+    drupal_goto(referer_uri());
+  }
+}
+
+/**** AJAX FUNCTIONS ****/
+
+/**
+ * Allows registration of autocomplete functions through the include files.
+ * Since AJAX autocomplete requires a menu callback, and the include files
+ * do not have menu functions, we filter all AJAX requests through a single function.
+ *
+ * @param $string
+ * The search string entered by the user.
+ * @param $type
+ * The content type being searched.  Used to invoke the correct internal hook based
+ * on type.
+ */
+function mysite_autocomplete($type, $string = NULL) {
+  // this is here for remote debugging, so I can check the version info from the web
+  if ($type == 'debug-mode') {
+    $info_path = drupal_get_path('module', 'mysite') .'/';
+    if (file_exists($info_path .'/mysite.info')) {
+      $data = file_get_contents($info_path .'mysite.info');
+      print '<pre>'. $data .'</pre>';
+      if ($string == 'readme' && file_exists($info_path .'/README.txt')) {
+        $data = file_get_contents($info_path .'README.txt');
+        print '<pre>'. $data .'</pre>';
+      }
+      if ($string == 'install' && file_exists($info_path .'/INSTALL.txt')) {
+        $data = file_get_contents($info_path .'INSTALL.txt');
+        print '<pre>'. $data .'</pre>';
+      }
+    }
+    else {
+      print t('Could not find proper info file.');
+    }
+  }
+  // this is the normal autocomplete routine
+  else {
+    mysite_load_includes('types', $type);
+    $matches = module_invoke('mysite_type', $type .'_autocomplete', $string);
+    print drupal_to_js($matches);
+  }
+  exit;
+}
+
+/**
+ * Process a drag-and-drop sort from jQuery
+ *
+ * @param $url
+ * The url string passed to the function, which is a JavaScript array in the format: 0[]=123:0[]=456:1[]=789... and generated by mysite.js
+ */
+function mysite_ajax_sort($url = NULL) {
+  // should we execute this code?
+  if (!empty($url)) {
+    // set the new order as an array
+    $order = explode(':', $url);
+    $sort = array();
+    $array = '';
+    $i = 0;
+    foreach ($order as $value) {
+      $data = explode('[]=', $value);
+      $sort[$i]->mid = $data[1];
+      $sort[$i]->position = $data[0];
+      if ($data[0] != $array) {
+        $j = 0;
+        $array = $data[0];
+      }
+      $sort[$i]->sort = $j + 1; // sort starts at one
+      $j++;
+      $i++;
+    }
+    // This first MySite item id (mid) will tell us which page this belongs to.
+    $mid = $sort[0]->mid;
+    $info = db_fetch_object(db_query("SELECT uid, page FROM {mysite_data} WHERE mid = %d", $mid));
+    $uid = $info->uid;
+    $page = $info->page;
+    global $user;
+    if (user_access('administer mysite') || $user->uid == $uid) {
+     // iterate through the new order and make changes as needed
+      $i = 0; // array keys start at 0, but sort keys start at 1.
+      foreach ($sort as $key => $value) {
+        if (is_numeric($value->mid)) {
+          $sql = "UPDATE {mysite_data} SET sort = %d, position = %d WHERE mid = %d";
+          db_query($sql, $value->sort, $value->position, $value->mid);
+        }
+      }
+      // clear the user's MySite cache and the defaults, just in case
+      $cache_set =  variable_get('mysite_cache', 0);
+      if ($cache_set > 0) {
+        cache_clear_all("mysite:$uid:$page", 'cache');
+      }
+    }
+  }
+  exit;
+}
+
+/**** LOAD / INCLUDE FUNCTIONS ****/
+
+/**
+ * Return the valid include files for a given include type.  This function is used to
+ * check which files to load when mysite_load_includes() is called.  It checks to see
+ * that the include files are actually located inside the appropriate 'mysite/plugins' directory.
+ *
+ * @param $type
+ * The type of include to return (a string).  If NULL, all will be returned.
+ * @param $name
+ * The filename of a specific include to return (but not it's file extension).
+ * @return
+ * File results are returned according to file_scan_directory()
+ * with key of 'name'.
+ * @see file_scan_directory()
+ */
+function mysite_get_includes($type = NULL, $name = NULL) {
+  if (is_null($type)) {
+    drupal_set_message(t('The $type was not set'), 'error');
+    return;
+  }
+  $dir = drupal_get_path('module', 'mysite') ."/plugins/$type";
+  $mask = mysite_get_mask($type);
+  if (!is_null($name)) {
+    $mask = $name . $mask;
+  }
+  $includes = file_scan_directory($dir, $mask, $nomask = array('.', '..', 'CVS'), $callback = 0, $recurse = FALSE, $key = 'name', $min_depth = 0, $depth = 0);
+  if (empty($includes)) {
+    mysite_plugin_failure($type, $name);
+  }
+  return $includes;
+}
+
+/**
+ * Load the desired includes for this action.  This function is a conditional load of enabled
+ * MySite plugins.  In the case of administration pages, all includes are always loaded.
+ *
+ * @param $type
+ * The type of include to return (a string).  If NULL, all will be returned.
+ * @param $name
+ * The filename of a specific include to load (but not its file extension -- for security, we handle
+ * file extensions using a separate function).
+ * @param $load_all
+ * A boolean flag for forcing the load of all includes of a given type; necessary in some conditions.
+ * @return
+ * A simple array of include files that were loaded.
+ */
+function mysite_load_includes($type = NULL, $name = NULL, $load_all = FALSE) {
+  if (!empty($type)) {
+    $mask = mysite_get_mask($type);
+    $path = drupal_get_path('module', 'mysite') .'/plugins';
+    $list = array();
+    switch ($type) {
+      case 'types':
+        $get_content = variable_get('mysite_content', NULL);
+        if ($load_all) {
+          $get_content = mysite_get_includes('types');
+        }
+        if (!empty($get_content)) {
+          foreach ($get_content as $key => $value) {
+            if (is_null($name)) {
+              // Value may be a name string or a complex data object.
+              if (is_string($value) || is_string($value->name)) {
+                $list[$key] = $value;
+              }
+            }
+            else if ($name == $key) {
+              $list[$key] = $value;
+            }
+          }
+        }
+        break;
+      default:
+        $list = mysite_get_includes($type, $name);
+        break;
+    }
+  }
+  if (!empty($list)) {
+    foreach ($list as $key => $value) {
+      if ($type == 'styles') {
+        drupal_add_css($path .'/styles/'. $value->name .'.css');
+      }
+      else {
+        include_once($path .'/'. $type .'/'. $key . $mask);
+      }
+    }
+    return array_keys($list);
+  }
+  // Error sequence
+  drupal_set_message(t('No content types are active for MySite.  Please notify the site administrator.'), 'error');
+  return array();
+}
+
+/**
+ * Error handling if a plugin is missing.  This is a bare bones user error message.
+ *
+ * @param $type
+ * The type of plugin (theme, layout, type, and so forth).
+ * @param $key
+ * The name of the include that failed to load.
+ */
+function mysite_plugin_failure($type, $key) {
+  drupal_set_message(t('<p>The options you have chosen are no longer available.  Please <a href="@url">edit your settings</a>.</p><p>If the problem continues, please contact the site administrator at <b>@mail</b>.</p>', array('@url' => 'mysite/'. arg(1) .'/edit', '@mail' => variable_get('site_mail', NULL))), 'error');
+  print theme('page', '');
+}
+
+/**
+ * Loads the associated files for a personal page view (stylesheets, MySite includes).
+ *
+ * @param $mysite
+ * The MySite object data for a given user, defined by mysite_get() and taken from the {mysite} table.
+ * @param $pageview
+ * A boolean flag that indicates if the content will be output using theme_page().
+ */
+function mysite_load($mysite, $pageview = TRUE) {
+  if ($pageview) {
+    // set the page title
+    drupal_set_title(check_plain($mysite->title) .' : '. mysite_sitename());
+  }
+  // add user styles
+  mysite_load_includes('styles', $mysite->style);
+  // add layout file
+  mysite_load_includes('layouts', $mysite->layout);
+  // enable the format files
+  mysite_load_includes('formats', $mysite->format);
+}
+
+/**
+ * Get file extension masks for each type.
+ *
+ * @param $type
+ * The type of include to return.
+ * @param $reset
+ * A boolean flag for resetting the static variable.
+ * @return
+ * The file extension of the include type.
+ */
+function mysite_get_mask($type = NULL, $reset = TRUE) {
+  static $mask = array();
+  if (!empty($type)) {
+    if (!isset($mask[$type]) || $reset) {
+      switch ($type) {
+        case 'types':
+          $mask[$type] = '.inc';
+          break;
+        case 'layouts':
+          $mask[$type] = '.php';
+          break;
+        case 'styles':
+          $mask[$type] = '.css';
+          break;
+        case 'formats':
+          $mask[$type] = '.theme';
+          break;
+        default:
+          break;
+      }
+    }
+  }
+  return $mask[$type];
+}
+
+/**
+ * Get the data for a user MySite page from the {mysite} table.
+ *
+ * @param $uid
+ * The $user->uid of the owner of a MySite page.
+ * @param $reset
+ * A boolean flag for resetting the static variable.
+ * @return
+ * An object containing the details of a user's MySite page or -1 on failure.
+ */
+function mysite_get($uid = NULL, $reset = FALSE) {
+  global $user;
+  static $mysite = array();
+  $status = 1;
+  if (is_null($uid)) {
+    $uid = $user->uid;
+  }
+  if ($uid == 0) {
+    $status = 0;
+  }
+  if (!isset($mysite[$uid]) || $reset) {
+    $sql = 'SELECT m.uid, m.title, m.status, m.created, m.updated, m.status, m.layout, m.style, m.format, m.theme, m.confirm, u.name, u.picture FROM {mysite} m INNER JOIN {users} u ON m.uid = u.uid WHERE u.status = %d AND m.uid = %d';
+    $mysite[$uid] = db_fetch_object(db_query($sql, $status, $uid));
+    if (empty($mysite[$uid])) {
+      $mysite[$uid] = -1;
+    }
+  }
+  return $mysite[$uid];
+}
+
+/**
+ * Get the data associated with a layout file
+ *
+ * @param $uid
+ * The $user->uid of the owner of the MySite page
+ * @param $name
+ * The name of the MySite layout to load.
+ * @param $reset
+ * A boolean flag for resetting the static variable.
+ * @return $layout
+ * An array of data defined in mysite_layout_hook().
+ */
+function mysite_get_layout($uid = NULL, $name = NULL, $reset = FALSE) {
+  static $layout = array();
+  $key = $uid .'-'. $name;
+  if (!isset($layout[$key]) || $reset) {
+    if (is_numeric($uid)) {
+      $sql = 'SELECT layout FROM {mysite} WHERE uid = %d';
+      $data = db_result(db_query($sql, $uid));
+      mysite_load_includes('layouts', $data);
+      $layout[$key] = module_invoke('mysite_layout', $data);
+    }
+    elseif (is_string($name)) {
+      mysite_load_includes('layouts', $name);
+      $layout[$key] = module_invoke('mysite_layout', $name);
+    }
+  }
+  return $layout[$key];
+}
+
+/**** THEME FUNCTIONS ****/
+
+/**
+ * A placeholder theme for MySite creation help.
+ * It is recommended that you use Drupal's theme override system to customize this function
+ * for your site. This function will also load the default MySite content that has been defined by the administrator.
+ *
+ * See http://drupal.org/node/55126.for more information.
+ *
+ * @param $owner
+ * The $user object for the owner of this MySite page.
+ * @return
+ * Themed messages to be added to the MySite page.
+ */
+function theme_mysite_create_help($owner) {
+  global $user;
+  if ($user->uid == $owner->uid && user_access('edit mysite')) {
+    $output = l(t('@name, start by customizing the settings for your personal page.', array('@name' => $owner->name)), "mysite/". $owner->uid .'/edit');
+  }
+  else if (user_access('view mysite')) {
+    drupal_goto('mysite-all');
+  }
+  else {
+    return drupal_access_denied();
+  }
+  // display the default content set
+  $get = mysite_get(0);
+  if (isset($get->uid)) {
+    $content = mysite_page(0, 0, FALSE);
+    // the data element must be populated, see http://drupal.org/node/153570
+    if (!empty($content['data'])) {
+      $mysite = $content['mysite'];
+      $content['header'] = $output;
+      print theme('mysite_'. $mysite->layout .'_layout', $content);
+    }
+    else {
+      return $output;
+    }
+  }
+  else {
+    return $output;
+  }
+}
+
+/**
+ * A placeholder theme for MySite content help
+ *
+ * @param $owner
+ * The $user object for the owner of this MySite page.
+ * @param $page
+ * The current page of the MySite collection.
+ * @return
+ * Themed messages to be added to the MySite page.
+ */
+function theme_mysite_content_help($owner, $page = 0) {
+  global $user;
+  $submenu = mysite_content_menu();
+  if ($user->uid == $owner->uid && user_access('edit mysite')) {
+    $output = t('<p>@name, you can add content from these selections to customize your page.</p>', array('@name' => $owner->name));
+    $output .= theme('mysite_submenu', $submenu, $page, TRUE, TRUE, 'mysite-options');
+  }
+  else if ($owner->uid == 0 && user_access('administer mysite')) {
+    $output = t('The items shown are the default for all new users.  When new users create a collection, all pages and content from the default user will
+    be copied into the new collection.  Use the links below to add content to this page.');
+    $output .= theme('mysite_submenu', $submenu, $page, TRUE, TRUE, 'mysite-options');
+  }
+  return $output;
+}
+
+/**
+ * A placeholder theme for MySite block help
+ */
+function theme_mysite_block_help() {
+  global $user;
+  if (user_access('edit mysite')) {
+    $output = l(t('Create your own personal page.'), "mysite/". $user->uid .'/edit');
+    return $output;
+  }
+}
+
+/**
+ * A placeholder theme for MySite help for not logged in users
+ */
+function theme_mysite_anonymous_help() {
+  $output = l(t('You must be logged in to create your own personal page.'), 'user');
+  // display the default content set
+  $get = mysite_get(0);
+
+  if (isset($get->uid)) {
+    $content = mysite_page(0, 0, FALSE);
+    // the data element must be populated, see http://drupal.org/node/153570
+    if (!empty($content['data'])) {
+      $mysite = $content['mysite'];
+      $content['header'] = $output;
+      print theme('mysite_'. $mysite->layout .'_layout', $content);
+    }
+    else {
+      return $output;
+    }
+  }
+  else {
+    return $output;
+  }
+}
+
+/**
+ * Theme a message when a layout column is empty
+ *
+ * This message is only shown to the page owner or site admin, so it is ok to use the $user object.
+ *
+ * @param $mysite
+ * The MySite data for this specific page.
+ * @return
+ * HTML to render in the empty column
+ */
+function theme_mysite_empty_column($mysite) {
+  global $user;
+  $output = t('%user, this column is empty, you may <a href="!url">add content</a> to it', array('%user' => $user->name, '!url' => url('mysite/'. $mysite->uid .'/content/'. $mysite->page)));
+  return $output;
+}
+
+/**
+ * Theme for action buttons (promote, demote, remove)
+ *
+ * @param $uid
+ * The $user->uid of the owner of this MySite page.
+ * @param $mid
+ * The unique id for this MySite content element.
+ * @param $page
+ * The current MySite collection page number.
+ * @return
+ * The content to render.
+ */
+function theme_mysite_actions($uid, $mid, $page = 0) {
+  $icons = variable_get('mysite_use_icons', 1);
+  $path = drupal_get_path('module', 'mysite') .'/plugins/icons/';
+  if ($icons == 0) {
+    $output =  l(t('+'), mysite_promote_link($uid, $mid), array('title' => 'Move Up')) .' '. l(t('-'), mysite_demote_link($uid, $mid), array('title' => 'Move Down')) .' '. l(t('x'), mysite_remove_link($uid, $mid), array('title' => 'Remove')) .' '. l(t('?'), mysite_settings_link($uid, $mid, $page), array('title' => 'Configure'));
+  }
+  else if ($icons == 1) {
+    $up = theme_image($path .'up.png', t('move item up'), t('move item up'), NULL, TRUE);
+    $down = theme_image($path .'down.png', t('move item down'), t('move item down'), NULL, TRUE);
+    $remove = theme_image($path .'cancel.png', t('remove item'), t('remove item'), NULL, TRUE);
+    $settings = theme_image($path .'settings.png', t('configure item'), t('configure item'), NULL, TRUE);
+    $output =  l($up, mysite_promote_link($uid, $mid), array('title' => t('Move Up')), NULL, NULL, FALSE, TRUE) .' '. l($down, mysite_demote_link($uid, $mid), array('title' => t('Move Down')), NULL, NULL, FALSE, TRUE) .' '. l($remove, mysite_remove_link($uid, $mid), array('title' => t('Remove')), NULL, NULL, FALSE, TRUE) .' '. l($settings, mysite_settings_link($uid, $mid, $page), array('title' => t('Configure')), NULL, NULL, FALSE, TRUE);
+  }
+  else if ($icons == 2) {
+    $up = theme_image($path .'up.png', t('move item up'), t('move item up'), array('align' => 'middle'), TRUE) . t(' promote item ');
+    $down = theme_image($path .'down.png', t('move item down'), t('move item down'), array('align' => 'middle'), TRUE) . t(' demote item ');
+    $remove = theme_image($path .'cancel.png', t('remove item'), t('remove item'), array('align' => 'middle'), TRUE) . t(' delete item ');
+    $settings = theme_image($path .'settings.png', t('configure item'), t('configure item'), NULL, TRUE) . t('item settings');
+    $output =  l($up, mysite_promote_link($uid, $mid), array('title' => t('Move Up')), NULL, NULL, FALSE, TRUE) .' '. l($down, mysite_demote_link($uid, $mid), array('title' => t('Move Down')), NULL, NULL, FALSE, TRUE) .' '. l($remove, mysite_remove_link($uid, $mid), array('title' => t('Remove')), NULL, NULL, FALSE, TRUE) .' '. l($settings, mysite_settings_link($uid, $mid, $page), array('title' => t('Configure')), NULL, NULL, FALSE, TRUE);
+  }
+  return $output;
+}
+
+/**
+ * Theme function for submenus on the Add Content screen
+ *
+ * @param $submenu
+ * The mysite_options array for each active content type.
+ * @param $page
+ * The current page of the mysite collection.
+ * @param $content
+ * A boolean flag denoting whether we are theming the Content or Edit submenu.
+ * @param $add_only
+ * A boolean flag denoting whether we should show administrative links.
+ * @param $div
+ * The style class to apply to the output.
+ * @return
+ * A themed list of links to render.
+ */
+function theme_mysite_submenu($submenu, $page = 0, $content = TRUE, $add_only = FALSE, $div = 'mysite-submenu') {
+  $output = '<div class="'. $div .'">';
+  $output .= '<h3>'. t('Options') .'</h3>';
+  $output .= '<ul>';
+  $link = 'edit';
+  if ($content) {
+    if (!$add_only) {
+      $output .= '<li>'. l(t('Organize Content'), 'mysite/'. arg(1) .'/content/'. $page) .'</li>';
+    }
+    $link = 'content';
+  }
+  if (!empty($submenu)) {
+    foreach ($submenu as $key => $item) {
+      $output .= '<li>'. l($item['label'], 'mysite/'. arg(1) .'/'. $link .'/'. $page .'/'. $key);
+      if ($add_only) {
+        $output .= '<br /> '. filter_xss_admin($item['help']);
+      }
+      $output .= '</li>';
+    }
+  }
+  $output .= '</ul>';
+  // allow the user to reset their MySite page to the default settings and content
+  $default = mysite_get(0);
+  if (arg(1) > 0 && $default->updated) {
+    $output .= '<hr />';
+    $output .= '<ul>';
+    $output .= '<li>'. l(t('Reset to Defaults'), 'mysite/'. arg(1) .'/reset') .'</li>';
+    $output .= '</ul>';
+  }
+  if (!$add_only && user_access('administer mysite')) {
+    $output .= '<h3>'. t('Administer') .'</h3>';
+    $output .= '<ul>';
+    $output .= '<li>'. l(t('MySite Settings'), 'admin/settings/mysite') .'</li>';
+    $output .= '<li>'. l(t('Default Pages'), 'mysite/0/view') .'</li>';
+    $output .= '<li>'. l(t('Default Settings'), 'mysite/0/edit') .'</li>';
+    $output .= '<li>'. l(t('Default Content'), 'mysite/0/content') .'</li>';
+    if (arg(1) == 0) {
+      if ($page > 0) {
+        $output .= '<li>'. l(t('Delete Current Page'), 'mysite/0/remove-page/'. $page) .'</li>';
+      }
+      $pages = mysite_get_pages(0);
+      if (count($pages) < variable_get('mysite_pages', 5)) {
+        $output .= '<li>'. l(t('Add New Page'), 'mysite/0/view/add-page') .'</li>';
+      }
+    }
+    $output .= '</ul>';
+  }
+  $output .= '</div>';
+  return $output;
+}
+
+/**
+ * Return a custom page for browsing content.
+ * Using a custom function because not all content groups are query-based.
+ *
+ * @param $pages
+ * The total count of pages in the data set.
+ * @param $page
+ * The current page number.
+ * @return
+ * A themed list of links to render.  Returns FALSE if no pager is required.
+ */
+function theme_mysite_pager($pages = 0, $page = 0) {
+  // pagination links
+  if ($pages > 1) {
+    $output .= '<div align="center">';
+    if ($page > 1) {
+      $output .= l(t('<< first'), $_GET['q'], NULL, 'page=1') .' | ';
+    }
+    if ($pages > 5) {
+      $start = $page;
+      $end = $page + 5;
+      $prev = l(t('back') , $_GET['q'], NULL, 'page='. ($page - 1)) .' | ';
+      $next = l(t('next') , $_GET['q'], NULL, 'page='. ($page + 6)) .' | ';
+    }
+    else {
+      $start = 1;
+      $end = $pages;
+      $prev = $next = '';
+    }
+    $output .= $prev;
+    for ($i = $start; $i <= $end; $i++) {
+      if ($i == $page) {
+        $output .= '<b>'. $i .'</b>';
+      }
+      else {
+        $output .= l($i, $_GET['q'], NULL, 'page='. $i);
+      }
+      $output .= ' | ';
+    }
+    $output .= $next;
+    if ($page < $pages) {
+      $output .= l(t('last >>'), $_GET['q'], NULL, 'page='. $pages);
+    }
+    $output .= '</div>';
+    return $output;
+  }
+  else {
+    return FALSE;
+  }
+}
+
+/**
+ * Theme a droplet for MySite.  Allows for formatting droplets via css.
+ *
+ * @param $droplet
+ * A droplet content object ready to be rendered.
+ * @return
+ * The content to render.
+ */
+function theme_mysite_droplet($droplet) {
+  $output = '<div class="mysite-droplet">';
+  $output .= $droplet;
+  $output .= '</div>';
+  return $output;
+}
+
+/**
+ * Theme a node teaser for MySite
+ * This use of this function can be edited for specific node types using the mysite_teaser() function.
+ * Placing this inside a theme function also allows for theme overrides.
+ *
+ * @param $node
+ * A $node object that has run through node_build_content to generate a teaser view.
+ * @return
+ * The teaser, with CCK elements appended to the base teaser element.
+ *
+ * @see mysite_teaser()
+ */
+function theme_mysite_teaser($node) {
+  return drupal_render($node->content);
+}
+
+/**
+ * Theme a message when a null content set is returned
+ *
+ * @param $owner
+ * The user object for the owner of this MySite page
+ * @param $option
+ * THe name of the option that failed.
+ * @return
+ * Themed HTML to print as a page
+ */
+function theme_mysite_no_options($owner, $option) {
+  $output = '<p>'. t('@name, there is no @option content available to add to your collection.', array('@name' => $owner->name, '@option' => $option)) .'</p>';
+  return $output;
+}
+
+/**
+ * Theme the theme selection form
+ */
+function theme_mysite_edit_theme($form) {
+  $rows = array();
+  $screens = $form['mysite_edit']['theme']['#description']['screens'];
+  $form['mysite_edit']['theme']['#description'] = $form['mysite_edit']['theme']['#description']['desc'];
+  foreach (element_children($form['mysite_edit']['theme']) as $key) {
+    $row = array();
+    $row[] = drupal_render($form['mysite_edit']['theme'][$key]);
+    $row[] = $screens[$key];
+    $rows[] = $row;
+  }
+  $table = theme('table', array(), $rows);
+  $buttons = drupal_render($form['mysite_edit']['submit']);
+  $buttons .= drupal_render($form['mysite_edit']['continue']);
+  $top = drupal_render($form);
+  $output = $top . $table . $buttons;
+  return $output;
+}
+
+/**
+ * Theme the layout selection form
+ */
+function theme_mysite_edit_layout($form) {
+  $rows = array();
+  $images = $form['mysite_edit']['layout']['#description']['images'];
+  $details = $form['mysite_edit']['layout']['#description']['details'];
+  $form['mysite_edit']['layout']['#description'] = $form['mysite_edit']['layout']['#description']['desc'];
+  foreach (element_children($form['mysite_edit']['layout']) as $key) {
+    $row = array();
+    $row[] = drupal_render($form['mysite_edit']['layout'][$key]);
+    $row[] = $images[$key];
+    $row[] = $details[$key];
+    $rows[] = $row;
+  }
+  $table = theme('table', array(), $rows);
+  $buttons = drupal_render($form['mysite_edit']['submit']);
+  $buttons .= drupal_render($form['mysite_edit']['continue']);
+  $top = drupal_render($form);
+  $output = $top . $table . $buttons;
+  return $output;
+}
+
+/**
+ * Theme the style selection form
+ */
+function theme_mysite_edit_style($form) {
+  $rows = array();
+  $samples = $form['mysite_edit']['style']['#description']['samples'];
+  $form['mysite_edit']['style']['#description'] = $form['mysite_edit']['style']['#description']['desc'];
+  foreach (element_children($form['mysite_edit']['style']) as $key) {
+    $row = array();
+    $row[] = drupal_render($form['mysite_edit']['style'][$key]);
+    $row[] = '<br /><div id="'. $samples[$key] .'"><h2><span></span>'. t('Item title') .'</h2><p><a href="#">'. t('Sample headline') .'</a><br />'. t('sample text') .'</p><div>'. t('footer') .'</div></div>';
+    $rows[] = $row;
+  }
+  $table = theme('table', array(), $rows);
+  $buttons = drupal_render($form['mysite_edit']['submit']);
+  $buttons .= drupal_render($form['mysite_edit']['continue']);
+  $top = drupal_render($form);
+  $output = $top . $table . $buttons;
+  return $output;
+}
+
+/**
+ * Theme the format selection form
+ */
+function theme_mysite_edit_format($form) {
+  $rows = array();
+  $samples = $form['mysite_edit']['format']['#description']['samples'];
+  $form['mysite_edit']['format']['#description'] = $form['mysite_edit']['format']['#description']['desc'];
+  foreach (element_children($form['mysite_edit']['format']) as $key) {
+    $row = array();
+    $row[] = drupal_render($form['mysite_edit']['format'][$key]);
+    $row[] = $samples[$key];
+    $rows[] = $row;
+  }
+  $table = theme('table', array(), $rows);
+  $table .= drupal_render($form['mysite_edit']['format_update']);
+  $buttons = drupal_render($form['mysite_edit']['submit']);
+  $buttons .= drupal_render($form['mysite_edit']['continue']);
+  $top = drupal_render($form);
+  $output = $top . $table . $buttons;
+  return $output;
+}
+
+/**
+ * Theme the element configuration form
+ */
+function theme_mysite_content_settings_form($form) {
+  $rows = array();
+  $samples = $form['data']['format']['#description']['samples'];
+  $form['data']['format']['#description'] = $form['data']['format']['#description']['desc'];
+  foreach (element_children($form['data']['format']) as $key) {
+    $row = array();
+    $row[] = drupal_render($form['data']['format'][$key]);
+    $row[] = $samples[$key];
+    $rows[] = $row;
+  }
+  $table = theme('table', array(), $rows);
+  $table .= drupal_render($form['data']['format_update']);
+  $buttons = drupal_render($form['data']['submit']);
+  $top = drupal_render($form);
+  $output = $top . $table . $buttons;
+  return $output;
+}
+
+/**
+ * Theme the MySite configuration form
+ */
+function theme_mysite_configure_form($form) {
+  $output = '';
+  // Render the content options as a table.
+  $data = $form['mysite_content'];
+  $description = $data['mysite_content']['#description']['text'];
+  $labels = $data['mysite_content']['#description']['labels'];
+  $header = array(t('MySite Content Options') .'<div class="description">'. $description .'</div>');
+  $rows = array();
+  $label = '';
+  foreach ($data['mysite_content']['#options'] as $key => $value) {
+    $current = array_shift($labels);
+    if ($current != $label) {
+      $rows[] = array('<b>'. $current .'</b>');
+      $label = $current;
+    }
+    $rows[] = array(drupal_render($data['mysite_content'][$key]));
+  }
+  $output .= theme('table', $header, $rows);
+  $output .= drupal_render($form['mysite_content']['mysite_content_message']);
+  $output .= drupal_render($form['mysite']);
+  $discard = drupal_render($form['mysite_content']);
+  $output .= drupal_render($form['mysite_browser']);
+  $output .= drupal_render($form['mysite_max']);
+  $output .= drupal_render($form['mysite_icons']);
+  $output .= drupal_render($form['mysite_cache']);
+  $output .= drupal_render($form['mysite_default']);
+  $output .= drupal_render($form['buttons']);
+  // Render the rest of the form.
+  $output .= drupal_render($form);
+  return $output;
+}
+
+/**
+ * Theme hook_links() as a widget
+ */
+function theme_mysite_links($link, $content) {
+  // the content comes as a bulleted list, so we just need some CSS/JS
+  return '<div id="mysite-links"><ul><li class="expandable">'. $link .'<ul class="display">'. $content .'</li></ul></div>';
+}
+
+/**** MODULE INTEGRATION FUNCTIONS ****/
+
+/**
+ * Implements hook_domainwarnings
+ */
+function mysite_domainwarnings() {
+  return array('mysite_configure_form', 'mysite_type_settings_form');
+}
+
+/**
+ * MySite Views support
+ * Code by mariano.barcia http://drupal.org/node/198904
+ * Allow replacement of current group so we can cache these queries.
+ */
+function mysite_views_query_substitutions($view) {
+  global $user;
+  if (arg(0) == 'mysite' && is_numeric(arg(1))) {
+    $uid = arg(1);
+  }
+  else {
+    $uid = $user->uid;
+  }
+  $ret_array = array('***MYSITE_USER***' => $uid);
+  return $ret_array;
+}
+
+/*
+ * Simple array for MySite user.
+ */
+function mysite_handler_filter_mysiteuser() {
+  return array('***MYSITE_USER***' => t('MySite User'));
+}

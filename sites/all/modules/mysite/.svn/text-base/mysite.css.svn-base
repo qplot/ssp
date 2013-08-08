@@ -1,0 +1,240 @@
+/* $Id: mysite.css,v 1.25 2008/04/01 00:55:56 agentken Exp $ */
+
+/**
+ * Layout classes -- required
+ */
+
+div.mysite-single-width {
+  float: left;
+  width: 19%;
+  margin: 0 10px 0 0;
+}
+
+div.mysite-double-width {
+  float: left;
+  width: 38%;
+  margin: 0 10px 0 0;
+}
+
+div.mysite-triple-width {
+  float: left;
+  width: 57%;
+  margin: 0 10px 0 0;
+}
+
+div.mysite-quadruple-width {
+  float: left;
+  width: 76%;
+  margin: 0 10px 0 0;
+}
+
+div.mysite-third-width {
+  float: left;
+  width: 31%;
+  margin: 0 10px 0 0;
+}
+
+div.mysite-half-width {
+  float: left;
+  width: 48%;
+  margin: 0 10px 0 0;
+}
+
+div.mysite-full-width {
+  float: left;
+  width: 95%;
+  margin: 0 20px 0 0;
+}
+
+div.mysite-clear {
+  clear: both;
+  margin: 0;
+  height: 1px;
+}
+
+/**
+ * Content styles -- required
+ */
+
+div.mysite-group {
+  width: 100%;
+  clear: both;
+  margin: 0 0 2em 0;
+  overflow: scroll;
+}
+
+div.mysite-submitted {
+  font-size: 0.8em;
+}
+
+div.mysite-subtitle {
+  font-weight: bold;
+  font-size: 1em;
+}
+
+div.mysite-droplet {
+  margin: 0;
+  padding: 0;
+}
+
+div.mysite-content .end-item {
+  margin: 2em 0 0 0 ;
+  clear: both;
+}
+
+/**
+ * Forms elements
+ */
+
+.mysite-layout-image {
+  clear: both;
+  margin: -20px 0 0px 10px;
+}
+
+.mysite-layout-image img {
+  float: left;
+  margin: 0px 20px 20px 20px;
+}
+
+.mysite-mainmenu .form-radios .form-item, .mysite-mainmenu .description {
+  clear: both;
+}
+
+div.mysite-submenu {
+  margin: 0px 10px 0px 0px;
+  padding: 0 6px 10px 4px;
+  width: 20%;
+  float: left;
+}
+
+div.mysite-mainmenu {
+  width: 75%;
+  float: right;
+}
+
+div.mysite-current {
+  margin: 20px 0 0 0;
+}
+
+div.mysite-options {
+  clear: both;
+  margin: 0;
+  padding: 30px 0 0 0;
+}
+
+div.mysite-sample {
+  margin: 10px;
+  width: 360px;
+  border: 0;
+}
+
+/* elements for jQuery interface table sorting */
+
+div.mysite-table-0 {
+  width: 225px;
+  float: left;
+}
+
+div.mysite-table-1 {
+  width: 90px;
+  float: left;
+}
+
+h5.mysite-divider {
+  clear: both;
+  margin: 1em 0 0.5em 0;
+}
+
+div.mysite-grabber {
+  cursor: pointer;
+  width: 16px;
+  padding: 3px 0 0 0;
+  margin-right: 8px;
+  float: left;
+  clear: both;
+}
+
+div.mysite-dnd {
+  clear: both;
+  min-width: 360px;
+}
+
+/**
+ * Interface helpers
+ */
+
+div.mysite-helper {
+  background-color: #fff;
+  padding: 10px 0 10px 0;
+  border: 2px dashed #00c;
+}
+
+div.mysite-active {
+  background-color: #fed;
+}
+
+div.mysite-hover {
+  background-color: #dfd;
+}
+
+/* elements for MySite icons */
+
+div.mysite-browser {
+  text-align: center;
+  display: block;
+  font-size: 9px;
+  width: 136px;
+}
+
+div.mysite-icon {
+  float: right;
+  margin: 12px 12px 4px 12px;
+  text-align: center;
+  padding: 0;
+}
+
+div.mysite-icon-text {
+  font: bold 10px arial, sans-serif;
+  padding: 20px 4px 4px 4px;
+  color: #666;
+}
+
+/**
+ * Collapsing divs -- required
+ */
+html.js div.collapsed {
+  border-bottom-width: 0;
+  border-left-width: 0;
+  border-right-width: 0;
+  margin-bottom: 2em;
+}
+html.js div.collapsed * {
+  display: none;
+}
+html.js div.collapsed span.mysite-header {
+  display: block;
+}
+html.js div.collapsed span.mysite-header a {
+  display: block;
+}
+html.js div.collapsible span.mysite-header a {
+  padding-left: 15px;
+  background: url(plugins/icons/menu-expanded.png) 2px 75% no-repeat;
+}
+html.js div.collapsed span.mysite-header a {
+  background-image: url(plugins/icons/menu-collapsed.png);
+  background-position: 2px 50%;
+}
+/* Note: IE-only fix due to '* html' (breaks Konqueror otherwise). */
+* html.js div.collapsed span.mysite-header,
+* html.js div.collapsed span.mysite-header *,
+* html.js div.collapsed table * {
+  display: inline;
+}
+html.js div.collapsible span.mysite-header a {
+  display: block;
+}
+/* Avoid jumping around due to margins collapsing into collapsible div border */
+html.js div.collapsible div.mysite-wrapper {
+  overflow: auto;
+}

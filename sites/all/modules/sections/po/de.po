@@ -1,0 +1,183 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: German translation for sections module\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2008-06-01 14:43+0200\n"
+"PO-Revision-Date: 2008-06-01 15:01+0100\n"
+"Last-Translator: Alexander Hass\n"
+"Language-Team: Alexander Hass\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Poedit-Language: German\n"
+"X-Poedit-Country: GERMANY\n"
+"X-Poedit-SourceCharset: utf-8\n"
+
+#: sections.module:15
+#: sections.info:0
+msgid "Allows you to define sections of your site and apply themes to those sections."
+msgstr "Ermöglicht die Website in Bereiche einzuteilen und diesen Themes zuzuweisen."
+
+#: sections.module:51
+#: sections.info:0
+msgid "Sections"
+msgstr "Bereiche"
+
+#: sections.module:52
+msgid "Define sections of your site and apply themes to them."
+msgstr "Die Website in Bereiche einteilen und diesen Themes zuweisen."
+
+#: sections.module:58
+msgid "List"
+msgstr "Alle anzeigen"
+
+#: sections.module:66;229;230;245
+msgid "Add section"
+msgstr "Bereich hinzufügen"
+
+#: sections.module:76
+msgid "Edit section"
+msgstr "Bereich bearbeiten"
+
+#: sections.module:84
+msgid "Delete section"
+msgstr "Bereich löschen"
+
+#: sections.module:125
+msgid "Section"
+msgstr "Bereich"
+
+#: sections.module:126
+msgid "Status"
+msgstr "Status"
+
+#: sections.module:127
+msgid "Theme"
+msgstr "Theme"
+
+#: sections.module:128;180
+msgid "Weight"
+msgstr "Reihenfolge"
+
+#: sections.module:129
+msgid "Operations"
+msgstr "Operationen"
+
+#: sections.module:136;167;309
+msgid "Enabled"
+msgstr "Aktiviert"
+
+#: sections.module:136;309
+msgid "Disabled"
+msgstr "Deaktiviert"
+
+#: sections.module:139
+msgid "Edit"
+msgstr "Bearbeiten"
+
+#: sections.module:140;259;279
+msgid "Delete"
+msgstr "Löschen"
+
+#: sections.module:155
+msgid "Section settings"
+msgstr "Bereichseinstellungen"
+
+#: sections.module:159
+msgid "Name"
+msgstr "Name"
+
+#: sections.module:163
+msgid "Give the name of the section."
+msgstr "Einen Namen für den Bereich angeben."
+
+#: sections.module:169
+msgid "Enable or disable this section."
+msgstr "Diesen Bereich aktivieren oder deaktivieren."
+
+#: sections.module:173
+msgid "Select theme"
+msgstr "Theme auswählen"
+
+#: sections.module:176
+msgid "Select the theme you want to use for this section. Disabled themes are not used until they are enabled on <a href=\"@url\">themes</a> page."
+msgstr "Das Theme für diesen Bereich auswählen. Deaktivierte Themes werden nicht verwendet, bis diese auf der <a href=\"@url\">Themes</a>-Seite aktiviert wurden."
+
+#: sections.module:187
+msgid "Page specific visibility settings"
+msgstr "Seitenspezifische Sichtbarkeits-Einstellungen"
+
+#: sections.module:200
+msgid "Show on every page except the listed pages."
+msgstr "Auf allen Seiten außer den aufgelisteten Seiten anzeigen."
+
+#: sections.module:200
+msgid "Show on only the listed pages."
+msgstr "Nur auf den aufgelisteten Seiten anzeigen."
+
+#: sections.module:201
+msgid "Enter one page per line as Drupal paths. The '*' character is a wildcard. Example paths are %blog for the blog page and %blog-wildcard for every personal blog. %front is the front page."
+msgstr "Geben Sie eine Seite pro Zeile als Drupal-Pfad an. Das ‚*‘-Zeichen ist ein Platzhalter. Beispielpfade sind %blog für die Blog-Seite und %blog-wildcard für jedes einzelne Blog. %front steht für die Startseite."
+
+#: sections.module:204
+msgid "Show if the following PHP code returns <code>TRUE</code> (PHP-mode, experts only)."
+msgstr "Nur anzeigen, wenn der folgende PHP-Code <code>TRUE</code> zurückgibt (PHP-Modus für Experten)."
+
+#: sections.module:205
+msgid "If the PHP-mode is chosen, enter PHP code between %php. Note that executing incorrect PHP-code can break your Drupal site."
+msgstr "Falls der PHP-Modus gewählt ist, geben Sie bitte PHP-Code zwischen %php ein. Beachten Sie, dass das Ausführen eines fehlerhaften PHP-Codes Ihre Drupal-Seite zerstören kann."
+
+#: sections.module:209
+msgid "Activate section on the specific pages"
+msgstr "Diesen Bereich auf bestimmten Seiten aktivieren"
+
+#: sections.module:215
+msgid "Pages"
+msgstr "Seiten"
+
+#: sections.module:223
+msgid "Edit section %name"
+msgstr "Bereich %name bearbeiten"
+
+#: sections.module:225;238
+msgid "Save section"
+msgstr "Bereich speichern"
+
+#: sections.module:240;247
+msgid "The sections configuration has been saved."
+msgstr "Die Bereichskonfiguration wurde gespeichert."
+
+#: sections.module:261
+msgid "The section %name has been deleted."
+msgstr "Der Bereich %name wurde gelöscht."
+
+#: sections.module:276
+msgid "Delete section %name"
+msgstr "Bereich %name löschen"
+
+#: sections.module:278
+msgid "Are you sure you want to delete the section %name?"
+msgstr "Soll der Bereich %name wirklich gelöscht werden?"
+
+#: sections.module:280
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: sections.module:309
+msgid "@name (@status)"
+msgstr "@name (@status)"
+
+#: sections.module:28
+msgid "administer sections"
+msgstr "Bereiche verwalten"
+
+#: sections.module:0
+msgid "sections"
+msgstr "Bereiche"
+

@@ -1,0 +1,721 @@
+<?php
+// $Id: mysite_icon.module,v 1.3 2008/04/06 23:08:26 agentken Exp $
+
+/**
+ * @defgroup mysite_icon MySite Icons module
+ *
+ * Creates and manages icons for use with the MySite module's content browser.
+ */
+
+/**
+ * @file
+ * Creates and manages icons for use with the MySite module's content browser.
+ *
+ * @ingroup mysite_icon
+ */
+
+/**
+ * Implementation of hook_help().
+ */
+function mysite_icon_help($section) {
+  switch ($section) {
+    case 'admin/help#mysite_icon':
+      $output = t("<p>MySite offers the option to view content selections as a table of image icons.  In order to use this feature, you must have a directory writable by your Drupal installation.  For most users, this directory will be <em>files/mysite</em>.  MySite Icons may not work properly until you configure a storage directory.</p><p>To use the MySite Icons module's features, you must also configure the MySite option <em>Content Browser</em> to the value <em>Display rows of icons</em>.");
+      return $output;
+      break;
+    case 'admin/settings/mysite/icons':
+      $output = t('<p>MySite offers the option to view content selections as a table of image icons.  In order to use this feature, you must have a directory writable by your Drupal installation.  For most users, this directory will be <em>files/mysite</em>.  If you see an error message below, MySite Icons may not work properly until you configure a storage directory.</p>');
+      return $output;
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function mysite_icon_menu($may_cache) {
+  $items = array();
+  $admin = user_access('administer mysite');
+  if ($may_cache) {
+    $items[] = array('path' => 'admin/settings/mysite/icons',
+      'title' => t('Content icons'),
+      'description' => t('Manage icons for use with the MySite content browser.'),
+      'weight' => 6,
+      'callback' => 'mysite_icon_configure',
+      'type' => MENU_LOCAL_TASK,
+      'access' => $admin);
+    $items[] = array('path' => 'admin/settings/mysite_icon',
+      'title' => t('MySite Icons'),
+      'description' => t('Manage icons for use with the MySite content browser.'),
+      'weight' => 0,
+      'callback' => 'mysite_icon_admin',
+      'access' => $admin);
+    $items[] = array('path' => 'admin/settings/mysite/icons/browse',
+      'title' => t('Current icons'),
+      'description' => t('Add icons for use with the MySite content browser.'),
+      'weight' => -6,
+      'callback' => 'mysite_icon_current',
+      'type' => MENU_LOCAL_TASK,
+      'access' => $admin);
+    $items[] = array('path' => 'admin/settings/mysite/icons/add',
+      'title' => t('Add content icon'),
+      'description' => t('Add icons for use with the MySite content browser.'),
+      'weight' => 2,
+      'callback' => 'mysite_icon_add',
+      'type' => MENU_LOCAL_TASK,
+      'access' => $admin);
+    $items[] = array('path' => 'admin/settings/mysite/icons/configure',
+      'title' => t('Icon settings'),
+      'description' => t('Default icon settings for the MySite content browser.'),
+      'weight' => -10,
+      'callback' => 'mysite_icon_configure',
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+      'access' => $admin);
+  }
+  else {
+    // only show these tabs on the change/delete pages
+    $type = MENU_CALLBACK;
+    if (is_numeric(arg(5))) {
+      $type = MENU_LOCAL_TASK;
+    }
+    $items[] = array('path' => 'admin/settings/mysite/icons/change/'. arg(5),
+      'title' => t('Change'),
+      'description' => t('Change content icon.'),
+      'weight' => 4,
+      'callback' => 'mysite_icon_change',
+      'type' => $type,
+      'access' => $admin);
+    $items[] = array('path' => 'admin/settings/mysite/icons/delete/'. arg(5),
+      'title' => t('Delete'),
+      'description' => t('Delete content icon.'),
+      'weight' => 6,
+      'callback' => 'mysite_icon_delete',
+      'type' => $type,
+      'access' => $admin);
+  }
+  // load the includes that we need
+  if (arg(0) == 'admin' && arg(2) == 'mysite' && arg(3) == 'icons') {
+    $types = variable_get('mysite_content', array());
+    foreach ($types as $type) {
+      mysite_load_includes('types', $type);
+    }
+  }
+  return $items;
+}
+
+/**
+ * Function needed to make help display properly
+ */
+function mysite_icon_admin() {
+  drupal_goto('admin/settings/mysite/icons');
+  return;
+}
+
+/**
+ * MySite Icons configuration page
+ */
+function mysite_icon_configure() {
+  $folder = variable_get('mysite_icon_path', 'mysite');
+  $path = file_create_path(file_directory_path() .'/'. $folder);
+  // create the directory, if possible and needed.
+  $dir = mysite_icon_folder_check($path);
+  $output .= drupal_get_form('mysite_icon_settings_form', $path, $folder);
+  return $output;
+}
+
+/**
+ * Check to see if icons can be uploaded
+ *
+ * @param $path
+ * The path to the MySite Icons folder
+ * @return
+ * The real directory as defined by file_check_directory()
+ */
+function mysite_icon_folder_check($path) {
+  $dir = file_check_directory($path, 1);
+  if (!$dir) {
+    // folder could not be created
+    drupal_set_message(t('The MySite Icons directory needs to reside in a folder that is writable by Drupal.  The recommended path is <b>mysite</b>. ') . l(t('Please check your file upload settings'), 'admin/settings/file-system'), 'error');
+  }
+  return $dir;
+}
+
+/**
+ * FormsAPI for configuration
+ *
+ * @param $path
+ * The path to the MySite Icons folder
+ * @param $folder
+ * The name of the MySite Icons folder
+ */
+function mysite_icon_settings_form($path, $folder) {
+  $form = array();
+  $form['mysite_icon_path'] = array(
+    '#type' => 'textfield',
+    '#title' => t('MySite Icons Directory'),
+    '#size' => 30,
+    '#maxlength' => 80,
+    '#default_value' => $folder,
+    '#required' => TRUE,
+    '#description' => t('This folder will reside in %path, and is a file system path where the files will be stored. Do not use a leading or trailing slash. This directory has to exist and be writable by Drupal. Changing this location after the site has been in use will cause problems so only change this setting on an existing site if you know what you are doing.', array('%path' => file_directory_path()))
+    );
+  $form['mysite_icon_dimensions'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Icon maximum dimensions'),
+    '#default_value' => variable_get('mysite_icon_dimensions', '120x60'),
+    '#size' => 15, '#maxlength' => 10,
+    '#description' => t('Maximum dimensions for icons, Width x Height, in pixels.')
+    );
+  $form['mysite_icon_file_size'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Icon maximum file size'),
+    '#default_value' => variable_get('mysite_icon_file_size', '32'),
+    '#size' => 15, '#maxlength' => 10,
+    '#description' => t('Maximum file size for icons, in kB.')
+    );
+  $form['mysite_icon_download'] = array(
+    '#type' => 'radios',
+    '#title' => t('Download icons'),
+    '#options' => array(0 => t('Do not download icons.'), 1 => t('Attempt to download icons.')),
+    '#default_value' => variable_get('mysite_icon_download', 1),
+    '#description' => t('Should MySite attempt to download icons from external websites?')
+    );
+  return system_settings_form($form);
+}
+
+/**
+ * Show current MySite Icons
+ */
+function mysite_icon_current() {
+  global $base_url;
+  $folder = variable_get('mysite_icon_path', 'mysite');
+  $path = file_create_path(file_directory_path() .'/'. $folder);
+  // create the directory, if possible and needed.
+  $dir = mysite_icon_folder_check($path);
+  if ($dir) {
+    $header = array(array('data' => t('Id'), 'field' => 'iid', 'sort' => 'asc'), t('Name'), array('data' => t('Type'), 'field' => 'type', 'sort' => 'asc'), array('data' => t('Type Id'), 'field' => 'type_id', 'sort' => 'asc'), array('data' => t('Icon'), 'field' => 'icon', 'sort' => 'asc'), t('Actions'));
+    $rows = array();
+    $result = pager_query("SELECT iid, type, type_id, icon FROM {mysite_icon}". tablesort_sql($header), 50);
+    while ($icon = db_fetch_object($result)) {
+      $name = module_invoke('mysite_type', $icon->type .'_title', $icon->type_id);
+      $image = file_create_url($path .'/'. $icon->icon);
+      $img = theme_image($image, $icon->icon, $icon->icon, $attributes = array('height' => '20'), $getsize = FALSE);
+      $rows[] = array($icon->iid, check_plain($name), $icon->type, $icon->type_id, l($img, $image, array(), NULL, NULL, FALSE, TRUE), l('change', 'admin/settings/mysite/icons/change/'. $icon->iid) .' | '. l('delete', 'admin/settings/mysite/icons/delete/'. $icon->iid));
+    }
+    $output = '<h3>'. t('Current Icons') .'</h3>';
+    if (count($rows) > 0) {
+      $output .= theme_table($header, $rows);
+      $output .= theme_pager(array(), 50);
+    }
+    else {
+      $output = t('No icons found.');
+    }
+  }
+  else {
+    $output = t('There is an error in the configuration of the MySite Icons upload folder.');
+  }
+  return $output;
+}
+
+/**
+ * Add a new icon
+ *
+ * Display a list of <select> boxes showing items that can have icons uploaded.
+ */
+function mysite_icon_add() {
+  $folder = variable_get('mysite_icon_path', 'mysite');
+  $path = file_create_path(file_directory_path() .'/'. $folder);
+  // create the directory, if possible and needed.
+  $dir = mysite_icon_folder_check($path);
+  if ($dir) {
+    $data = array();
+    $type = arg(5);
+    $type_id = arg(6);
+    $types = variable_get('mysite_content', array());
+    if (in_array($type, $types) && is_numeric($type_id)) {
+      $icon = mysite_icon_lookup($type, $type_id);
+      if ($icon->iid) {
+        drupal_goto('admin/settings/mysite/icons/change/'. $icon->iid);
+      }
+      $name = module_invoke('mysite_type', $type .'_title', $type_id);
+      $output = '<h3>'. t('Upload icon: ') . check_plain($name) .'</h3>';
+      $output .= drupal_get_form('mysite_icon_new_form', $type, $type_id);
+      return $output;
+    }
+    else {
+      foreach ($types as $type) {
+        $data[$type] = module_invoke('mysite_type', $type);
+      }
+      $options = array();
+      foreach ($data as $key => $value) {
+        if (!empty($value['options'])) {
+          for ($i = 0; $i < count($value['options']['type']); $i++) {
+            if (empty($value['options']['icon'][$i])) {
+              $k = $value['options']['type'][$i] .'-'. $value['options']['type_id'][$i];
+              $options[$value['include']][$k] = $value['options']['name'][$i];
+            }
+          }
+        }
+      }
+      if (!empty($options)) {
+        return drupal_get_form('mysite_icon_add_form', $options);
+      }
+      else {
+        return t('No options are currently available.');
+      }
+    }
+  }
+  else {
+    return t('There is an error in the configuration of the MySite Icons upload folder.');
+  }
+}
+
+/**
+ * Forms API for adding new icon
+ *
+ * @param $type
+ * The MySite content type
+ * @param $type_id
+ * The MySite content type id
+ * @return
+ * An upload form generated by the FormsAPI
+ */
+function mysite_icon_new_form($type, $type_id) {
+  $form = mysite_icon_form($type, $type_id, $icon = NULL, $name = 'mysite_icon');
+  return $form;
+}
+
+/**
+ * FormsAPI for icon creation
+ */
+function mysite_icon_new_form_submit($form_id, &$form_values) {
+  if ($file = file_check_upload('icon')) {
+    mysite_icon_validate_picture($file, $form_values);
+    $iid = db_next_id('{mysite_icon}_iid');
+    db_query("INSERT INTO {mysite_icon} (iid, type, type_id, icon) VALUES ('%d', '%s', %d, '%s')", $iid, $form_values['type'], $form_values['type_id'], $form_values['icon']);
+    drupal_set_message(t('Icon successfully changed.'));
+  }
+  else {
+    form_set_error('icon', t('The image upload has failed.'));
+  }
+}
+
+/**
+ * Forms API for browsing icon choices
+ *
+ * @param $options
+ * The avaialbe type options generated by mysite_icon_add()
+ */
+function mysite_icon_add_form($options) {
+  $form = array();
+  $types = variable_get('mysite_content', array());
+  $form['intro'] = array('#value' => t('<h3>Add new MySite icon</h3><p>Select from the options below.  Only content elements that do not have existing icons are shown.</p>'));
+  foreach ($options as $key => $value) {
+    $opts = array($key => $options[$key]);
+    array_unshift($opts, t('Select @key', array('@key' => $key)));
+    $form['icon_id_'. $key] = array(
+      '#type' => 'select',
+      '#title' => t('Add new %key icon', array('%key' => $key)),
+      '#default_value' => 0,
+      '#options' => $opts,
+    );
+  }
+  $form['submit'] = array('#type' => 'submit', '#value' => t('Select Item and Continue'));
+  return $form;
+}
+
+/**
+ * FormsAPI for icon selection
+ */
+function mysite_icon_add_form_submit($form_id, &$form_values) {
+  foreach ($form_values as $key => $value) {
+    if ($str = strstr($key, 'icon_id') && !empty($value)) {
+      $arg = explode('-', $value);
+    }
+  }
+  if (empty($arg)) {
+    form_set_error('icon_id', t('You must select an option.'));
+  }
+  drupal_goto('admin/settings/mysite/icons/add/'. $arg[0] .'/'. $arg[1]);
+}
+
+/**
+ * Change an existing icon
+ *
+ * @return
+ * An upload form according to the FormsAPI.
+ *
+ */
+function mysite_icon_change() {
+  $folder = variable_get('mysite_icon_path', 'mysite');
+  $path = file_create_path(file_directory_path() .'/'. $folder);
+  // create the directory, if possible and needed.
+  $dir = mysite_icon_folder_check($path);
+  if ($dir) {
+    $iid = arg(5);
+    $icon = mysite_icon_get($iid);
+    if (!empty($icon->iid)) {
+      $name = module_invoke('mysite_type', $icon->type .'_title', $icon->type_id);
+      $output = '<h3>'. t('Change icon: ') . check_plain($name) .'</h3>';
+      $output .= drupal_get_form('mysite_icon_change_form', $icon);
+    }
+    else {
+      $output = t('Invalid selection.');
+    }
+  }
+  else {
+    $output = t('There is an error in the configuration of the MySite Icons upload folder.');
+  }
+  return $output;
+}
+
+/**
+ * FormsAPI for icon change
+ *
+ * @param $icon
+ * Data object taken from {mysite_icon}
+ */
+function mysite_icon_change_form($icon) {
+  $form = mysite_icon_form($icon->type, $icon->type_id, $icon->icon, 'mysite_icon_change');
+  $form['iid'] = array('#type' => 'value', '#value' => $icon->iid);
+  return $form;
+}
+
+/**
+ * FormsAPI for icon change
+ */
+function mysite_icon_change_form_submit($form_id, &$form_values) {
+  if ($file = file_check_upload('icon')) {
+    mysite_icon_validate_picture($file, $form_values);
+    db_query("UPDATE {mysite_icon} SET icon = '%s' WHERE iid = %d", $form_values['icon'], $form_values['iid']);
+    drupal_set_message(t('Icon successfully changed.'));
+  }
+  else {
+    form_set_error('icon', t('The image upload has failed.'));
+  }
+}
+
+/**
+ * Delete an existing icon
+ */
+function mysite_icon_delete() {
+  $iid = arg(5);
+  $icon = mysite_icon_get($iid);
+  if (!empty($icon->iid)) {
+    $name = module_invoke('mysite_type', $icon->type .'_title', $icon->type_id);
+    $output = '<h3>'. t('Delete icon: ') . check_plain($name) .'</h3>';
+    $output .= drupal_get_form('mysite_icon_delete_form', $icon);
+  }
+  else {
+    $output = t('Invalid selection.');
+  }
+  return $output;
+}
+
+/**
+ * FormsAPI for icon delete
+ *
+ * @param $icon
+ * Data object taken from {mysite_icon}
+ */
+function mysite_icon_delete_form($icon) {
+  $form = array();
+  $form['iid'] = array('#type' => 'value', '#value' => $icon->iid);
+  $image = file_directory_path() .'/'. variable_get('mysite_icon_path', 'mysite') .'/'. $icon->icon;
+  $img = file_create_url($image);
+  $image_div = '<div style="float: right; margin: 12px;">'. theme_image($img, '', '', array(), FALSE) .'</div>';
+  $form['image'] = array('#value' =>  $image_div);
+  $form['note'] = array('#value' => t('<p>The default icon will be used if you delete this icon.</p>'));
+  $form['cancel'] = array('#value' => '<ul><li>'. l(t('Do not delete this icon.'), 'admin/settings/mysite/icons/browse') .'</li></ul>');
+  $form['submit'] = array('#type' => 'submit', '#value' => t('Delete Icon'));
+  return $form;
+}
+
+/**
+ * FormsAPI for icon delete
+ */
+function mysite_icon_delete_form_submit($form_id, $form_values) {
+  $icon = mysite_icon_get($form_values['iid']);
+  $path = file_directory_path() .'/'. variable_get('mysite_icon_path', 'mysite') .'/'. $icon->icon;
+  if ($success = file_delete($path)) {
+    db_query("DELETE FROM {mysite_icon} WHERE iid = %d", $icon->iid);
+    drupal_set_message(t('Icon successfully deleted.'));
+    drupal_goto('admin/settings/mysite/icons/browse');
+  }
+  else {
+    form_set_error('submit', t('Failed to delete icon.  Check the server permissions in your MySite icon directory.'));
+  }
+}
+
+/**
+ * Helper function to load icon data
+ *
+ * @param $iid
+ * The icon id of the icon being loaded from {mysite_icon}
+ * @return
+ * An object of data from {mysite_icon}
+ */
+function mysite_icon_get($iid) {
+  $icon = db_fetch_object(db_query("SELECT iid, type, type_id, icon FROM {mysite_icon} WHERE iid = %d", $iid));
+  return $icon;
+}
+
+/**
+ * Helper function to find icon data based on known keys
+ *
+ * @param $type
+ * The MySite content type
+ * @param $type_id
+ * The MySite content type id
+ * @return
+ * An object of data from {mysite_icon}
+ */
+function mysite_icon_lookup($type, $type_id) {
+  $icon = db_fetch_object(db_query("SELECT iid, type, type_id, icon FROM {mysite_icon} WHERE type = '%s' AND type_id = %d", $type, $type_id));
+  return $icon;
+}
+
+/**
+ * Form builder function
+ *
+ * An internal function to re-use common form elements
+ *
+ * @param $type
+ * The MySite content type
+ * @param $type_id
+ * The MySite content type id
+ * @param $icon
+ * An object of data from {mysite_icon}
+ * @param $name
+ * The name of the form this will be inserted into
+ */
+function mysite_icon_form($type = NULL, $type_id = NULL, $icon = NULL, $name = 'mysite_icon') {
+  $form = array();
+  $form['#attributes']['enctype'] = 'multipart/form-data';
+  $form['#redirect'] = referer_uri();
+  if ($type == 'blog' || $type == 'user') {
+    $form['blog'] = array('#value' => t('<p>Blog and user icons are set to be user pictures by default.  If the user has no picture, or you wish to override the user picture, upload a new icon here.  Changing the MySite icon will not change the user picture.</p>'));
+  }
+  $form['type'] =array('#type' => 'value', '#value' => $type);
+  $form['type_id'] =array('#type' => 'value', '#value' => $type_id);
+  list($maxwidth, $maxheight) = explode('x', variable_get('mysite_icon_dimensions', '120x60'));
+  if (empty($icon)) {
+    $default = 'icon.png';
+    if (!empty($type)) {
+      $default = 'icon-'. $type .'.png';
+    }
+    $path = drupal_get_path('module', 'mysite') .'/plugins/icons';
+    $image = $path .'/'. $default;
+    if (!file_exists(file_check_location($image, $path))) {
+      $image = $path .'/icon.png';
+    }
+    $image_div = theme_mysite_icon_default($image, $edit['title'], $maxwidth, $maxheight);
+  }
+  else {
+    $image = file_directory_path() .'/'. variable_get('mysite_icon_path', 'mysite') .'/'. $icon;
+    $image_div = theme_mysite_icon_custom($image, $edit['title'], $maxwidth, $maxheight);
+  }
+  $form[$name]['image'] = array(
+    '#value' =>  $image_div
+  );
+  $form[$name]['icon'] = array(
+    '#type' => 'file',
+    '#title' => t('Icon'),
+    '#size' => 40,
+    '#description' => t('Must be a .GIF, .JPG or .PNG and should be %width x %height pixels.  Maximum size is %size kB.', array('%width' => $maxwidth, '%height' => $maxheight, '%size' => variable_get('mysite_icon_file_size', 32)))
+  );
+  $form[$name]['submit'] = array('#type' => 'submit', '#value' => t('Save Icon'));
+  return $form;
+}
+
+/**
+ * Helper function to validate images
+ *
+ * This is the key function to the module.  It takes an uploaded file and verifies that it is a GIF, JPG or PNG.  Then it checks and processes the image size and saves the image in the MySite Icons folder.
+ *
+ * Icons are saved in the format "type-type_id.ext" in both the filesystem and the database.  Only the filename (not the path) is stored in {mysite_icon}.
+ *
+ * This function has no return value, but passes the new filename back by reference.
+ *
+ * @param $file
+ * The file uploaded by the user
+ * @param &$form_values
+ * The $form_values submitted, passed by reference.
+ * @param $form_element
+ * The name of the form element asking for validation
+ */
+function mysite_icon_validate_picture($file, &$form_values, $form_element = 'icon') {
+  // get the size restrictions
+  list($maxwidth, $maxheight) = explode('x', variable_get('mysite_icon_dimensions', '120x60'));
+  $size = variable_get('mysite_icon_file_size', 32);
+
+  // Check that uploaded file is an image
+  $info = image_get_info($file->filepath);
+  if (!$info || !$info['extension']) {
+    form_set_error('icon', t('The uploaded file was not an image.'));
+  }
+  // Adjust the file size
+  else if (image_get_toolkit()) {
+    image_scale($file->filepath, $file->filepath, $maxwidth, $maxheight);
+  }
+  else if (filesize($file->filepath) > ($size * 1000)) {
+    form_set_error('icon', t('The uploaded image is too large; the maximum file size is %size kB.', array('%size' => $size)));
+  }
+  else if ($info['width'] > $maxwidth || $info['height'] > $maxheight) {
+    form_set_error($form_element, t('The uploaded image is too large; the maximum dimensions are %width x %height pixels.', array('%width' => $maxwidth, '%height' => $maxheight)));
+  }
+  $directory = file_directory_path() .'/'. variable_get('mysite_icon_path', 'mysite');
+  $dir = file_check_directory($directory, $mode = 1, $form_item = 'icon');
+  if (!form_get_errors()) {
+    if ($file = file_save_upload('icon', $directory .'/'. $form_values['type'] .'-'. $form_values['type_id'] .'.'. $info['extension'], 1)) {
+      $form_values[$form_element] = $form_values['type'] .'-'. $form_values['type_id'] .'.'. $info['extension'];
+    }
+    else {
+      form_set_error($form_element, t("Failed to upload the picture image; the %directory directory doesn't exist.", array('%directory' => file_directory_path() .'/'. variable_get('mysite_icon_path', 'mysite'))));
+    }
+  }
+}
+
+/**
+ * Implementation of hook_file_download()
+ */
+function mysite_icon_file_download($file) {
+  // make sure this file is a MySite Icon file, based on the folder
+  $mysite = variable_get('mysite_icon_path', 'mysite');
+  $data = explode('/', $file);
+  $icon = array_pop($data);
+  $folder = implode('/', $data);
+  if ($mysite == $folder) {
+    $check = db_result(db_query("SELECT COUNT(iid) FROM {mysite_icon} WHERE icon = '%s'", $icon));
+    if ($check) {
+      $info = image_get_info(file_create_path($file));
+      return array('Content-type: '. $info['mime_type']);
+    }
+    else {
+      return -1;
+    }
+  }
+}
+
+/**
+ * Theme function for displaying icons to the user
+ *
+ * @param $type
+ * The MySite content type
+ * @param $type_id
+ * The MySite content type id
+ * @param $title
+ * The name of the content item this icon represents
+ * @param $icon
+ * An object of data from {mysite_icon}
+ * @return
+ * HTML that displays the icon or a default icon
+ */
+function theme_mysite_icon($type, $type_id, $title, $icon) {
+  $output = NULL;
+  // get the size restrictions
+  list($maxwidth, $maxheight) = explode('x', variable_get('mysite_icon_dimensions', '120x60'));
+  $path =  file_directory_path() .'/'. variable_get('mysite_icon_path', 'mysite');
+  $title = check_plain($title);
+  // The $icon value is usually a string, but can be an array in special cases
+  if (!empty($icon)) {
+    //$image = $path .'/'. $icon;
+    if (is_array($icon)) {
+      $path = $icon['path'];
+      $image = $icon['file'];
+    }
+    if ($file = file_check_location($image, $path)) {
+      $output = theme_mysite_icon_custom($image, $title, $maxwidth, $maxheight);
+    }
+  }
+  if (empty($output)) {
+    $path = drupal_get_path('module', 'mysite') .'/plugins/icons';
+    $image = $path .'/icon-'. $type .'.png';
+    if (!file_exists(file_check_location($image, $path))) {
+      $image = $path .'/icon.png';
+    }
+    $output = theme_mysite_icon_default($image, $title, $maxwidth, $maxheight);
+  }
+  return $output;
+}
+
+/**
+ * Theme function to add an edit link to the browse menu
+ *
+ * @param $type
+ * The MySite content type
+ * @param $type_id
+ * The MySite content type id
+ * @return
+ * A linked * that lets the administrator change the icon at mysite_icon_change() or mysite_icon_add()
+ */
+function theme_mysite_icon_add_link($type, $type_id) {
+  $icon = mysite_icon_lookup($type, $type_id);
+  if (empty($icon)) {
+    return l(' * ', 'admin/settings/mysite/icons/add/'. $type .'/'. $type_id, array('title' => t('Upload new icon.')));
+  }
+  else {
+    return l(' * ', 'admin/settings/mysite/icons/change/'. $icon->iid, array('title' => t('Change current icon.')));
+  }
+}
+
+/**
+ * Theme function for previewing / displaying an icon
+ *
+ * @param $image
+ * The MySite content type
+ * @param $title
+ * The name of the content item this icon represents
+ * @param $icon
+ * An object of data from {mysite_icon}
+ * @param $maxwidth
+ * The maximum width (in pixels) of the icon
+ * @param $maxheight
+ * The maximum height (in pixels) of the icon
+ * @return
+ * The HTML to display the icon
+ */
+function theme_mysite_icon_default($image, $title, $maxwidth = 120, $maxheight = 60) {
+  // needed because CSS doesn't know where the theme file is located
+  global $base_url;
+  $image = $base_url .'/'. $image;
+  // truncate the title if its too long
+  if (strlen($title) > 32) {
+    $title = substr($title, 0, 32) .'...';
+  }
+  // we don't check_plain() since this all gets wrapped in l() later.
+  $output = '<div class="mysite-icon" style="width: '. $maxwidth .'px; height: '. $maxheight .'px; background: no-repeat url('. $image .');"><div class="mysite-icon-text">'. $title .'</div></div>';
+  return $output;
+}
+
+/**
+ * Theme function for displaying a default icon
+ *
+ * @param $image
+ * The MySite content type
+ * @param $title
+ * The name of the content item this icon represents
+ * @param $icon
+ * An object of data from {mysite_icon}
+ * @param $maxwidth
+ * The maximum width (in pixels) of the icon
+ * @param $maxheight
+ * The maximum height (in pixels) of the icon
+ * @return
+ * The HTML to display the icon
+ */
+function theme_mysite_icon_custom($image, $title, $maxwidth = 120, $maxheight = 60) {
+  // this allows private downloads to work correctly, since we have to pass $getsize == FALSE
+  $size = @getimagesize($image);
+  $width = $maxwidth;
+  $height = $maxheight;
+  if ($size[0] <= $maxwidth) {
+    $width = $size[0];
+  }
+  if ($size[1] <= $maxheight) {
+    $height = $size[1];
+  }
+  $image = file_create_url($image);
+  $output = '<div class="mysite-icon" style="width: '. $maxwidth .'px; height: '. $maxheight .'px;">'. theme('image', $image, $title, $title, array('height' => $height, 'width' => $width), FALSE) .'</div>';
+  return $output;
+}

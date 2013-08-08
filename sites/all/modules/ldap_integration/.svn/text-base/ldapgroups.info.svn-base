@@ -1,0 +1,11 @@
+; $Id: ldapgroups.info,v 1.1.2.3 2008/04/17 04:32:13 scafmac Exp $
+name = ldapgroups
+description = "Integrated LDAP Groups with Drupal Roles"
+package = Administration
+dependencies = ldapauth
+
+; Information added by drupal.org packaging script on 2009-10-27
+version = "5.x-1.5"
+project = "ldap_integration"
+datestamp = "1256654469"
+
