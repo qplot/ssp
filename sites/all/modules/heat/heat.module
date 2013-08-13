@@ -88,8 +88,9 @@ function heat_graph($options = array())
   $o.= '<map name="map-ticket-status-pie-chart">';
   $link_w = ceil($w/3);
   $open_link_start = $w - $link_w;
-  $o.= '<area href="/heat/tickets?status=Closed" ALT="Closed Tickets" TITLE="View Closed Tickets" SHAPE="RECT" COORDS="0,0,'.$link_w.','.$h.'" />';
-  $o.= '<area href="/heat/tickets?status=Open" ALT="Open Tickets" TITLE="View Open Tickets" SHAPE="RECT" COORDS="'.$open_link_start.',0,'.$w.','.$h.'" />';
+  $url = url('heat/tickets');
+  $o.= '<area href="'. $url . '?status=Closed" ALT="Closed Tickets" TITLE="View Closed Tickets" SHAPE="RECT" COORDS="0,0,'.$link_w.','.$h.'" />';
+  $o.= '<area href="'. $url . '?status=Open" ALT="Open Tickets" TITLE="View Open Tickets" SHAPE="RECT" COORDS="'.$open_link_start.',0,'.$w.','.$h.'" />';
   $o.= '</map>';
   return $o;
   
@@ -279,7 +280,8 @@ function heat_view_call()
   {
     $o.='<h6>Closed by '.heat_user_link($r['ClosedBy']).' on '.heat_date($r['ClosedDate']).' at '.heat_time($r['ClosedTime']).'</h6>';
   }
-  $o .='<p style="margin-top:1em;"><a href="/heat/tickets">View All Tickets</a></p>';
+  $url = url('heat/tickets');
+  $o .='<p style="margin-top:1em;"><a href="'. $url . '">View All Tickets</a></p>';
   return $o;
 }
 
@@ -322,10 +324,11 @@ function heat_tickets()
   
 $date_title = 'try last week, last month, 12/2, -3 days, -1 week, 8/3/06';
 $o .= heat_graph();
+$url = url('heat/tickets');
 $o .= <<<FILTERS
 <div class="filters">
 <h3 style="margin-bottom:0;">Filters</h3>
-<form id="heat_filter" action="/heat/tickets/" style="margin-bottom:1em;" method="get">
+<form id="heat_filter" action="{$url}" style="margin-bottom:1em;" method="get">
   <label for="search" title="Search by Ticket #, Description, Journal Entries">Search</label>
   <input type="text" name="search" value="{$_GET['search']}" />
   <label for="type">Type</label>
@@ -337,7 +340,7 @@ $o .= <<<FILTERS
     {$callStatuseOpts}
   </select>
   Created between <input title="{$date_title}" size="10" class="date" name="after" type="text" value="{$_GET['after']}" /> and <input title="{$date_title}" class="date" name="before" type="text" size="10" value="{$_GET['before']}" />
-  <input type="submit" value="Search" /> or <a href="/heat/tickets/">Reset</a>
+  <input type="submit" value="Search" /> or <a href="{$url}">Reset</a>
 </form>
 </div>
 FILTERS;
